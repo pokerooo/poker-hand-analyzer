@@ -70,6 +70,7 @@ export const hands = mysqlTable("hands", {
   
   // Analysis text
   analysis: text("analysis"), // Full analysis markdown
+  aiAnalysis: text("aiAnalysis"), // AI-generated strategic analysis
   
   // Sharing
   shareToken: varchar("shareToken", { length: 32 }).unique(), // Unique token for public sharing

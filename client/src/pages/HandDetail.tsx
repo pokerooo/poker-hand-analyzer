@@ -6,21 +6,25 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2, Share2, Check, Copy } from "lucide-react";
+import { ArrowLeft, Loader2, Share2, Check, Copy, Sparkles, Download } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Link } from "wouter";
 import { Streamdown } from "streamdown";
+import SocialMediaExport from "@/components/SocialMediaExport";
 
 export default function HandDetail() {
   const [, params] = useRoute("/hand/:id");
   const handId = parseInt(params?.id || "0");
   const [shareToken, setShareToken] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [showExport, setShowExport] = useState(false);
+  const [aiAnalysisLoading, setAiAnalysisLoading] = useState(false);
 
-  const { data: hand, isLoading, error } = trpc.hands.get.useQuery({ id: handId });
+  const { data: hand, isLoading, error, refetch } = trpc.hands.get.useQuery({ id: handId });
   const generateShare = trpc.hands.generateShareToken.useMutation();
   const revokeShare = trpc.hands.revokeSharing.useMutation();
+  const analyzeWithAI = trpc.hands.analyzeWithAI.useMutation();
 
   if (isLoading) {
     return (
@@ -109,37 +113,47 @@ export default function HandDetail() {
               <span className="text-2xl text-accent">♠</span>
               <h1 className="text-2xl font-bold">Hand Analysis</h1>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={async () => {
-                if (shareToken || hand.shareToken) {
-                  const token = shareToken || hand.shareToken;
-                  const shareUrl = `${window.location.origin}/share/${token}`;
-                  await navigator.clipboard.writeText(shareUrl);
-                  setCopied(true);
-                  toast.success("Link copied to clipboard!");
-                  setTimeout(() => setCopied(false), 2000);
-                } else {
-                  const result = await generateShare.mutateAsync({ id: handId });
-                  if (result.shareToken) {
-                    setShareToken(result.shareToken);
-                    const shareUrl = `${window.location.origin}/share/${result.shareToken}`;
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowExport(true)}
+              >
+                <Download className="mr-2 h-4 w-4" />
+                Export
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={async () => {
+                  if (shareToken || hand.shareToken) {
+                    const token = shareToken || hand.shareToken;
+                    const shareUrl = `${window.location.origin}/share/${token}`;
                     await navigator.clipboard.writeText(shareUrl);
                     setCopied(true);
-                    toast.success("Share link generated and copied!");
+                    toast.success("Link copied to clipboard!");
                     setTimeout(() => setCopied(false), 2000);
+                  } else {
+                    const result = await generateShare.mutateAsync({ id: handId });
+                    if (result.shareToken) {
+                      setShareToken(result.shareToken);
+                      const shareUrl = `${window.location.origin}/share/${result.shareToken}`;
+                      await navigator.clipboard.writeText(shareUrl);
+                      setCopied(true);
+                      toast.success("Share link generated and copied!");
+                      setTimeout(() => setCopied(false), 2000);
+                    }
                   }
-                }
-              }}
-            >
-              {copied ? (
-                <Check className="mr-2 h-4 w-4" />
-              ) : (
-                <Share2 className="mr-2 h-4 w-4" />
-              )}
-              {shareToken || hand.shareToken ? "Copy Link" : "Share Hand"}
-            </Button>
+                }}
+              >
+                {copied ? (
+                  <Check className="mr-2 h-4 w-4" />
+                ) : (
+                  <Share2 className="mr-2 h-4 w-4" />
+                )}
+                {shareToken || hand.shareToken ? "Copy Link" : "Share Hand"}
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -291,7 +305,7 @@ export default function HandDetail() {
 
             {/* Street-by-Street Analysis */}
             <Tabs defaultValue="summary" className="w-full">
-              <TabsList className="grid w-full grid-cols-5 bg-card">
+              <TabsList className="grid w-full grid-cols-6 bg-card">
                 <TabsTrigger value="preflop">Preflop</TabsTrigger>
                 <TabsTrigger value="flop" disabled={!hand.flopCard1}>
                   Flop
@@ -301,6 +315,10 @@ export default function HandDetail() {
                 </TabsTrigger>
                 <TabsTrigger value="river" disabled={!hand.riverCard}>
                   River
+                </TabsTrigger>
+                <TabsTrigger value="ai-analysis">
+                  <Sparkles className="w-4 h-4 mr-1" />
+                  AI Analysis
                 </TabsTrigger>
                 <TabsTrigger value="summary">Summary</TabsTrigger>
               </TabsList>
@@ -392,6 +410,64 @@ export default function HandDetail() {
                 </TabsContent>
               )}
 
+              {/* AI Analysis */}
+              <TabsContent value="ai-analysis" className="space-y-4">
+                <Card className="bg-card border-border">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="flex items-center gap-2">
+                        <Sparkles className="w-5 h-5 text-accent" />
+                        AI-Powered Analysis
+                      </CardTitle>
+                      {!hand.aiAnalysis && (
+                        <Button
+                          onClick={async () => {
+                            setAiAnalysisLoading(true);
+                            try {
+                              await analyzeWithAI.mutateAsync({ id: handId });
+                              await refetch();
+                              toast.success("AI analysis complete!");
+                            } catch (error) {
+                              toast.error("Failed to generate AI analysis");
+                            } finally {
+                              setAiAnalysisLoading(false);
+                            }
+                          }}
+                          disabled={aiAnalysisLoading}
+                        >
+                          {aiAnalysisLoading ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Analyzing...
+                            </>
+                          ) : (
+                            <>
+                              <Sparkles className="mr-2 h-4 w-4" />
+                              Analyze with AI
+                            </>
+                          )}
+                        </Button>
+                      )}
+                    </div>
+                    <CardDescription>
+                      Get strategic recommendations powered by advanced AI
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {hand.aiAnalysis ? (
+                      <div className="prose prose-invert prose-sm max-w-none bg-muted/30 p-6 rounded-lg">
+                        <Streamdown>{hand.aiAnalysis}</Streamdown>
+                      </div>
+                    ) : (
+                      <div className="text-center py-12 text-muted-foreground">
+                        <Sparkles className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                        <p>Click "Analyze with AI" to get strategic recommendations</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
               {/* Summary */}
               <TabsContent value="summary" className="space-y-4">
                 <Card className="bg-card border-border">
@@ -469,6 +545,13 @@ export default function HandDetail() {
           </div>
         </div>
       </div>
+
+      {/* Social Media Export Modal */}
+      {showExport && (
+        <div className="fixed inset-0 z-50">
+          <SocialMediaExport hand={hand} onClose={() => setShowExport(false)} />
+        </div>
+      )}
     </div>
   );
 }

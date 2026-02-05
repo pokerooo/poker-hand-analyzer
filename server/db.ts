@@ -375,3 +375,126 @@ export async function revokeHandSharing(handId: number, userId: number): Promise
     return false;
   }
 }
+
+
+/**
+ * AI Analysis Functions
+ */
+import { invokeLLM } from "./_core/llm";
+
+export async function generateAIAnalysis(hand: any): Promise<string> {
+  // Format hand data for LLM
+  const handDescription = formatHandForAI(hand);
+  
+  // Call LLM to generate analysis
+  const response = await invokeLLM({
+    messages: [
+      {
+        role: "system",
+        content: `You are a professional poker coach analyzing hands. Provide strategic recommendations for each street, identify mistakes, and suggest improvements. Focus on:
+1. Position and range considerations
+2. Bet sizing and pot odds
+3. Board texture analysis
+4. Opponent tendencies (when applicable)
+5. GTO-based suggestions
+6. Specific mistakes and how to fix them
+
+Format your response in clear sections for each street (Preflop, Flop, Turn, River) with actionable advice.`
+      },
+      {
+        role: "user",
+        content: handDescription as string
+      }
+    ]
+  });
+  
+  const content = response.choices[0]?.message?.content;
+  if (typeof content === 'string') {
+    return content;
+  }
+  return "Analysis unavailable";
+}
+
+function formatHandForAI(hand: any): string {
+  const actions = JSON.parse(hand.actions || "[]");
+  
+  let description = `# Hand Analysis Request\n\n`;
+  description += `**Game Info:**\n`;
+  description += `- Blinds: ${hand.smallBlind}/${hand.bigBlind}`;
+  if (hand.ante > 0) description += ` (Ante: ${hand.ante})`;
+  description += `\n\n`;
+  
+  description += `**Hero:**\n`;
+  description += `- Position: ${hand.heroPosition}\n`;
+  description += `- Cards: ${hand.heroCard1} ${hand.heroCard2}\n\n`;
+  
+  // Group actions by street
+  const preflopActions = actions.filter((a: any) => a.street === "preflop");
+  const flopActions = actions.filter((a: any) => a.street === "flop");
+  const turnActions = actions.filter((a: any) => a.street === "turn");
+  const riverActions = actions.filter((a: any) => a.street === "river");
+  
+  if (preflopActions.length > 0) {
+    description += `**Preflop:**\n`;
+    preflopActions.forEach((a: any) => {
+      description += `- ${a.player}: ${a.action}`;
+      if (a.amount) description += ` ${a.amount}`;
+      description += `\n`;
+    });
+    description += `\n`;
+  }
+  
+  if (hand.flopCard1 && hand.flopCard2 && hand.flopCard3) {
+    description += `**Flop:** ${hand.flopCard1} ${hand.flopCard2} ${hand.flopCard3}\n`;
+    if (flopActions.length > 0) {
+      flopActions.forEach((a: any) => {
+        description += `- ${a.player}: ${a.action}`;
+        if (a.amount) description += ` ${a.amount}`;
+        description += `\n`;
+      });
+    }
+    description += `\n`;
+  }
+  
+  if (hand.turnCard) {
+    description += `**Turn:** ${hand.turnCard}\n`;
+    if (turnActions.length > 0) {
+      turnActions.forEach((a: any) => {
+        description += `- ${a.player}: ${a.action}`;
+        if (a.amount) description += ` ${a.amount}`;
+        description += `\n`;
+      });
+    }
+    description += `\n`;
+  }
+  
+  if (hand.riverCard) {
+    description += `**River:** ${hand.riverCard}\n`;
+    if (riverActions.length > 0) {
+      riverActions.forEach((a: any) => {
+        description += `- ${a.player}: ${a.action}`;
+        if (a.amount) description += ` ${a.amount}`;
+        description += `\n`;
+      });
+    }
+    description += `\n`;
+  }
+  
+  description += `\nPlease analyze this hand and provide strategic recommendations.`;
+  
+  return description;
+}
+
+export async function updateHandAIAnalysis(handId: number, userId: number, aiAnalysis: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Verify ownership
+  const existing = await getHandById(handId, userId);
+  if (!existing) throw new Error("Hand not found or access denied");
+  
+  await db
+    .update(hands)
+    .set({ aiAnalysis })
+    .where(eq(hands.id, handId));
+}

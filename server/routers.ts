@@ -130,6 +130,23 @@ export const appRouter = router({
         const success = await db.revokeHandSharing(input.id, ctx.user.id);
         return { success };
       }),
+    
+    analyzeWithAI: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const hand = await db.getHandById(input.id, ctx.user.id);
+        if (!hand) {
+          throw new Error("Hand not found");
+        }
+        
+        // Generate AI analysis using LLM
+        const aiAnalysis = await db.generateAIAnalysis(hand);
+        
+        // Update hand with AI analysis
+        await db.updateHandAIAnalysis(input.id, ctx.user.id, aiAnalysis);
+        
+        return { success: true, aiAnalysis };
+      }),
   }),
 });
 

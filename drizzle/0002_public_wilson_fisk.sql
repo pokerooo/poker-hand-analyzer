@@ -1,0 +1,1 @@
+ALTER TABLE `hands` ADD `aiAnalysis` text;

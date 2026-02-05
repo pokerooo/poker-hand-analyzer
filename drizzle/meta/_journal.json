@@ -15,6 +15,13 @@
       "when": 1770279588030,
       "tag": "0001_military_lorna_dane",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1770295168855,
+      "tag": "0002_public_wilson_fisk",
+      "breakpoints": true
     }
   ]
 }

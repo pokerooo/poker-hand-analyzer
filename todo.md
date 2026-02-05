@@ -226,3 +226,33 @@
   - [x] Test GGPoker format
   - [x] Test error handling with invalid input
   - [x] Write vitest tests for parser (16/16 passing)
+
+
+## Current Task: AI Analysis, Batch Import & Social Media Export ✓
+- [x] AI-Powered Hand Analysis:
+  - [x] Create tRPC procedure to analyze hand using LLM
+  - [x] Generate strategic recommendations for each street
+  - [x] Identify mistakes and suggest improvements
+  - [x] Calculate GTO-based suggestions
+  - [x] Add "Analyze with AI" button to hand detail page
+  - [x] Display AI analysis results in a readable format
+  - [x] Store AI analysis in database for future reference
+- [x] Batch Import:
+  - [x] Modify HandHistoryImport to accept multiple files
+  - [x] Parse multiple hand histories from single text input
+  - [x] Show progress indicator during batch processing
+  - [x] Display summary of imported hands (success/failure count)
+  - [x] Save all imported hands to database automatically
+  - [x] Handle errors gracefully for individual hands
+- [x] Social Media Export:
+  - [x] Design export templates for each platform:
+    - [x] Instagram Reels (1080x1920, 9:16 vertical)
+    - [x] X/Twitter (1200x675, 16:9 landscape)
+    - [x] TikTok (1080x1920, 9:16 vertical)
+    - [x] WhatsApp (1080x1080, 1:1 square)
+  - [x] Create visual hand summary with key stats
+  - [x] Add branding/watermark to exports
+  - [x] Generate shareable images using canvas/HTML2Canvas
+  - [x] Add download buttons for each platform format
+  - [x] Include hand analysis highlights in export
+  - [x] Test exports on actual social media platforms

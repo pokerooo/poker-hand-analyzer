@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, ArrowRight, Check, Loader2, FileText } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Loader2, FileText, Upload } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { toast } from "sonner";
 import VisualCardSelector from "@/components/VisualCardSelector";
@@ -14,6 +14,7 @@ import { PlayerActionInterface, ActionHistory, PlayerAction as ActionData } from
 import { BulkActionEntry } from "@/components/BulkActionEntry";
 import { getNextPlayer, BulkAction } from "@/utils/pokerUtils";
 import HandHistoryImport from "@/components/HandHistoryImport";
+import BatchHandHistoryImport from "@/components/BatchHandHistoryImport";
 import type { ParsedHandHistory } from "@/utils/handHistoryParser";
 
 type Position = "UTG" | "UTG+1" | "UTG+2" | "MP" | "MP+1" | "CO" | "BTN" | "SB" | "BB";
@@ -62,6 +63,7 @@ export default function HandInputSequential() {
   const [currentPlayer, setCurrentPlayer] = useState<Position>("UTG");
   const [bulkEntryMode, setBulkEntryMode] = useState(false);
   const [showImport, setShowImport] = useState(false);
+  const [showBatchImport, setShowBatchImport] = useState(false);
   const [handState, setHandState] = useState<HandState>({
     smallBlind: 200,
     bigBlind: 400,
@@ -233,6 +235,19 @@ export default function HandInputSequential() {
     );
   }
 
+  // Show batch import UI if requested
+  if (showBatchImport) {
+    return (
+      <BatchHandHistoryImport
+        onComplete={(successCount, failCount) => {
+          setShowBatchImport(false);
+          setLocation("/archive");
+        }}
+        onCancel={() => setShowBatchImport(false)}
+      />
+    );
+  }
+
   // Show import UI if requested
   if (showImport) {
     return (
@@ -285,17 +300,25 @@ export default function HandInputSequential() {
               <CardDescription>Enter the blinds and ante for this hand</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Import Button */}
-              <div className="mb-6">
-                <Button
-                  variant="outline"
-                  onClick={() => setShowImport(true)}
-                  className="w-full"
-                >
-                  <FileText className="mr-2 h-4 w-4" />
-                  Import Hand History
-                </Button>
-                <p className="text-xs text-muted-foreground text-center mt-2">
+              {/* Import Buttons */}
+              <div className="mb-6 space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowImport(true)}
+                  >
+                    <FileText className="mr-2 h-4 w-4" />
+                    Import Single Hand
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowBatchImport(true)}
+                  >
+                    <Upload className="mr-2 h-4 w-4" />
+                    Batch Import
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground text-center">
                   Or enter manually below
                 </p>
               </div>
