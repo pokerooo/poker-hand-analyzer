@@ -174,3 +174,11 @@
 - [x] Validate action sequences (e.g., can't check after a bet)
 - [ ] Create TableVisualization component (future enhancement)
 - [x] Style with Casino Noir theme
+
+## Current Task: Adding Undo/Edit Functionality for Actions ✓
+- [x] Add undo button to ActionHistory component
+- [x] Implement removeLastAction handler in HandInputSequential
+- [x] Update pot and currentBet calculations after undo
+- [x] Add visual feedback for undo action (toast notification)
+- [x] Test undo functionality across all streets
+- [x] Ensure undo works correctly with different action types

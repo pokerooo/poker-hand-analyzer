@@ -179,9 +179,10 @@ export function PlayerActionInterface({
 
 interface ActionHistoryProps {
   actions: PlayerAction[];
+  onRemoveAction?: (index: number) => void;
 }
 
-export function ActionHistory({ actions }: ActionHistoryProps) {
+export function ActionHistory({ actions, onRemoveAction }: ActionHistoryProps) {
   if (actions.length === 0) {
     return (
       <Card className="bg-card border-border">
@@ -202,7 +203,7 @@ export function ActionHistory({ actions }: ActionHistoryProps) {
           {actions.map((action, index) => (
             <div
               key={index}
-              className="flex justify-between items-center p-2 bg-muted/50 rounded text-sm"
+              className="flex justify-between items-center p-2 bg-muted/50 rounded text-sm group"
             >
               <span className="font-mono">{action.player}</span>
               <span className="flex items-center gap-2">
@@ -219,6 +220,17 @@ export function ActionHistory({ actions }: ActionHistoryProps) {
                 </span>
                 {action.amount && (
                   <span className="font-mono text-accent">{action.amount}</span>
+                )}
+                {onRemoveAction && index === actions.length - 1 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onRemoveAction(index)}
+                    className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                    title="Undo this action"
+                  >
+                    <span className="text-xs">✕</span>
+                  </Button>
                 )}
               </span>
             </div>

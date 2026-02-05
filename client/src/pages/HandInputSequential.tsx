@@ -375,6 +375,19 @@ export default function HandInputSequential() {
                 action: a.action,
                 amount: a.amount,
               }))}
+              onRemoveAction={(index) => {
+                const removedAction = handState.preflopActions[index];
+                const newPreflopActions = handState.preflopActions.filter((_, i) => i !== index);
+                setHandState({
+                  ...handState,
+                  preflopActions: newPreflopActions,
+                  // Restore player to active if they folded
+                  activePlayers: removedAction.action === "fold" && !handState.activePlayers.includes(removedAction.position)
+                    ? [...handState.activePlayers, removedAction.position]
+                    : handState.activePlayers,
+                });
+                toast.success("Action removed");
+              }}
             />
 
             <div className="flex justify-between pt-4">
@@ -473,6 +486,18 @@ export default function HandInputSequential() {
                 action: a.action,
                 amount: a.amount,
               }))}
+              onRemoveAction={(index) => {
+                const removedAction = handState.flopActions[index];
+                const newFlopActions = handState.flopActions.filter((_, i) => i !== index);
+                setHandState({
+                  ...handState,
+                  flopActions: newFlopActions,
+                  activePlayers: removedAction.action === "fold" && !handState.activePlayers.includes(removedAction.position)
+                    ? [...handState.activePlayers, removedAction.position]
+                    : handState.activePlayers,
+                });
+                toast.success("Action removed");
+              }}
             />
 
             <div className="flex justify-between pt-4">
@@ -563,6 +588,18 @@ export default function HandInputSequential() {
                 action: a.action,
                 amount: a.amount,
               }))}
+              onRemoveAction={(index) => {
+                const removedAction = handState.turnActions[index];
+                const newTurnActions = handState.turnActions.filter((_, i) => i !== index);
+                setHandState({
+                  ...handState,
+                  turnActions: newTurnActions,
+                  activePlayers: removedAction.action === "fold" && !handState.activePlayers.includes(removedAction.position)
+                    ? [...handState.activePlayers, removedAction.position]
+                    : handState.activePlayers,
+                });
+                toast.success("Action removed");
+              }}
             />
 
             <div className="flex justify-between pt-4">
@@ -655,6 +692,18 @@ export default function HandInputSequential() {
                 action: a.action,
                 amount: a.amount,
               }))}
+              onRemoveAction={(index) => {
+                const removedAction = handState.riverActions[index];
+                const newRiverActions = handState.riverActions.filter((_, i) => i !== index);
+                setHandState({
+                  ...handState,
+                  riverActions: newRiverActions,
+                  activePlayers: removedAction.action === "fold" && !handState.activePlayers.includes(removedAction.position)
+                    ? [...handState.activePlayers, removedAction.position]
+                    : handState.activePlayers,
+                });
+                toast.success("Action removed");
+              }}
             />
 
             <div className="flex justify-between pt-4">
