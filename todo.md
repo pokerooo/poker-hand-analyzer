@@ -83,3 +83,17 @@
 - [x] Implement delete hand functionality
 - [ ] Create HandDetail page with full analysis
 - [ ] Add navigation to detail view from archive
+
+## Current Task: Building Analysis Engine ✓
+- [x] Create mistake detection rules for common errors:
+  - [x] Overcalling rivers (calling large bets with weak holdings)
+  - [x] Passive flop play (checking when should bet for value/protection)
+  - [x] Missing turn probes (not betting turn after flop check)
+  - [x] Overvaluing weak top pairs
+  - [x] Not charging draws (checking when draws are present)
+  - [x] Poor pot odds calls
+  - [x] Leaking in 3-bet spots
+- [x] Build rating calculation system (0-10 scale per street)
+- [x] Create analysis text generator for explanations
+- [x] Integrate engine with hand submission in HandInput form
+- [x] Test with various hand scenarios (12/12 tests passing)

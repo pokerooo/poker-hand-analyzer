@@ -4,6 +4,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import * as db from "./db";
+import { analyzeHand } from "./analysisEngine";
 
 export const appRouter = router({
     // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
@@ -53,12 +54,41 @@ export const appRouter = router({
         })),
       }))
       .mutation(async ({ ctx, input }) => {
+        // Run analysis engine
+        const analysis = analyzeHand({
+          smallBlind: input.smallBlind,
+          bigBlind: input.bigBlind,
+          ante: input.ante,
+          heroPosition: input.heroPosition,
+          heroCard1: input.heroCard1,
+          heroCard2: input.heroCard2,
+          flopCard1: input.flopCard1,
+          flopCard2: input.flopCard2,
+          flopCard3: input.flopCard3,
+          turnCard: input.turnCard,
+          riverCard: input.riverCard,
+          actions: input.actions,
+        });
+        
+        // Create hand with analysis results
         const result = await db.createHand({
           ...input,
           userId: ctx.user.id,
           actions: input.actions as any, // JSON type
+          mistakeTags: analysis.mistakeTags as any, // JSON type
+          overallRating: analysis.overallRating.toString(),
+          preflopRating: analysis.preflopRating.toString(),
+          flopRating: analysis.flopRating?.toString() || null,
+          turnRating: analysis.turnRating?.toString() || null,
+          riverRating: analysis.riverRating?.toString() || null,
+          analysis: analysis.analysis,
         });
-        return { success: true, handId: result[0]?.insertId };
+        
+        return { 
+          success: true, 
+          handId: result[0]?.insertId,
+          analysis: analysis,
+        };
       }),
     
     delete: protectedProcedure
