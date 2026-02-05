@@ -6,13 +6,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, ArrowRight, Check, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Loader2, FileText } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { toast } from "sonner";
 import VisualCardSelector from "@/components/VisualCardSelector";
 import { PlayerActionInterface, ActionHistory, PlayerAction as ActionData } from "@/components/PlayerActionInterface";
 import { BulkActionEntry } from "@/components/BulkActionEntry";
 import { getNextPlayer, BulkAction } from "@/utils/pokerUtils";
+import HandHistoryImport from "@/components/HandHistoryImport";
+import type { ParsedHandHistory } from "@/utils/handHistoryParser";
 
 type Position = "UTG" | "UTG+1" | "UTG+2" | "MP" | "MP+1" | "CO" | "BTN" | "SB" | "BB";
 type Action = "fold" | "check" | "call" | "bet" | "raise" | "allin";
@@ -59,6 +61,7 @@ export default function HandInputSequential() {
   const [step, setStep] = useState(1);
   const [currentPlayer, setCurrentPlayer] = useState<Position>("UTG");
   const [bulkEntryMode, setBulkEntryMode] = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const [handState, setHandState] = useState<HandState>({
     smallBlind: 200,
     bigBlind: 400,
@@ -132,6 +135,63 @@ export default function HandInputSequential() {
     setStep(step - 1);
   };
 
+  const handleImport = (parsed: ParsedHandHistory) => {
+    // Convert parsed data to HandState
+    const newState: Partial<HandState> = {
+      smallBlind: parsed.smallBlind,
+      bigBlind: parsed.bigBlind,
+      ante: parsed.ante || 0,
+      heroPosition: parsed.heroPosition as Position,
+      heroCard1: parsed.heroCards[0]?.replace('♠', 's').replace('♥', 'h').replace('♦', 'd').replace('♣', 'c') || '',
+      heroCard2: parsed.heroCards[1]?.replace('♠', 's').replace('♥', 'h').replace('♦', 'd').replace('♣', 'c') || '',
+      preflopActions: parsed.preflopActions.map(a => ({
+        position: a.position as Position,
+        action: a.action,
+        amount: a.amount,
+      })),
+      flopActions: parsed.flopActions?.map(a => ({
+        position: a.position as Position,
+        action: a.action,
+        amount: a.amount,
+      })) || [],
+      turnActions: parsed.turnActions?.map(a => ({
+        position: a.position as Position,
+        action: a.action,
+        amount: a.amount,
+      })) || [],
+      riverActions: parsed.riverActions?.map(a => ({
+        position: a.position as Position,
+        action: a.action,
+        amount: a.amount,
+      })) || [],
+    };
+
+    // Convert board cards
+    if (parsed.flopCards) {
+      newState.flopCard1 = parsed.flopCards[0]?.replace('♠', 's').replace('♥', 'h').replace('♦', 'd').replace('♣', 'c') || '';
+      newState.flopCard2 = parsed.flopCards[1]?.replace('♠', 's').replace('♥', 'h').replace('♦', 'd').replace('♣', 'c') || '';
+      newState.flopCard3 = parsed.flopCards[2]?.replace('♠', 's').replace('♥', 'h').replace('♦', 'd').replace('♣', 'c') || '';
+    }
+    if (parsed.turnCard) {
+      newState.turnCard = parsed.turnCard.replace('♠', 's').replace('♥', 'h').replace('♦', 'd').replace('♣', 'c');
+    }
+    if (parsed.riverCard) {
+      newState.riverCard = parsed.riverCard.replace('♠', 's').replace('♥', 'h').replace('♦', 'd').replace('♣', 'c');
+    }
+
+    // Update active players based on who folded
+    const foldedPlayers = new Set<Position>();
+    [...(parsed.preflopActions || []), ...(parsed.flopActions || []), ...(parsed.turnActions || []), ...(parsed.riverActions || [])]
+      .filter(a => a.action === 'fold')
+      .forEach(a => foldedPlayers.add(a.position as Position));
+    newState.activePlayers = POSITIONS.filter(p => !foldedPlayers.has(p));
+
+    setHandState(prev => ({ ...prev, ...newState }));
+    setShowImport(false);
+    setStep(10); // Go to review step
+    toast.success(`Hand history imported from ${parsed.site}!`);
+  };
+
   const handleSubmit = () => {
     if (!handState.heroPosition) {
       toast.error("Invalid hand data");
@@ -170,6 +230,16 @@ export default function HandInputSequential() {
           </CardHeader>
         </Card>
       </div>
+    );
+  }
+
+  // Show import UI if requested
+  if (showImport) {
+    return (
+      <HandHistoryImport
+        onImport={handleImport}
+        onCancel={() => setShowImport(false)}
+      />
     );
   }
 
@@ -215,6 +285,23 @@ export default function HandInputSequential() {
               <CardDescription>Enter the blinds and ante for this hand</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Import Button */}
+              <div className="mb-6">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowImport(true)}
+                  className="w-full"
+                >
+                  <FileText className="mr-2 h-4 w-4" />
+                  Import Hand History
+                </Button>
+                <p className="text-xs text-muted-foreground text-center mt-2">
+                  Or enter manually below
+                </p>
+              </div>
+
+              <Separator />
+
               <div className="grid grid-cols-3 gap-4">
                 <div>
                   <label className="text-sm font-medium mb-2 block">Small Blind</label>

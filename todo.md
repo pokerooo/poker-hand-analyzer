@@ -196,3 +196,33 @@
 - [x] Add toggle button to switch between modes
 - [x] Test auto-advance with various action sequences
 - [x] Test bulk entry with valid and invalid inputs
+
+
+## Current Task: Hand History Import Feature ✓
+- [x] Research and document hand history formats from popular poker sites:
+  - [x] PokerStars format (.txt)
+  - [x] GGPoker format
+- [x] Create hand history parser utility:
+  - [x] Parse game info (blinds, ante, game type)
+  - [x] Extract hero position and cards
+  - [x] Parse preflop actions with amounts
+  - [x] Parse flop cards and actions
+  - [x] Parse turn card and actions
+  - [x] Parse river card and actions
+  - [x] Handle different action formats (fold, check, call, bet, raise, all-in)
+- [x] Build HandHistoryImport component:
+  - [x] Add file upload button (.txt files)
+  - [x] Add textarea for paste import
+  - [x] Detect poker site format automatically
+  - [x] Show preview of parsed data before import
+  - [x] Add error handling for invalid formats
+- [x] Integrate with HandInputSequential:
+  - [x] Add "Import Hand History" button to step 1
+  - [x] Pre-fill all form fields from parsed data
+  - [x] Allow user to review and edit imported data
+  - [x] Handle edge cases (missing data, unsupported formats)
+- [x] Test with real hand history examples:
+  - [x] Test PokerStars format
+  - [x] Test GGPoker format
+  - [x] Test error handling with invalid input
+  - [x] Write vitest tests for parser (16/16 passing)
