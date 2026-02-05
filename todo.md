@@ -132,3 +132,20 @@
 - [x] Implement copy-to-clipboard functionality
 - [x] WhatsApp sharing (users can paste the copied link)
 - [x] Test sharing flow
+
+## Current Task: Building Hand Comparison Tool ✓
+- [x] Create HandCompare page component at /compare
+- [x] Build hand selection interface (multi-select from archive)
+- [x] Design side-by-side comparison layout (2-3 hands)
+- [x] Display key metrics for each hand:
+  - [x] Position, cards, blinds
+  - [x] Street-by-street ratings
+  - [x] Mistake tags
+  - [x] Actions taken on each street
+- [x] Add pattern detection logic:
+  - [x] Identify common mistakes across selected hands
+  - [x] Detect position-based tendencies
+  - [x] Find rating patterns by street
+- [x] Create insights summary panel
+- [x] Add navigation from archive page
+- [x] Style with Casino Noir theme

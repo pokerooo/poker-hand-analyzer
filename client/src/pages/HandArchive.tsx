@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
 import { useState } from "react";
-import { Search, Trash2, Eye } from "lucide-react";
+import { Search, Trash2, Eye, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -120,12 +120,20 @@ export default function HandArchive() {
                 Review and analyze your poker hands
               </p>
             </div>
-            <Link href="/input">
-              <Button className="bg-accent text-accent-foreground hover:bg-accent/90 gap-2">
-                <span className="text-xl">+</span>
-                New Hand
-              </Button>
-            </Link>
+            <div className="flex gap-3">
+              <Link href="/compare">
+                <Button variant="outline" className="gap-2">
+                  <TrendingUp className="h-4 w-4" />
+                  Compare Hands
+                </Button>
+              </Link>
+              <Link href="/input">
+                <Button className="bg-accent text-accent-foreground hover:bg-accent/90 gap-2">
+                  <span className="text-xl">+</span>
+                  New Hand
+                </Button>
+              </Link>
+            </div>
           </div>
 
           {/* Search and Filters */}
