@@ -217,9 +217,9 @@ export default function HandArchive() {
                     </span>
                   </div>
 
-                  {hand.mistakeTags && Array.isArray(hand.mistakeTags) && hand.mistakeTags.length > 0 && (
+                  {hand.mistakeTags && Array.isArray(hand.mistakeTags) && hand.mistakeTags.length > 0 ? (
                     <div className="flex flex-wrap gap-1">
-                      {hand.mistakeTags.slice(0, 3).map((tag: string, idx: number) => (
+                      {(hand.mistakeTags as string[]).slice(0, 3).map((tag: string, idx: number) => (
                         <Badge key={idx} variant="outline" className="text-xs">
                           {tag}
                         </Badge>
@@ -230,7 +230,7 @@ export default function HandArchive() {
                         </Badge>
                       )}
                     </div>
-                  )}
+                  ) : null}
 
                   {/* Actions */}
                   <div className="flex gap-2 pt-2">

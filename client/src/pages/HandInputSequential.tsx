@@ -11,6 +11,8 @@ import { Link, useLocation } from "wouter";
 import { toast } from "sonner";
 import VisualCardSelector from "@/components/VisualCardSelector";
 import { PlayerActionInterface, ActionHistory, PlayerAction as ActionData } from "@/components/PlayerActionInterface";
+import { BulkActionEntry } from "@/components/BulkActionEntry";
+import { getNextPlayer, BulkAction } from "@/utils/pokerUtils";
 
 type Position = "UTG" | "UTG+1" | "UTG+2" | "MP" | "MP+1" | "CO" | "BTN" | "SB" | "BB";
 type Action = "fold" | "check" | "call" | "bet" | "raise" | "allin";
@@ -55,6 +57,8 @@ export default function HandInputSequential() {
   const { isAuthenticated } = useAuth();
   const [, setLocation] = useLocation();
   const [step, setStep] = useState(1);
+  const [currentPlayer, setCurrentPlayer] = useState<Position>("UTG");
+  const [bulkEntryMode, setBulkEntryMode] = useState(false);
   const [handState, setHandState] = useState<HandState>({
     smallBlind: 200,
     bigBlind: 400,
@@ -315,10 +319,17 @@ export default function HandInputSequential() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="p-4 bg-muted/50 rounded-lg">
+                <div className="p-4 bg-muted/50 rounded-lg flex justify-between items-center">
                   <p className="text-sm text-muted-foreground">
                     Record each player's action in order. Select a player below and record their action.
                   </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setBulkEntryMode(!bulkEntryMode)}
+                  >
+                    {bulkEntryMode ? "Normal Mode" : "Quick Entry"}
+                  </Button>
                 </div>
 
                 <div>
@@ -329,14 +340,9 @@ export default function HandInputSequential() {
                         key={pos}
                         variant={handState.activePlayers.includes(pos) ? "outline" : "ghost"}
                         size="sm"
-                        onClick={() => {
-                          // Set this as current player for action
-                          const currentPot = handState.smallBlind + handState.bigBlind + (handState.ante * 9);
-                          const lastBet = handState.preflopActions.length > 0 
-                            ? Math.max(...handState.preflopActions.filter(a => a.amount).map(a => a.amount || 0), handState.bigBlind)
-                            : handState.bigBlind;
-                          // Store current player in a temporary state if needed
-                        }}
+                onClick={() => {
+                  setCurrentPlayer(pos);
+                }}
                         disabled={!handState.activePlayers.includes(pos)}
                       >
                         {pos}
@@ -347,27 +353,66 @@ export default function HandInputSequential() {
               </CardContent>
             </Card>
 
-            <PlayerActionInterface
-              currentPlayer={handState.heroPosition || "UTG"}
-              currentPot={handState.smallBlind + handState.bigBlind + (handState.ante * 9)}
-              lastBet={handState.preflopActions.length > 0 
-                ? Math.max(...handState.preflopActions.filter(a => a.amount).map(a => a.amount || 0), handState.bigBlind)
-                : handState.bigBlind}
-              onAction={(action: ActionData) => {
-                const newAction: PlayerAction = {
-                  position: action.player as Position,
-                  action: action.action,
-                  amount: action.amount,
-                };
-                setHandState({
-                  ...handState,
-                  preflopActions: [...handState.preflopActions, newAction],
-                  activePlayers: action.action === "fold" 
+            {bulkEntryMode ? (
+              <BulkActionEntry
+                onApply={(actions: BulkAction[]) => {
+                  const newActions: PlayerAction[] = [];
+                  let newActivePlayers = [...handState.activePlayers];
+                  
+                  for (const action of actions) {
+                    newActions.push({
+                      position: action.position,
+                      action: action.action,
+                      amount: action.amount,
+                    });
+                    
+                    if (action.action === "fold") {
+                      newActivePlayers = newActivePlayers.filter(p => p !== action.position);
+                    }
+                  }
+                  
+                  setHandState({
+                    ...handState,
+                    preflopActions: [...handState.preflopActions, ...newActions],
+                    activePlayers: newActivePlayers,
+                  });
+                  
+                  setBulkEntryMode(false);
+                  toast.success(`${newActions.length} actions added`);
+                }}
+                onCancel={() => setBulkEntryMode(false)}
+              />
+            ) : (
+              <PlayerActionInterface
+                currentPlayer={currentPlayer}
+                currentPot={handState.smallBlind + handState.bigBlind + (handState.ante * 9)}
+                lastBet={handState.preflopActions.length > 0 
+                  ? Math.max(...handState.preflopActions.filter(a => a.amount).map(a => a.amount || 0), handState.bigBlind)
+                  : handState.bigBlind}
+                onAction={(action: ActionData) => {
+                  const newAction: PlayerAction = {
+                    position: action.player as Position,
+                    action: action.action,
+                    amount: action.amount,
+                  };
+                  const newActivePlayers = action.action === "fold" 
                     ? handState.activePlayers.filter(p => p !== action.player)
-                    : handState.activePlayers,
-                });
-              }}
-            />
+                    : handState.activePlayers;
+                  
+                  setHandState({
+                    ...handState,
+                    preflopActions: [...handState.preflopActions, newAction],
+                    activePlayers: newActivePlayers,
+                  });
+                  
+                  // Auto-advance to next player
+                  const nextPlayer = getNextPlayer(action.player as Position, newActivePlayers);
+                  if (nextPlayer) {
+                    setCurrentPlayer(nextPlayer);
+                  }
+                }}
+              />
+            )}
 
             <ActionHistory 
               actions={handState.preflopActions.map(a => ({
@@ -458,7 +503,7 @@ export default function HandInputSequential() {
             </Card>
 
             <PlayerActionInterface
-              currentPlayer={handState.heroPosition || "UTG"}
+              currentPlayer={currentPlayer}
               currentPot={handState.smallBlind + handState.bigBlind + (handState.ante * 9) + 
                 handState.preflopActions.filter(a => a.amount).reduce((sum, a) => sum + (a.amount || 0), 0)}
               lastBet={handState.flopActions.length > 0 
@@ -470,13 +515,21 @@ export default function HandInputSequential() {
                   action: action.action,
                   amount: action.amount,
                 };
+                const newActivePlayers = action.action === "fold" 
+                  ? handState.activePlayers.filter(p => p !== action.player)
+                  : handState.activePlayers;
+                
                 setHandState({
                   ...handState,
                   flopActions: [...handState.flopActions, newAction],
-                  activePlayers: action.action === "fold" 
-                    ? handState.activePlayers.filter(p => p !== action.player)
-                    : handState.activePlayers,
+                  activePlayers: newActivePlayers,
                 });
+                
+                // Auto-advance to next player
+                const nextPlayer = getNextPlayer(action.player as Position, newActivePlayers);
+                if (nextPlayer) {
+                  setCurrentPlayer(nextPlayer);
+                }
               }}
             />
 
@@ -559,7 +612,7 @@ export default function HandInputSequential() {
             </Card>
 
             <PlayerActionInterface
-              currentPlayer={handState.heroPosition || "UTG"}
+              currentPlayer={currentPlayer}
               currentPot={handState.smallBlind + handState.bigBlind + (handState.ante * 9) + 
                 handState.preflopActions.filter(a => a.amount).reduce((sum, a) => sum + (a.amount || 0), 0) +
                 handState.flopActions.filter(a => a.amount).reduce((sum, a) => sum + (a.amount || 0), 0)}
@@ -572,13 +625,21 @@ export default function HandInputSequential() {
                   action: action.action,
                   amount: action.amount,
                 };
+                const newActivePlayers = action.action === "fold" 
+                  ? handState.activePlayers.filter(p => p !== action.player)
+                  : handState.activePlayers;
+                
                 setHandState({
                   ...handState,
                   turnActions: [...handState.turnActions, newAction],
-                  activePlayers: action.action === "fold" 
-                    ? handState.activePlayers.filter(p => p !== action.player)
-                    : handState.activePlayers,
+                  activePlayers: newActivePlayers,
                 });
+                
+                // Auto-advance to next player
+                const nextPlayer = getNextPlayer(action.player as Position, newActivePlayers);
+                if (nextPlayer) {
+                  setCurrentPlayer(nextPlayer);
+                }
               }}
             />
 
@@ -662,7 +723,7 @@ export default function HandInputSequential() {
             </Card>
 
             <PlayerActionInterface
-              currentPlayer={handState.heroPosition || "UTG"}
+              currentPlayer={currentPlayer}
               currentPot={handState.smallBlind + handState.bigBlind + (handState.ante * 9) + 
                 handState.preflopActions.filter(a => a.amount).reduce((sum, a) => sum + (a.amount || 0), 0) +
                 handState.flopActions.filter(a => a.amount).reduce((sum, a) => sum + (a.amount || 0), 0) +
@@ -676,13 +737,21 @@ export default function HandInputSequential() {
                   action: action.action,
                   amount: action.amount,
                 };
+                const newActivePlayers = action.action === "fold" 
+                  ? handState.activePlayers.filter(p => p !== action.player)
+                  : handState.activePlayers;
+                
                 setHandState({
                   ...handState,
                   riverActions: [...handState.riverActions, newAction],
-                  activePlayers: action.action === "fold" 
-                    ? handState.activePlayers.filter(p => p !== action.player)
-                    : handState.activePlayers,
+                  activePlayers: newActivePlayers,
                 });
+                
+                // Auto-advance to next player
+                const nextPlayer = getNextPlayer(action.player as Position, newActivePlayers);
+                if (nextPlayer) {
+                  setCurrentPlayer(nextPlayer);
+                }
               }}
             />
 

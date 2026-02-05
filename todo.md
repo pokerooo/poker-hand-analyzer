@@ -182,3 +182,17 @@
 - [x] Add visual feedback for undo action (toast notification)
 - [x] Test undo functionality across all streets
 - [x] Ensure undo works correctly with different action types
+
+
+## Current Task: Auto-Advance & Bulk Action Entry ✓
+- [x] Implement auto-advance to next player after recording an action
+- [x] Determine next player in sequence (clockwise from current)
+- [x] Highlight/select next player automatically
+- [x] Skip players who have folded
+- [x] Design bulk action entry UI (toggle between normal/quick mode)
+- [x] Parse bulk action text format (e.g., "UTG fold, UTG+1 raise 800, MP call")
+- [x] Validate bulk action syntax and show errors
+- [x] Apply bulk actions to hand state
+- [x] Add toggle button to switch between modes
+- [x] Test auto-advance with various action sequences
+- [x] Test bulk entry with valid and invalid inputs
