@@ -188,3 +188,108 @@ export async function updateUserStats(userId: number, stats: Partial<InsertUserS
     });
   }
 }
+
+// Statistics queries
+export async function getUserStatistics(userId: number) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot get user statistics: database not available");
+    return null;
+  }
+
+  try {
+    // Get all hands for the user
+    const userHands = await db.select().from(hands).where(eq(hands.userId, userId));
+
+    if (userHands.length === 0) {
+      return {
+        totalHands: 0,
+        averageRating: 0,
+        mistakeFrequency: {},
+        positionPerformance: {},
+        ratingTrend: [],
+      };
+    }
+
+    // Calculate average rating
+    const totalRating = userHands.reduce((sum, hand) => sum + parseFloat(hand.overallRating || "0"), 0);
+    const averageRating = totalRating / userHands.length;
+
+    // Count mistake frequency
+    const mistakeFrequency: Record<string, number> = {};
+    userHands.forEach((hand) => {
+      const mistakes = (hand.mistakeTags as unknown as string[]) || [];
+      mistakes.forEach((mistake) => {
+        mistakeFrequency[mistake] = (mistakeFrequency[mistake] || 0) + 1;
+      });
+    });
+
+    // Calculate position performance
+    const positionPerformance: Record<string, { count: number; avgRating: number }> = {};
+    userHands.forEach((hand) => {
+      const position = hand.heroPosition;
+      if (!positionPerformance[position]) {
+        positionPerformance[position] = { count: 0, avgRating: 0 };
+      }
+      positionPerformance[position].count++;
+      positionPerformance[position].avgRating += parseFloat(hand.overallRating || "0");
+    });
+
+    // Calculate average ratings for each position
+    Object.keys(positionPerformance).forEach((position) => {
+      const data = positionPerformance[position];
+      data.avgRating = data.avgRating / data.count;
+    });
+
+    // Get rating trend over time (last 30 hands)
+    const recentHands = userHands
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, 30)
+      .reverse();
+
+    const ratingTrend = recentHands.map((hand, index) => ({
+      handNumber: index + 1,
+      rating: parseFloat(hand.overallRating || "0"),
+      date: hand.createdAt,
+    }));
+
+    return {
+      totalHands: userHands.length,
+      averageRating: parseFloat(averageRating.toFixed(2)),
+      mistakeFrequency,
+      positionPerformance,
+      ratingTrend,
+    };
+  } catch (error) {
+    console.error("[Database] Failed to get user statistics:", error);
+    return null;
+  }
+}
+
+export async function getMistakePatterns(userId: number) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot get mistake patterns: database not available");
+    return [];
+  }
+
+  try {
+    const userHands = await db.select().from(hands).where(eq(hands.userId, userId));
+
+    const mistakeCount: Record<string, number> = {};
+    userHands.forEach((hand) => {
+      const mistakes = (hand.mistakeTags as unknown as string[]) || [];
+      mistakes.forEach((mistake) => {
+        mistakeCount[mistake] = (mistakeCount[mistake] || 0) + 1;
+      });
+    });
+
+    // Convert to array and sort by frequency
+    return Object.entries(mistakeCount)
+      .map(([mistake, count]) => ({ mistake, count }))
+      .sort((a, b) => b.count - a.count);
+  } catch (error) {
+    console.error("[Database] Failed to get mistake patterns:", error);
+    return [];
+  }
+}

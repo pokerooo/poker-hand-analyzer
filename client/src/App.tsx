@@ -7,6 +7,7 @@ import Home from "./pages/Home";
 import HandDetail from "./pages/HandDetail";
 import HandArchive from "./pages/HandArchive";
 import HandInput from "./pages/HandInput";
+import UserStats from "./pages/UserStats";
 import NotFound from "./pages/NotFound";
 
 function Router() {
@@ -17,6 +18,7 @@ function Router() {
       <Route path={"/input"} component={HandInput} />
       <Route path={"/archive"} component={HandArchive} />
       <Route path={"/hand/:id"} component={HandDetail} />
+      <Route path={"/stats"} component={UserStats} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>

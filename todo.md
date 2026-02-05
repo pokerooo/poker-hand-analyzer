@@ -107,3 +107,18 @@
 - [x] Render analysis text from engine
 - [x] Add navigation from archive page
 - [x] Style with Casino Noir theme
+
+## Current Task: Building User Statistics Dashboard ✓
+- [x] Create database queries for aggregated stats:
+  - [x] Calculate average rating across all hands
+  - [x] Count most common mistake patterns
+  - [x] Aggregate performance by position
+  - [x] Track rating trends over time
+- [x] Add tRPC procedures for statistics
+- [x] Build dashboard UI with:
+  - [x] Overall performance metrics card
+  - [x] Mistake frequency chart
+  - [x] Position performance breakdown
+  - [x] Rating improvement trend chart
+- [x] Add navigation from home page
+- [x] Style with Casino Noir theme

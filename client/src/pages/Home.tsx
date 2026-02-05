@@ -52,17 +52,22 @@ export default function Home() {
                 </Button>
               ) : (
                 <>
-                  <Link href="/input">
-                    <Button size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90 gap-2">
-                      <span className="text-2xl">+</span>
-                      Input New Hand
-                    </Button>
-                  </Link>
-                  <Link href="/archive">
-                    <Button size="lg" variant="outline" className="gap-2">
-                      View Archive
-                    </Button>
-                  </Link>
+            <Link href="/input">
+              <Button size="lg" className="gap-2">
+                <span className="text-lg">+</span>
+                Input New Hand
+              </Button>
+            </Link>
+            <Link href="/archive">
+              <Button size="lg" variant="outline" className="gap-2">
+                View Archive
+              </Button>
+            </Link>
+            <Link href="/stats">
+              <Button size="lg" variant="outline" className="gap-2">
+                Your Statistics
+              </Button>
+            </Link>
                 </>
               )}
             </div>

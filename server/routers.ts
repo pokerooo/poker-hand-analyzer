@@ -20,6 +20,16 @@ export const appRouter = router({
     }),
   }),
 
+  stats: router({
+    overview: protectedProcedure.query(async ({ ctx }) => {
+      return await db.getUserStatistics(ctx.user.id);
+    }),
+    
+    mistakes: protectedProcedure.query(async ({ ctx }) => {
+      return await db.getMistakePatterns(ctx.user.id);
+    }),
+  }),
+
   hands: router({
     list: protectedProcedure.query(async ({ ctx }) => {
       return await db.getUserHands(ctx.user.id);
@@ -97,12 +107,6 @@ export const appRouter = router({
         await db.deleteHand(input.id, ctx.user.id);
         return { success: true };
       }),
-  }),
-  
-  stats: router({
-    me: protectedProcedure.query(async ({ ctx }) => {
-      return await db.getUserStats(ctx.user.id);
-    }),
   }),
 });
 
