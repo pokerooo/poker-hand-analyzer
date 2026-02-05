@@ -167,6 +167,10 @@
   - [x] Step 8: River card (visual selector)
   - [x] Step 9: River action placeholder
   - [x] Step 10: Review and submit
+- [x] Build PlayerActionInterface component with fold/check/call/bet/raise buttons
+- [x] Add amount input field for bet/raise actions
+- [x] Integrate action tracking into sequential hand input for each street
+- [x] Display action history showing who acted and what they did
+- [x] Validate action sequences (e.g., can't check after a bet)
 - [ ] Create TableVisualization component (future enhancement)
-- [ ] Add detailed ActionTracker for each player (future enhancement)
 - [x] Style with Casino Noir theme

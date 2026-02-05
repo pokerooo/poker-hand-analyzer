@@ -10,9 +10,10 @@ import { ArrowLeft, ArrowRight, Check, Loader2 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { toast } from "sonner";
 import VisualCardSelector from "@/components/VisualCardSelector";
+import { PlayerActionInterface, ActionHistory, PlayerAction as ActionData } from "@/components/PlayerActionInterface";
 
 type Position = "UTG" | "UTG+1" | "UTG+2" | "MP" | "MP+1" | "CO" | "BTN" | "SB" | "BB";
-type Action = "fold" | "check" | "call" | "bet" | "raise";
+type Action = "fold" | "check" | "call" | "bet" | "raise" | "allin";
 
 interface PlayerAction {
   position: Position;
@@ -304,34 +305,89 @@ export default function HandInputSequential() {
 
         {/* Step 3: Preflop Actions */}
         {step === 3 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Preflop Action</CardTitle>
-              <CardDescription>
-                You have {formatCard(handState.heroCard1)} {formatCard(handState.heroCard2)} in{" "}
-                {handState.heroPosition}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="p-4 bg-muted/50 rounded-lg">
-                <p className="text-sm text-muted-foreground">
-                  Record the preflop action (who raised, who called, who folded). For now, click Next
-                  to continue to the flop.
-                </p>
-              </div>
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Preflop Action</CardTitle>
+                <CardDescription>
+                  You have {formatCard(handState.heroCard1)} {formatCard(handState.heroCard2)} in{" "}
+                  {handState.heroPosition}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="p-4 bg-muted/50 rounded-lg">
+                  <p className="text-sm text-muted-foreground">
+                    Record each player's action in order. Select a player below and record their action.
+                  </p>
+                </div>
 
-              <div className="flex justify-between pt-4">
-                <Button variant="outline" onClick={handleBack}>
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back
-                </Button>
-                <Button onClick={handleNext}>
-                  Next: Flop Cards
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Select Player</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {POSITIONS.map((pos) => (
+                      <Button
+                        key={pos}
+                        variant={handState.activePlayers.includes(pos) ? "outline" : "ghost"}
+                        size="sm"
+                        onClick={() => {
+                          // Set this as current player for action
+                          const currentPot = handState.smallBlind + handState.bigBlind + (handState.ante * 9);
+                          const lastBet = handState.preflopActions.length > 0 
+                            ? Math.max(...handState.preflopActions.filter(a => a.amount).map(a => a.amount || 0), handState.bigBlind)
+                            : handState.bigBlind;
+                          // Store current player in a temporary state if needed
+                        }}
+                        disabled={!handState.activePlayers.includes(pos)}
+                      >
+                        {pos}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <PlayerActionInterface
+              currentPlayer={handState.heroPosition || "UTG"}
+              currentPot={handState.smallBlind + handState.bigBlind + (handState.ante * 9)}
+              lastBet={handState.preflopActions.length > 0 
+                ? Math.max(...handState.preflopActions.filter(a => a.amount).map(a => a.amount || 0), handState.bigBlind)
+                : handState.bigBlind}
+              onAction={(action: ActionData) => {
+                const newAction: PlayerAction = {
+                  position: action.player as Position,
+                  action: action.action,
+                  amount: action.amount,
+                };
+                setHandState({
+                  ...handState,
+                  preflopActions: [...handState.preflopActions, newAction],
+                  activePlayers: action.action === "fold" 
+                    ? handState.activePlayers.filter(p => p !== action.player)
+                    : handState.activePlayers,
+                });
+              }}
+            />
+
+            <ActionHistory 
+              actions={handState.preflopActions.map(a => ({
+                player: a.position,
+                action: a.action,
+                amount: a.amount,
+              }))}
+            />
+
+            <div className="flex justify-between pt-4">
+              <Button variant="outline" onClick={handleBack}>
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back
+              </Button>
+              <Button onClick={handleNext}>
+                Next: Flop Cards
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
+          </div>
         )}
 
         {/* Step 4: Flop Cards */}
@@ -377,33 +433,59 @@ export default function HandInputSequential() {
 
         {/* Step 5: Flop Actions */}
         {step === 5 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Flop Action</CardTitle>
-              <CardDescription>
-                Board: {formatCard(handState.flopCard1)} {formatCard(handState.flopCard2)}{" "}
-                {formatCard(handState.flopCard3)}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="p-4 bg-muted/50 rounded-lg">
-                <p className="text-sm text-muted-foreground">
-                  Record the flop action. For now, click Next to continue to the turn.
-                </p>
-              </div>
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Flop Action</CardTitle>
+                <CardDescription>
+                  Board: {formatCard(handState.flopCard1)} {formatCard(handState.flopCard2)}{" "}
+                  {formatCard(handState.flopCard3)}
+                </CardDescription>
+              </CardHeader>
+            </Card>
 
-              <div className="flex justify-between pt-4">
-                <Button variant="outline" onClick={handleBack}>
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back
-                </Button>
-                <Button onClick={handleNext}>
-                  Next: Turn Card
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+            <PlayerActionInterface
+              currentPlayer={handState.heroPosition || "UTG"}
+              currentPot={handState.smallBlind + handState.bigBlind + (handState.ante * 9) + 
+                handState.preflopActions.filter(a => a.amount).reduce((sum, a) => sum + (a.amount || 0), 0)}
+              lastBet={handState.flopActions.length > 0 
+                ? Math.max(...handState.flopActions.filter(a => a.amount).map(a => a.amount || 0), 0)
+                : 0}
+              onAction={(action: ActionData) => {
+                const newAction: PlayerAction = {
+                  position: action.player as Position,
+                  action: action.action,
+                  amount: action.amount,
+                };
+                setHandState({
+                  ...handState,
+                  flopActions: [...handState.flopActions, newAction],
+                  activePlayers: action.action === "fold" 
+                    ? handState.activePlayers.filter(p => p !== action.player)
+                    : handState.activePlayers,
+                });
+              }}
+            />
+
+            <ActionHistory 
+              actions={handState.flopActions.map(a => ({
+                player: a.position,
+                action: a.action,
+                amount: a.amount,
+              }))}
+            />
+
+            <div className="flex justify-between pt-4">
+              <Button variant="outline" onClick={handleBack}>
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back
+              </Button>
+              <Button onClick={handleNext}>
+                Next: Turn Card
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
+          </div>
         )}
 
         {/* Step 6: Turn Card */}
@@ -440,33 +522,60 @@ export default function HandInputSequential() {
 
         {/* Step 7: Turn Actions */}
         {step === 7 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Turn Action</CardTitle>
-              <CardDescription>
-                Board: {formatCard(handState.flopCard1)} {formatCard(handState.flopCard2)}{" "}
-                {formatCard(handState.flopCard3)} {formatCard(handState.turnCard)}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="p-4 bg-muted/50 rounded-lg">
-                <p className="text-sm text-muted-foreground">
-                  Record the turn action. For now, click Next to continue to the river.
-                </p>
-              </div>
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Turn Action</CardTitle>
+                <CardDescription>
+                  Board: {formatCard(handState.flopCard1)} {formatCard(handState.flopCard2)}{" "}
+                  {formatCard(handState.flopCard3)} {formatCard(handState.turnCard)}
+                </CardDescription>
+              </CardHeader>
+            </Card>
 
-              <div className="flex justify-between pt-4">
-                <Button variant="outline" onClick={handleBack}>
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back
-                </Button>
-                <Button onClick={handleNext}>
-                  Next: River Card
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+            <PlayerActionInterface
+              currentPlayer={handState.heroPosition || "UTG"}
+              currentPot={handState.smallBlind + handState.bigBlind + (handState.ante * 9) + 
+                handState.preflopActions.filter(a => a.amount).reduce((sum, a) => sum + (a.amount || 0), 0) +
+                handState.flopActions.filter(a => a.amount).reduce((sum, a) => sum + (a.amount || 0), 0)}
+              lastBet={handState.turnActions.length > 0 
+                ? Math.max(...handState.turnActions.filter(a => a.amount).map(a => a.amount || 0), 0)
+                : 0}
+              onAction={(action: ActionData) => {
+                const newAction: PlayerAction = {
+                  position: action.player as Position,
+                  action: action.action,
+                  amount: action.amount,
+                };
+                setHandState({
+                  ...handState,
+                  turnActions: [...handState.turnActions, newAction],
+                  activePlayers: action.action === "fold" 
+                    ? handState.activePlayers.filter(p => p !== action.player)
+                    : handState.activePlayers,
+                });
+              }}
+            />
+
+            <ActionHistory 
+              actions={handState.turnActions.map(a => ({
+                player: a.position,
+                action: a.action,
+                amount: a.amount,
+              }))}
+            />
+
+            <div className="flex justify-between pt-4">
+              <Button variant="outline" onClick={handleBack}>
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back
+              </Button>
+              <Button onClick={handleNext}>
+                Next: River Card
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
+          </div>
         )}
 
         {/* Step 8: River Card */}
@@ -503,34 +612,62 @@ export default function HandInputSequential() {
 
         {/* Step 9: River Actions */}
         {step === 9 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>River Action</CardTitle>
-              <CardDescription>
-                Final Board: {formatCard(handState.flopCard1)} {formatCard(handState.flopCard2)}{" "}
-                {formatCard(handState.flopCard3)} {formatCard(handState.turnCard)}{" "}
-                {formatCard(handState.riverCard)}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="p-4 bg-muted/50 rounded-lg">
-                <p className="text-sm text-muted-foreground">
-                  Record the river action. For now, click Next to review and submit.
-                </p>
-              </div>
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>River Action</CardTitle>
+                <CardDescription>
+                  Final Board: {formatCard(handState.flopCard1)} {formatCard(handState.flopCard2)}{" "}
+                  {formatCard(handState.flopCard3)} {formatCard(handState.turnCard)}{" "}
+                  {formatCard(handState.riverCard)}
+                </CardDescription>
+              </CardHeader>
+            </Card>
 
-              <div className="flex justify-between pt-4">
-                <Button variant="outline" onClick={handleBack}>
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back
-                </Button>
-                <Button onClick={handleNext}>
-                  Next: Review
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+            <PlayerActionInterface
+              currentPlayer={handState.heroPosition || "UTG"}
+              currentPot={handState.smallBlind + handState.bigBlind + (handState.ante * 9) + 
+                handState.preflopActions.filter(a => a.amount).reduce((sum, a) => sum + (a.amount || 0), 0) +
+                handState.flopActions.filter(a => a.amount).reduce((sum, a) => sum + (a.amount || 0), 0) +
+                handState.turnActions.filter(a => a.amount).reduce((sum, a) => sum + (a.amount || 0), 0)}
+              lastBet={handState.riverActions.length > 0 
+                ? Math.max(...handState.riverActions.filter(a => a.amount).map(a => a.amount || 0), 0)
+                : 0}
+              onAction={(action: ActionData) => {
+                const newAction: PlayerAction = {
+                  position: action.player as Position,
+                  action: action.action,
+                  amount: action.amount,
+                };
+                setHandState({
+                  ...handState,
+                  riverActions: [...handState.riverActions, newAction],
+                  activePlayers: action.action === "fold" 
+                    ? handState.activePlayers.filter(p => p !== action.player)
+                    : handState.activePlayers,
+                });
+              }}
+            />
+
+            <ActionHistory 
+              actions={handState.riverActions.map(a => ({
+                player: a.position,
+                action: a.action,
+                amount: a.amount,
+              }))}
+            />
+
+            <div className="flex justify-between pt-4">
+              <Button variant="outline" onClick={handleBack}>
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back
+              </Button>
+              <Button onClick={handleNext}>
+                Next: Review
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
+          </div>
         )}
 
         {/* Step 10: Review & Submit */}
