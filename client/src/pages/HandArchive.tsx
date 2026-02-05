@@ -8,6 +8,7 @@ import { Link } from "wouter";
 import { useState } from "react";
 import { Search, Trash2, Eye, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
+import { TagFilter } from "@/components/TagFilter";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,10 +27,20 @@ export default function HandArchive() {
   const { isAuthenticated } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterPosition, setFilterPosition] = useState<string>("all");
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
-  const { data: hands, isLoading, refetch } = trpc.hands.list.useQuery(undefined, {
-    enabled: isAuthenticated,
+  const { data: handsAll, isLoading: loadingAll, refetch: refetchAll } = trpc.hands.list.useQuery(undefined, {
+    enabled: isAuthenticated && selectedTags.length === 0,
   });
+  
+  const { data: handsFiltered, isLoading: loadingFiltered, refetch: refetchFiltered } = trpc.hands.filterByTags.useQuery(
+    { tags: selectedTags },
+    { enabled: isAuthenticated && selectedTags.length > 0 }
+  );
+  
+  const hands = selectedTags.length > 0 ? handsFiltered : handsAll;
+  const isLoading = selectedTags.length > 0 ? loadingFiltered : loadingAll;
+  const refetch = selectedTags.length > 0 ? refetchFiltered : refetchAll;
 
   const deleteMutation = trpc.hands.delete.useMutation({
     onSuccess: () => {
@@ -167,6 +178,8 @@ export default function HandArchive() {
                 </Button>
               ))}
             </div>
+            
+            <TagFilter selectedTags={selectedTags} onTagsChange={setSelectedTags} />
           </div>
         </div>
       </div>
@@ -275,7 +288,7 @@ export default function HandArchive() {
             <CardHeader>
               <CardTitle className="text-center">No Hands Found</CardTitle>
               <CardDescription className="text-center">
-                {searchTerm || filterPosition !== "all"
+                {searchTerm || filterPosition !== "all" || selectedTags.length > 0
                   ? "Try adjusting your search or filters"
                   : "Start by inputting your first hand"}
               </CardDescription>

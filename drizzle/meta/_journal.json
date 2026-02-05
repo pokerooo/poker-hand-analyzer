@@ -36,6 +36,13 @@
       "when": 1770296353450,
       "tag": "0004_smart_rocket_racer",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1770299756263,
+      "tag": "0005_robust_wilson_fisk",
+      "breakpoints": true
     }
   ]
 }

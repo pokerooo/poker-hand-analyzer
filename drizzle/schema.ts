@@ -168,3 +168,18 @@ export const handComments = mysqlTable("handComments", {
 
 export type HandComment = typeof handComments.$inferSelect;
 export type InsertHandComment = typeof handComments.$inferInsert;
+
+/**
+ * Hand tags - custom labels for organizing and filtering hands
+ */
+export const handTags = mysqlTable("handTags", {
+  id: int("id").autoincrement().primaryKey(),
+  handId: int("handId").notNull(),
+  userId: int("userId").notNull(), // Owner of the tag
+  tag: varchar("tag", { length: 50 }).notNull(), // Tag name (e.g., "bluff", "hero call")
+  color: varchar("color", { length: 7 }).default("#3b82f6").notNull(), // Hex color code
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type HandTag = typeof handTags.$inferSelect;
+export type InsertHandTag = typeof handTags.$inferInsert;

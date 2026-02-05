@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS handTags (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  handId INT NOT NULL,\n  userId INT NOT NULL,\n  tag VARCHAR(50) NOT NULL,\n  color VARCHAR(7) DEFAULT '#3b82f6' NOT NULL,\n  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,\n  INDEX idx_handId (handId),\n  INDEX idx_userId (userId),\n  INDEX idx_tag (tag)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3S5EK7kkwn3cfqa.root --database g6HPzuQNwUJzsGs4mHVNkx --execute CREATE TABLE IF NOT EXISTS handTags (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  handId INT NOT NULL,\n  userId INT NOT NULL,\n  tag VARCHAR(50) NOT NULL,\n  color VARCHAR(7) DEFAULT '#3b82f6' NOT NULL,\n  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,\n  INDEX idx_handId (handId),\n  INDEX idx_userId (userId),\n  INDEX idx_tag (tag)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1893
+}

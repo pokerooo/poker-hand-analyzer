@@ -183,6 +183,36 @@ export const appRouter = router({
       .query(async ({ input }) => {
         return await db.getPublicHands(input.limit, input.sortBy);
       }),
+    
+    // Tag management procedures
+    addTag: protectedProcedure
+      .input(z.object({ handId: z.number(), tag: z.string(), color: z.string().default("#3b82f6") }))
+      .mutation(async ({ ctx, input }) => {
+        return await db.addHandTag(input.handId, ctx.user.id, input.tag, input.color);
+      }),
+    
+    removeTag: protectedProcedure
+      .input(z.object({ handId: z.number(), tag: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        return await db.removeHandTag(input.handId, ctx.user.id, input.tag);
+      }),
+    
+    getTags: protectedProcedure
+      .input(z.object({ handId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        return await db.getHandTags(input.handId, ctx.user.id);
+      }),
+    
+    getAllTags: protectedProcedure
+      .query(async ({ ctx }) => {
+        return await db.getAllUserTags(ctx.user.id);
+      }),
+    
+    filterByTags: protectedProcedure
+      .input(z.object({ tags: z.array(z.string()) }))
+      .query(async ({ ctx, input }) => {
+        return await db.filterHandsByTags(ctx.user.id, input.tags);
+      }),
   }),
 });
 

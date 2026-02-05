@@ -15,6 +15,7 @@ import SocialMediaExport from "@/components/SocialMediaExport";
 import { RangeAnalysis } from "@/components/RangeAnalysis";
 import { EquityCalculator } from "@/components/EquityCalculator";
 import { HandReplayer } from "@/components/HandReplayer";
+import { TagManager } from "@/components/TagManager";
 
 export default function HandDetail() {
   const [, params] = useRoute("/hand/:id");
@@ -307,6 +308,14 @@ export default function HandDetail() {
                       </div>
                     )}
                   </div>
+                </div>
+                
+                <Separator />
+                
+                {/* Tags */}
+                <div>
+                  <h3 className="font-semibold text-sm text-muted-foreground mb-3">Tags</h3>
+                  <TagManager handId={handId} />
                 </div>
               </CardContent>
             </Card>

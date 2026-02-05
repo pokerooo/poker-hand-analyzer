@@ -363,3 +363,33 @@
   - [x] Test replayer animations and timing
   - [x] Verify keyboard shortcuts work correctly
   - [x] Write vitest tests for equity calculator
+
+
+## Current Task: Hand Tagging System ✓
+- [x] Database Schema:
+  - [x] Create handTags table (id, handId, tag, color, createdAt)
+  - [x] Add indexes for efficient tag queries
+  - [x] Support multiple tags per hand
+- [x] Backend (tRPC Procedures):
+  - [x] addTag(handId, tag, color) - Add tag to hand
+  - [x] removeTag(handId, tag) - Remove tag from hand
+  - [x] getTags(handId) - Get all tags for a hand
+  - [x] getAllTags() - Get all unique tags with usage count
+  - [x] filterByTags(tags[]) - Filter hands by tags
+- [x] UI Components:
+  - [x] TagInput component for adding new tags
+  - [x] TagBadge component for displaying tags
+  - [x] TagManager component for editing tags on hand detail page
+  - [x] TagFilter component for archive filtering
+  - [x] Color picker for tag customization
+- [x] Integration:
+  - [x] Add tag manager to hand detail page header
+  - [x] Display tags in hand archive list
+  - [x] Add tag filter dropdown to archive page
+  - [x] Show tag suggestions based on existing tags
+  - [x] Support quick tag presets (bluff, hero call, cooler, mistake, etc.)
+- [x] Testing:
+  - [x] Test adding/removing tags
+  - [x] Test filtering by single and multiple tags
+  - [x] Test tag color customization
+  - [x] Write vitest tests for tag operations

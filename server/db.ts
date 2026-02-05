@@ -1,7 +1,7 @@
 import { eq, and, desc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { sql } from "drizzle-orm";
-import { InsertUser, users, hands, InsertHand, userStats, InsertUserStats, handUpvotes, handComments } from "../drizzle/schema";
+import { sql, inArray } from "drizzle-orm";
+import { InsertUser, users, hands, InsertHand, userStats, InsertUserStats, handUpvotes, handComments, handTags } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -616,4 +616,120 @@ export async function getPublicHands(limit: number = 50, sortBy: "recent" | "top
   }
   
   return await query;
+}
+
+// ============================================================================
+// Tag Management Functions
+// ============================================================================
+
+export async function addHandTag(handId: number, userId: number, tag: string, color: string = "#3b82f6") {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Check if tag already exists for this hand
+  const existing = await db
+    .select()
+    .from(handTags)
+    .where(and(
+      eq(handTags.handId, handId),
+      eq(handTags.userId, userId),
+      eq(handTags.tag, tag)
+    ))
+    .limit(1);
+  
+  if (existing.length > 0) {
+    return existing[0]; // Tag already exists
+  }
+  
+  const result = await db.insert(handTags).values({
+    handId,
+    userId,
+    tag,
+    color,
+  });
+  
+  return { id: Number((result as any).insertId), handId, userId, tag, color };
+}
+
+export async function removeHandTag(handId: number, userId: number, tag: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db
+    .delete(handTags)
+    .where(and(
+      eq(handTags.handId, handId),
+      eq(handTags.userId, userId),
+      eq(handTags.tag, tag)
+    ));
+  
+  return { success: true };
+}
+
+export async function getHandTags(handId: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  return await db
+    .select()
+    .from(handTags)
+    .where(and(
+      eq(handTags.handId, handId),
+      eq(handTags.userId, userId)
+    ))
+    .orderBy(handTags.createdAt);
+}
+
+export async function getAllUserTags(userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Get all unique tags with usage count
+  const tags = await db
+    .select({
+      tag: handTags.tag,
+      color: handTags.color,
+      count: sql<number>`COUNT(*)`.as('count')
+    })
+    .from(handTags)
+    .where(eq(handTags.userId, userId))
+    .groupBy(handTags.tag, handTags.color)
+    .orderBy(desc(sql`COUNT(*)`));
+  
+  return tags;
+}
+
+export async function filterHandsByTags(userId: number, tags: string[]) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  if (tags.length === 0) {
+    return await getUserHands(userId);
+  }
+  
+  // Get hands that have ALL the specified tags
+  const handIds = await db
+    .select({ handId: handTags.handId })
+    .from(handTags)
+    .where(and(
+      eq(handTags.userId, userId),
+      inArray(handTags.tag, tags)
+    ))
+    .groupBy(handTags.handId)
+    .having(sql`COUNT(DISTINCT ${handTags.tag}) = ${tags.length}`);
+  
+  if (handIds.length === 0) {
+    return [];
+  }
+  
+  const ids = handIds.map(h => h.handId);
+  
+  return await db
+    .select()
+    .from(hands)
+    .where(and(
+      eq(hands.userId, userId),
+      inArray(hands.id, ids)
+    ))
+    .orderBy(desc(hands.createdAt));
 }
