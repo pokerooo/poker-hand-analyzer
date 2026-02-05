@@ -198,7 +198,7 @@ export default function HandDetail() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Left Column - Hand Setup */}
           <div className="lg:col-span-4">
-            <Card className="bg-card border-border sticky top-24">
+            <Card className="bg-card border-border lg:sticky lg:top-24">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <span className="text-accent">♦</span>

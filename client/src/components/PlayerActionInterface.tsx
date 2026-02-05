@@ -70,7 +70,7 @@ export function PlayerActionInterface({
                 variant="destructive"
                 onClick={() => handleAction("fold")}
                 disabled={disabled}
-                className="w-full"
+                className="w-full min-h-[48px]"
               >
                 Fold
               </Button>
@@ -79,7 +79,7 @@ export function PlayerActionInterface({
                   variant="outline"
                   onClick={() => handleAction("check")}
                   disabled={disabled}
-                  className="w-full"
+                  className="w-full min-h-[48px]"
                 >
                   Check
                 </Button>
@@ -88,7 +88,7 @@ export function PlayerActionInterface({
                   variant="outline"
                   onClick={() => handleAction("call", callAmount)}
                   disabled={disabled}
-                  className="w-full"
+                  className="w-full min-h-[48px]"
                 >
                   Call {callAmount}
                 </Button>
@@ -166,7 +166,7 @@ export function PlayerActionInterface({
               variant="outline"
               onClick={() => handleAction("allin")}
               disabled={disabled}
-              className="w-full border-accent text-accent hover:bg-accent hover:text-accent-foreground"
+              className="w-full min-h-[48px] border-accent text-accent hover:bg-accent hover:text-accent-foreground"
             >
               All-In
             </Button>

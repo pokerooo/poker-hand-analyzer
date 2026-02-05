@@ -195,11 +195,11 @@ export function HandReplayer({ hand }: HandReplayerProps) {
         <div className="relative bg-green-900/20 border-2 border-green-700/30 rounded-lg p-8 min-h-[400px]">
           {/* Board Cards */}
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-            <div className="flex gap-2">
+            <div className="flex gap-1 sm:gap-2">
               {visibleFlopCards.map((card, i) => (
                 <div
                   key={`flop-${i}`}
-                  className="w-16 h-24 bg-white rounded-lg shadow-lg flex items-center justify-center text-2xl font-bold animate-in fade-in zoom-in duration-300"
+                  className="w-12 h-16 sm:w-16 sm:h-24 bg-white rounded-lg shadow-lg flex items-center justify-center text-lg sm:text-2xl font-bold animate-in fade-in zoom-in duration-300"
                 >
                   {formatCard(card)}
                 </div>
@@ -207,7 +207,7 @@ export function HandReplayer({ hand }: HandReplayerProps) {
               {visibleTurnCard.map((card, i) => (
                 <div
                   key={`turn-${i}`}
-                  className="w-16 h-24 bg-white rounded-lg shadow-lg flex items-center justify-center text-2xl font-bold animate-in fade-in zoom-in duration-300"
+                  className="w-12 h-16 sm:w-16 sm:h-24 bg-white rounded-lg shadow-lg flex items-center justify-center text-lg sm:text-2xl font-bold animate-in fade-in zoom-in duration-300"
                 >
                   {formatCard(card)}
                 </div>
@@ -215,7 +215,7 @@ export function HandReplayer({ hand }: HandReplayerProps) {
               {visibleRiverCard.map((card, i) => (
                 <div
                   key={`river-${i}`}
-                  className="w-16 h-24 bg-white rounded-lg shadow-lg flex items-center justify-center text-2xl font-bold animate-in fade-in zoom-in duration-300"
+                  className="w-12 h-16 sm:w-16 sm:h-24 bg-white rounded-lg shadow-lg flex items-center justify-center text-lg sm:text-2xl font-bold animate-in fade-in zoom-in duration-300"
                 >
                   {formatCard(card)}
                 </div>
@@ -235,11 +235,11 @@ export function HandReplayer({ hand }: HandReplayerProps) {
             <div className="text-center mb-2">
               <Badge variant="outline">{hand.heroPosition}</Badge>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-1 sm:gap-2">
               {visibleHeroCards.map((card, i) => (
                 <div
                   key={`hero-${i}`}
-                  className="w-16 h-24 bg-white rounded-lg shadow-lg flex items-center justify-center text-2xl font-bold animate-in fade-in zoom-in duration-300"
+                  className="w-12 h-16 sm:w-16 sm:h-24 bg-white rounded-lg shadow-lg flex items-center justify-center text-lg sm:text-2xl font-bold animate-in fade-in zoom-in duration-300"
                 >
                   {formatCard(card)}
                 </div>
@@ -273,7 +273,7 @@ export function HandReplayer({ hand }: HandReplayerProps) {
           </div>
           
           {/* Playback Controls */}
-          <div className="flex items-center justify-center gap-2">
+          <div className="flex flex-wrap items-center justify-center gap-2">
             <Button
               variant="outline"
               size="icon"
@@ -316,7 +316,7 @@ export function HandReplayer({ hand }: HandReplayerProps) {
             </Button>
             
             {/* Speed Control */}
-            <div className="flex gap-1 ml-4">
+            <div className="flex gap-1 ml-2 sm:ml-4">
               {[0.5, 1, 2].map(s => (
                 <Button
                   key={s}

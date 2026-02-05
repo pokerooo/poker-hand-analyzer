@@ -74,7 +74,7 @@ export function EquityCalculator({
       <CardContent className="space-y-6">
         {/* Main Equity Display */}
         <div className="p-6 bg-muted/30 rounded-lg">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
             <div>
               <p className="text-sm text-muted-foreground mb-1">Your Equity</p>
               <div className="flex items-center gap-3">
@@ -102,7 +102,7 @@ export function EquityCalculator({
         </div>
         
         {/* Simulation Results */}
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-3 gap-2 sm:gap-4">
           <div className="p-3 bg-green-600/10 border border-green-600/30 rounded-lg">
             <p className="text-xs text-muted-foreground mb-1">Wins</p>
             <p className="text-2xl font-bold text-green-500">{equityData.wins}</p>
@@ -135,7 +135,7 @@ export function EquityCalculator({
               <Target className="h-5 w-5 text-accent mt-0.5 flex-shrink-0" />
               <div className="flex-1">
                 <p className="font-semibold text-sm mb-1">Drawing Hand Detected</p>
-                <div className="grid grid-cols-2 gap-4 mt-3">
+                <div className="grid grid-cols-2 gap-3 sm:gap-4 mt-3">
                   <div>
                     <p className="text-xs text-muted-foreground">Outs</p>
                     <p className="text-xl font-bold text-accent">{outsData.outs}</p>

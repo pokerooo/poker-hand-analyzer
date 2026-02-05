@@ -148,7 +148,7 @@ export default function HandArchive() {
           </div>
 
           {/* Search and Filters */}
-          <div className="flex gap-4 flex-wrap">
+          <div className="flex flex-col sm:flex-row gap-4 flex-wrap">
             <div className="relative flex-1 min-w-[200px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -159,7 +159,7 @@ export default function HandArchive() {
               />
             </div>
             
-            <div className="flex gap-2 flex-wrap">
+            <div className="flex gap-2 flex-wrap overflow-x-auto pb-2">
               <Button
                 variant={filterPosition === "all" ? "default" : "outline"}
                 onClick={() => setFilterPosition("all")}

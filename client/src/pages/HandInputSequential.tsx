@@ -302,7 +302,7 @@ export default function HandInputSequential() {
             <CardContent className="space-y-4">
               {/* Import Buttons */}
               <div className="mb-6 space-y-3">
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <Button
                     variant="outline"
                     onClick={() => setShowImport(true)}
@@ -325,7 +325,7 @@ export default function HandInputSequential() {
 
               <Separator />
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label className="text-sm font-medium mb-2 block">Small Blind</label>
                   <Input
@@ -377,7 +377,7 @@ export default function HandInputSequential() {
                 <CardDescription>Select where you're sitting at the table</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {POSITIONS.map((pos) => (
                     <Button
                       key={pos}
@@ -444,7 +444,7 @@ export default function HandInputSequential() {
 
                 <div>
                   <label className="text-sm font-medium mb-2 block">Select Player</label>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                     {POSITIONS.map((pos) => (
                       <Button
                         key={pos}

@@ -23,7 +23,7 @@ export default function Home() {
     <div className="min-h-screen bg-background felt-texture">
       {/* Hero Section */}
       <div 
-        className="relative bg-cover bg-center py-20 border-b border-border"
+        className="relative bg-cover bg-center py-12 sm:py-20 border-b border-border"
         style={{
           backgroundImage: `url('https://private-us-east-1.manuscdn.com/sessionFile/X1F9AFyeGpOrfmKOxPNlIi/sandbox/DzCqIvhu85aHghSC3lC6lM-img-1_1770192263000_na1fn_aGVyby1iYWNrZ3JvdW5k.png?x-oss-process=image/resize,w_1920,h_1920/format,webp/quality,q_80&Expires=1798761600&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly9wcml2YXRlLXVzLWVhc3QtMS5tYW51c2Nkbi5jb20vc2Vzc2lvbkZpbGUvWDFGOUFGeWVHcE9yZm1LT3hQTmxJaS9zYW5kYm94L0R6Q3FJdmh1ODVhSGdoU0MzbEM2bE0taW1nLTFfMTc3MDE5MjI2MzAwMF9uYTFmbl9hR1Z5YnkxaVlXTnJaM0p2ZFc1ay5wbmc~eC1vc3MtcHJvY2Vzcz1pbWFnZS9yZXNpemUsd18xOTIwLGhfMTkyMC9mb3JtYXQsd2VicC9xdWFsaXR5LHFfODAiLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE3OTg3NjE2MDB9fX1dfQ__&Key-Pair-Id=K2HSFNDJXOU9YS&Signature=OUFcfuewFQUVbPrfFWRvUIVqAxiS34w3lVqGsJMCTxw8ERz2nttcwQtDnhZ682gQPIDyjrda67ILWjuYiJ4iD2TetU4neeX9sevr4F1f80lR3cjZaE820epYoRx8uspR-qYebDeim2a1PIwSB5-9DG95003HXsf9SBOiXYCyDWGfESckzx9AMjjZiu1Ae~n9DEOhR2aTLjE19fSxw9zKOwXmZT8GZzsPXdBonRKT5MWlmyPspdosua2sBdGABPZ4oAMw3kagikmHae-npiylGbyj6K0fgvrhe8ty2NmGuVBaC~R9UBIAf-ay7vNTcY2e1oXULOUY7ldB8UVmJCa2sw__')`
         }}
@@ -33,15 +33,15 @@ export default function Home() {
           <div className="max-w-3xl">
             <div className="flex items-center gap-3 mb-4">
               <span className="text-5xl text-accent">♠</span>
-              <h1 className="text-6xl font-bold text-foreground tracking-tight">
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground tracking-tight">
                 Poker Hand Analyzer
               </h1>
             </div>
-            <p className="text-xl text-muted-foreground leading-relaxed mb-6">
+            <p className="text-base sm:text-lg lg:text-xl text-muted-foreground leading-relaxed mb-6">
               Professional hand analysis for serious players. Dissect every street, understand every decision, and elevate your game with data-driven insights.
             </p>
             
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-3">
               {!isAuthenticated ? (
                 <Button 
                   size="lg" 
@@ -87,7 +87,7 @@ export default function Home() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Left Column - Hand Setup */}
           <div className="lg:col-span-4">
-            <Card className="bg-card border-border sticky top-8">
+            <Card className="bg-card border-border lg:sticky lg:top-8">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <span className="text-accent">♦</span>

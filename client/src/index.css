@@ -191,3 +191,52 @@
     font-family: var(--font-mono);
   }
 }
+
+  /* Mobile optimizations */
+  @media (max-width: 768px) {
+    .container {
+      padding-left: 0.75rem;
+      padding-right: 0.75rem;
+    }
+    
+    /* Minimum touch target size */
+    button, [role="button"], a[href] {
+      min-height: 44px;
+      min-width: 44px;
+    }
+    
+    /* Readable text without zooming */
+    body {
+      font-size: 16px;
+    }
+    
+    /* Prevent horizontal scroll */
+    body {
+      overflow-x: hidden;
+    }
+    
+    /* Make cards stack vertically */
+    .grid {
+      grid-template-columns: 1fr !important;
+    }
+    
+    /* Optimize spacing for mobile */
+    .space-y-8 > * + * {
+      margin-top: 1rem;
+    }
+    
+    .space-y-6 > * + * {
+      margin-top: 0.75rem;
+    }
+    
+    /* Make tabs scrollable */
+    [role="tablist"] {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    
+    [role="tablist"]::-webkit-scrollbar {
+      display: none;
+    }
+  }

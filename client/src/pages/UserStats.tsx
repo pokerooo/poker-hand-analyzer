@@ -74,9 +74,9 @@ export default function UserStats() {
                 Back to Home
               </Button>
             </Link>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               <span className="text-2xl text-accent">♠</span>
-              <h1 className="text-2xl font-bold">Your Statistics</h1>
+              <h1 className="text-xl sm:text-2xl font-bold">Your Statistics</h1>
             </div>
             <div className="w-24" /> {/* Spacer */}
           </div>
@@ -85,7 +85,7 @@ export default function UserStats() {
 
       {/* Main Content */}
       <div className="container py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           {/* Overall Performance */}
           <Card className="bg-card border-border">
             <CardHeader>
@@ -330,7 +330,7 @@ export default function UserStats() {
               <div className="space-y-3">
                 {mistakes.map((mistake, index) => (
                   <div key={mistake.mistake} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 sm:gap-3">
                       <div className="text-2xl font-bold text-muted-foreground w-8">
                         {index + 1}
                       </div>

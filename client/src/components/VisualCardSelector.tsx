@@ -63,8 +63,8 @@ export default function VisualCardSelector({ value, onChange, label }: VisualCar
       <Card className="bg-muted/50 border-border">
         <CardContent className="p-6 space-y-6">
           {/* Suit Selection - Top Row */}
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex gap-3 flex-1">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="grid grid-cols-4 sm:flex gap-2 sm:gap-3 flex-1 w-full">
               {SUITS.map((suit) => (
                 <button
                   key={suit.name}
@@ -94,15 +94,15 @@ export default function VisualCardSelector({ value, onChange, label }: VisualCar
               variant="ghost"
               size="lg"
               onClick={handleClear}
-              className="text-cyan-400 hover:text-cyan-300 hover:bg-cyan-400/10"
+              className="text-cyan-400 hover:text-cyan-300 hover:bg-cyan-400/10 w-full sm:w-auto min-h-[44px]"
             >
               Clear
             </Button>
           </div>
 
           {/* Rank Selection - Grid */}
-          <div className="space-y-3">
-            <div className="grid grid-cols-7 gap-2">
+          <div className="space-y-2">
+            <div className="grid grid-cols-7 gap-1.5 sm:gap-2">
               {RANKS.slice(0, 7).map((rank) => (
                 <button
                   key={rank}
@@ -110,8 +110,9 @@ export default function VisualCardSelector({ value, onChange, label }: VisualCar
                   className={`
                     aspect-square rounded-lg border-2
                     flex items-center justify-center
-                    text-2xl font-bold
-                    transition-all hover:scale-105
+                    text-xl sm:text-2xl font-bold
+                    transition-all hover:scale-105 active:scale-95
+                    min-h-[44px] min-w-[44px]
                     ${
                       displayRank === rank
                         ? "border-accent bg-accent/20 text-accent shadow-lg scale-105"
@@ -124,7 +125,7 @@ export default function VisualCardSelector({ value, onChange, label }: VisualCar
               ))}
             </div>
             
-            <div className="grid grid-cols-7 gap-2">
+            <div className="grid grid-cols-7 gap-1.5 sm:gap-2">
               {RANKS.slice(7).map((rank) => (
                 <button
                   key={rank}
@@ -132,8 +133,9 @@ export default function VisualCardSelector({ value, onChange, label }: VisualCar
                   className={`
                     aspect-square rounded-lg border-2
                     flex items-center justify-center
-                    text-2xl font-bold
-                    transition-all hover:scale-105
+                    text-xl sm:text-2xl font-bold
+                    transition-all hover:scale-105 active:scale-95
+                    min-h-[44px] min-w-[44px]
                     ${
                       displayRank === rank
                         ? "border-accent bg-accent/20 text-accent shadow-lg scale-105"

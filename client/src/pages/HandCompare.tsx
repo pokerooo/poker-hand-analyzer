@@ -142,7 +142,7 @@ export default function HandCompare() {
               </CardHeader>
             </Card>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {hands?.map((hand) => (
                 <Card
                   key={hand.id}
@@ -242,7 +242,7 @@ export default function HandCompare() {
 
                   <Separator />
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <h3 className="font-semibold text-sm mb-2">Average Ratings</h3>
                       <div className="space-y-2">
@@ -298,7 +298,7 @@ export default function HandCompare() {
             )}
 
             {/* Side-by-Side Comparison */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
               {selectedHands.map((hand) => {
                 const mistakes = Array.isArray(hand.mistakeTags) ? hand.mistakeTags : [];
                 return (

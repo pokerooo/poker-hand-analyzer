@@ -38,18 +38,18 @@ export default function Community() {
       {/* Header */}
       <div className="border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="container py-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <Link href="/">
               <Button variant="ghost" size="sm">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to Home
               </Button>
             </Link>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               <span className="text-2xl text-accent">♠</span>
-              <h1 className="text-2xl font-bold">Community Hands</h1>
+              <h1 className="text-xl sm:text-2xl font-bold">Community Hands</h1>
             </div>
-            <div className="w-24" />
+            <div className="w-0 sm:w-24" />
           </div>
         </div>
       </div>
@@ -85,7 +85,7 @@ export default function Community() {
               <Link key={hand.id} href={`/hand/${hand.id}`}>
                 <Card className="bg-card border-border hover:border-accent transition-colors cursor-pointer h-full">
                   <CardHeader>
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between gap-2">
                       <CardTitle className="text-lg">
                         {hand.title || `${hand.heroPosition} Hand`}
                       </CardTitle>

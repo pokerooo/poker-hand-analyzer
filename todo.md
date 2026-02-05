@@ -393,3 +393,58 @@
   - [x] Test filtering by single and multiple tags
   - [x] Test tag color customization
   - [x] Write vitest tests for tag operations
+
+
+## Current Task: Mobile Optimization
+- [ ] Core Layout & Navigation:
+  - [ ] Make header responsive with hamburger menu for mobile
+  - [ ] Optimize button sizes for touch (minimum 44x44px)
+  - [ ] Add mobile-friendly spacing and padding
+  - [ ] Ensure text is readable without zooming (minimum 16px)
+  - [ ] Fix viewport meta tag for proper mobile scaling
+- [ ] Hand Input Flow:
+  - [ ] Make card selector touch-friendly with larger tap targets
+  - [ ] Optimize multi-step form for mobile screens
+  - [ ] Make action buttons larger and easier to tap
+  - [ ] Improve keyboard input for bet amounts on mobile
+  - [ ] Add swipe gestures for navigation between steps
+- [ ] Hand Detail Page:
+  - [ ] Make tabs scrollable horizontally on mobile
+  - [ ] Optimize card layout to fit mobile screens
+  - [ ] Make equity calculator charts responsive
+  - [ ] Ensure hand replayer controls are touch-friendly
+  - [ ] Optimize range chart for mobile viewing
+- [ ] Archive Page:
+  - [ ] Make hand cards stack vertically on mobile
+  - [ ] Optimize filters for mobile (collapsible sections)
+  - [ ] Make search bar full-width on mobile
+  - [ ] Improve tag filter UI for mobile
+- [ ] Community & Comparison:
+  - [ ] Make hand comparison side-by-side vertical on mobile
+  - [ ] Optimize community leaderboard for mobile scrolling
+  - [ ] Make comment section mobile-friendly
+- [ ] Testing:
+  - [ ] Test on iOS Safari
+  - [ ] Test on Android Chrome
+  - [ ] Verify touch interactions work correctly
+  - [ ] Test landscape and portrait orientations
+  - [ ] Ensure no horizontal scrolling issues
+
+
+## Current Task: Mobile Optimization ✓
+- [x] Make all pages responsive for mobile devices
+- [x] Optimize HandDetail page layout (remove sticky on mobile)
+- [x] Make HandArchive filters mobile-friendly with horizontal scroll
+- [x] Responsive grids in HandInputSequential (1 col mobile, 2-3 desktop)
+- [x] Touch-friendly action buttons (48px min-height)
+- [x] Optimize VisualCardSelector for mobile (already had good support)
+- [x] Make PlayerActionInterface buttons touch-friendly
+- [x] Responsive Community page header
+- [x] Optimize RangeAnalysis chart (smaller cells on mobile)
+- [x] Make EquityCalculator responsive
+- [x] Optimize HandReplayer controls and cards for mobile
+- [x] Make HandCompare grids responsive
+- [x] Responsive Home page hero section
+- [x] Optimize UserStats page for mobile
+- [x] Test mobile layout in responsive design mode
+- [x] Verify touch interactions work properly

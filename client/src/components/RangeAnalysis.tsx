@@ -134,7 +134,7 @@ export function RangeAnalysis({ heroHand, heroPosition }: RangeAnalysisProps) {
                       <div
                         key={`${i}-${j}`}
                         className={`
-                          w-10 h-10 flex items-center justify-center text-xs font-mono font-semibold rounded
+                          w-7 h-7 sm:w-10 sm:h-10 flex items-center justify-center text-[10px] sm:text-xs font-mono font-semibold rounded
                           ${isHeroHand 
                             ? 'bg-yellow-500 text-black ring-2 ring-yellow-300' 
                             : isInRange 
@@ -153,7 +153,7 @@ export function RangeAnalysis({ heroHand, heroPosition }: RangeAnalysisProps) {
           </div>
 
           {/* Legend */}
-          <div className="flex items-center gap-4 mt-4 text-sm">
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4 mt-4 text-xs sm:text-sm">
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 bg-green-600/80 rounded"></div>
               <span>In Range</span>
@@ -169,7 +169,7 @@ export function RangeAnalysis({ heroHand, heroPosition }: RangeAnalysisProps) {
           </div>
 
           {/* Range Stats */}
-          <div className="mt-6 grid grid-cols-2 gap-4">
+          <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="p-3 bg-muted/30 rounded-lg">
               <p className="text-sm text-muted-foreground mb-1">Range Size</p>
               <p className="text-2xl font-bold">{rangePercentage}%</p>
