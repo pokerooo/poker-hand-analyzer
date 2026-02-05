@@ -329,3 +329,37 @@
   - [x] Verify range data accuracy against GTO charts
   - [x] Test UI with various hand types (pairs, suited, offsuit)
   - [x] Write vitest tests for range evaluation logic
+
+
+## Current Task: Equity Calculator & Hand Replayer ✓
+- [x] Equity Calculator:
+  - [x] Research poker equity calculation algorithms
+  - [x] Implement Monte Carlo simulation for equity calculation
+  - [x] Estimate villain's range based on actions and position
+  - [x] Calculate hero's equity against villain's range
+  - [x] Show equity percentages for each street (preflop, flop, turn, river)
+  - [x] Display equity changes as hand progresses
+  - [x] Add visual equity bar/chart
+  - [x] Show outs and odds for drawing hands
+  - [x] Allow manual range adjustment for villain
+- [x] Hand Replayer:
+  - [x] Design replayer UI with play/pause/step controls
+  - [x] Create animation timeline for all actions
+  - [x] Animate card reveals (hero cards, flop, turn, river)
+  - [x] Animate action buttons and bet amounts
+  - [x] Show pot size updates in real-time
+  - [x] Display player stack changes
+  - [x] Add speed control (0.5x, 1x, 2x)
+  - [x] Highlight current action with visual emphasis
+  - [x] Show action history sidebar during replay
+  - [x] Add keyboard shortcuts (space = play/pause, arrows = step)
+- [x] Integration:
+  - [x] Add equity calculator to each street tab
+  - [x] Add replayer as new tab or modal in hand detail
+  - [x] Sync replayer with equity updates
+  - [x] Show equity changes during replay
+- [x] Testing:
+  - [x] Test equity calculations with known scenarios
+  - [x] Test replayer animations and timing
+  - [x] Verify keyboard shortcuts work correctly
+  - [x] Write vitest tests for equity calculator

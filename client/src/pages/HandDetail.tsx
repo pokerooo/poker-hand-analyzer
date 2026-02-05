@@ -13,6 +13,8 @@ import { Link } from "wouter";
 import { Streamdown } from "streamdown";
 import SocialMediaExport from "@/components/SocialMediaExport";
 import { RangeAnalysis } from "@/components/RangeAnalysis";
+import { EquityCalculator } from "@/components/EquityCalculator";
+import { HandReplayer } from "@/components/HandReplayer";
 
 export default function HandDetail() {
   const [, params] = useRoute("/hand/:id");
@@ -337,7 +339,7 @@ export default function HandDetail() {
 
             {/* Street-by-Street Analysis */}
             <Tabs defaultValue="summary" className="w-full">
-              <TabsList className="grid w-full grid-cols-6 bg-card">
+              <TabsList className="grid w-full grid-cols-7 bg-card">
                 <TabsTrigger value="preflop">Preflop</TabsTrigger>
                 <TabsTrigger value="flop" disabled={!hand.flopCard1}>
                   Flop
@@ -353,6 +355,7 @@ export default function HandDetail() {
                   AI Analysis
                 </TabsTrigger>
                 <TabsTrigger value="summary">Summary</TabsTrigger>
+                <TabsTrigger value="replayer">Replayer</TabsTrigger>
               </TabsList>
 
               {/* Preflop */}
@@ -378,6 +381,13 @@ export default function HandDetail() {
                   heroHand={`${hand.heroCard1}${hand.heroCard2}`}
                   heroPosition={hand.heroPosition}
                 />
+                
+                {/* Equity Calculator */}
+                <EquityCalculator
+                  heroCards={[hand.heroCard1, hand.heroCard2]}
+                  boardCards={[]}
+                  street="preflop"
+                />
               </TabsContent>
 
               {/* Flop */}
@@ -401,6 +411,13 @@ export default function HandDetail() {
                       </div>
                     </CardContent>
                   </Card>
+                  
+                  {/* Equity Calculator */}
+                  <EquityCalculator
+                    heroCards={[hand.heroCard1, hand.heroCard2]}
+                    boardCards={[hand.flopCard1, hand.flopCard2!, hand.flopCard3!]}
+                    street="flop"
+                  />
                 </TabsContent>
               )}
 
@@ -423,6 +440,13 @@ export default function HandDetail() {
                       </div>
                     </CardContent>
                   </Card>
+                  
+                  {/* Equity Calculator */}
+                  <EquityCalculator
+                    heroCards={[hand.heroCard1, hand.heroCard2]}
+                    boardCards={[hand.flopCard1!, hand.flopCard2!, hand.flopCard3!, hand.turnCard]}
+                    street="turn"
+                  />
                 </TabsContent>
               )}
 
@@ -445,6 +469,13 @@ export default function HandDetail() {
                       </div>
                     </CardContent>
                   </Card>
+                  
+                  {/* Equity Calculator */}
+                  <EquityCalculator
+                    heroCards={[hand.heroCard1, hand.heroCard2]}
+                    boardCards={[hand.flopCard1!, hand.flopCard2!, hand.flopCard3!, hand.turnCard!, hand.riverCard]}
+                    street="river"
+                  />
                 </TabsContent>
               )}
 
@@ -578,6 +609,11 @@ export default function HandDetail() {
                     )}
                   </CardContent>
                 </Card>
+              </TabsContent>
+              
+              {/* Hand Replayer */}
+              <TabsContent value="replayer" className="space-y-4">
+                <HandReplayer hand={hand} />
               </TabsContent>
             </Tabs>
           </div>
