@@ -73,3 +73,13 @@
 - [x] Implement action tracker for each street
 - [x] Create form validation and submission
 - [x] Add route and navigation for input form page
+
+## Phase 3: Hand Archive & Detail View (In Progress)
+- [x] Create HandArchive page component
+- [x] Add search and filter functionality (by position, date, rating)
+- [x] Display hand cards with color-coded suits
+- [x] Show quick stats (date, position, rating, mistake tags)
+- [x] Add navigation links from Home page
+- [x] Implement delete hand functionality
+- [ ] Create HandDetail page with full analysis
+- [ ] Add navigation to detail view from archive
