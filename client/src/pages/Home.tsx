@@ -14,6 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { getLoginUrl } from "@/const";
+import { Link } from "wouter";
 
 export default function Home() {
   const { user, isAuthenticated } = useAuth();
@@ -40,15 +41,24 @@ export default function Home() {
               Professional hand analysis for serious players. Dissect every street, understand every decision, and elevate your game with data-driven insights.
             </p>
             
-            {!isAuthenticated && (
-              <Button 
-                size="lg" 
-                className="bg-accent text-accent-foreground hover:bg-accent/90"
-                onClick={() => window.location.href = getLoginUrl()}
-              >
-                Sign In to Analyze Your Hands
-              </Button>
-            )}
+            <div className="flex gap-3">
+              {!isAuthenticated ? (
+                <Button 
+                  size="lg" 
+                  className="bg-accent text-accent-foreground hover:bg-accent/90"
+                  onClick={() => window.location.href = getLoginUrl()}
+                >
+                  Sign In to Analyze Your Hands
+                </Button>
+              ) : (
+                <Link href="/input">
+                  <Button size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90 gap-2">
+                    <span className="text-2xl">+</span>
+                    Input New Hand
+                  </Button>
+                </Link>
+              )}
+            </div>
             
             {isAuthenticated && user && (
               <div className="flex items-center gap-3 text-sm text-muted-foreground">
