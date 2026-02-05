@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { Link } from "wouter";
 import { Streamdown } from "streamdown";
 import SocialMediaExport from "@/components/SocialMediaExport";
+import { RangeAnalysis } from "@/components/RangeAnalysis";
 
 export default function HandDetail() {
   const [, params] = useRoute("/hand/:id");
@@ -371,6 +372,12 @@ export default function HandDetail() {
                     </div>
                   </CardContent>
                 </Card>
+                
+                {/* Range Analysis */}
+                <RangeAnalysis 
+                  heroHand={`${hand.heroCard1}${hand.heroCard2}`}
+                  heroPosition={hand.heroPosition}
+                />
               </TabsContent>
 
               {/* Flop */}

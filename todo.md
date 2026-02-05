@@ -293,3 +293,39 @@
   - [x] Test upvoting and commenting functionality
   - [x] Test leaderboard sorting and pagination
   - [x] Write vitest tests for community features
+
+
+## Current Task: Hand Range Analysis Feature ✓
+- [x] Research and document GTO preflop ranges:
+  - [x] UTG range (early position)
+  - [x] MP range (middle position)
+  - [x] CO range (cutoff)
+  - [x] BTN range (button)
+  - [x] SB range (small blind)
+  - [x] BB range (big blind)
+- [x] Create range data structure:
+  - [x] Define hand notation (e.g., "AKs", "QQ+", "A5s-A2s")
+  - [x] Store ranges for each position
+  - [x] Include range percentages (e.g., UTG opens 15%)
+  - [x] Add range categories (premium, strong, playable, marginal)
+- [x] Build range evaluation logic:
+  - [x] Check if hero's hand is in optimal range for position
+  - [x] Calculate hand strength percentile within range
+  - [x] Identify if hand is at top/middle/bottom of range
+  - [x] Provide recommendations (fold, raise, call)
+- [x] Create RangeAnalysis component:
+  - [x] Display visual range chart (grid of all hands)
+  - [x] Highlight hands in range with color coding
+  - [x] Show hero's actual hand on the chart
+  - [x] Display range statistics (% of hands, combos)
+  - [x] Add position-specific insights
+- [x] Integrate into hand detail pages:
+  - [x] Add "Range Analysis" section to preflop tab
+  - [x] Show whether hand selection was optimal
+  - [x] Display alternative hands in similar strength tier
+  - [x] Add educational tooltips about range construction
+- [x] Testing:
+  - [x] Test range evaluation for all positions
+  - [x] Verify range data accuracy against GTO charts
+  - [x] Test UI with various hand types (pairs, suited, offsuit)
+  - [x] Write vitest tests for range evaluation logic
