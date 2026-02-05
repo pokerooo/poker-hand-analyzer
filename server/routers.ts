@@ -147,6 +147,42 @@ export const appRouter = router({
         
         return { success: true, aiAnalysis };
       }),
+    
+    togglePublic: protectedProcedure
+      .input(z.object({ id: z.number(), isPublic: z.boolean() }))
+      .mutation(async ({ ctx, input }) => {
+        return await db.toggleHandPublic(input.id, ctx.user.id, input.isPublic);
+      }),
+    
+    upvote: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        return await db.upvoteHand(input.id, ctx.user.id);
+      }),
+    
+    hasUpvoted: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ ctx, input }) => {
+        return await db.hasUserUpvoted(input.id, ctx.user.id);
+      }),
+    
+    addComment: protectedProcedure
+      .input(z.object({ id: z.number(), content: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        return await db.addComment(input.id, ctx.user.id, ctx.user.name || "Anonymous", input.content);
+      }),
+    
+    getComments: publicProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getHandComments(input.id);
+      }),
+    
+    getPublic: publicProcedure
+      .input(z.object({ limit: z.number().default(50), sortBy: z.enum(["recent", "top", "rating"]).default("recent") }))
+      .query(async ({ input }) => {
+        return await db.getPublicHands(input.limit, input.sortBy);
+      }),
   }),
 });
 

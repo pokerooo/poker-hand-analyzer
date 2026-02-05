@@ -6,7 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2, Share2, Check, Copy, Sparkles, Download } from "lucide-react";
+import { ArrowLeft, Loader2, Share2, Check, Copy, Sparkles, Download, ThumbsUp, MessageCircle, Globe, Lock } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Link } from "wouter";
@@ -20,11 +20,17 @@ export default function HandDetail() {
   const [copied, setCopied] = useState(false);
   const [showExport, setShowExport] = useState(false);
   const [aiAnalysisLoading, setAiAnalysisLoading] = useState(false);
+  const [commentText, setCommentText] = useState("");
 
   const { data: hand, isLoading, error, refetch } = trpc.hands.get.useQuery({ id: handId });
+  const { data: hasUpvoted } = trpc.hands.hasUpvoted.useQuery({ id: handId });
+  const { data: comments } = trpc.hands.getComments.useQuery({ id: handId });
   const generateShare = trpc.hands.generateShareToken.useMutation();
   const revokeShare = trpc.hands.revokeSharing.useMutation();
   const analyzeWithAI = trpc.hands.analyzeWithAI.useMutation();
+  const togglePublic = trpc.hands.togglePublic.useMutation();
+  const upvote = trpc.hands.upvote.useMutation();
+  const addComment = trpc.hands.addComment.useMutation();
 
   if (isLoading) {
     return (
@@ -114,6 +120,31 @@ export default function HandDetail() {
               <h1 className="text-2xl font-bold">Hand Analysis</h1>
             </div>
             <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={async () => {
+                  const newPublicState = !hand.isPublic;
+                  await togglePublic.mutateAsync({ id: handId, isPublic: newPublicState });
+                  await refetch();
+                  toast.success(newPublicState ? "Hand is now public" : "Hand is now private");
+                }}
+              >
+                {hand.isPublic ? <Globe className="mr-2 h-4 w-4" /> : <Lock className="mr-2 h-4 w-4" />}
+                {hand.isPublic ? "Public" : "Private"}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={async () => {
+                  await upvote.mutateAsync({ id: handId });
+                  await refetch();
+                }}
+                className={hasUpvoted ? "text-accent" : ""}
+              >
+                <ThumbsUp className="mr-2 h-4 w-4" />
+                {hand.upvoteCount || 0}
+              </Button>
               <Button
                 variant="outline"
                 size="sm"
@@ -544,6 +575,73 @@ export default function HandDetail() {
             </Tabs>
           </div>
         </div>
+        
+        {/* Comments Section */}
+        {hand.isPublic && (
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MessageCircle className="h-5 w-5" />
+                Comments ({comments?.length || 0})
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Add Comment Form */}
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={commentText}
+                  onChange={(e) => setCommentText(e.target.value)}
+                  placeholder="Add a comment..."
+                  className="flex-1 px-3 py-2 bg-muted rounded-md border border-border focus:outline-none focus:ring-2 focus:ring-accent"
+                  onKeyPress={(e) => {
+                    if (e.key === "Enter" && commentText.trim()) {
+                      addComment.mutateAsync({ id: handId, content: commentText }).then(() => {
+                        setCommentText("");
+                        refetch();
+                        toast.success("Comment added!");
+                      });
+                    }
+                  }}
+                />
+                <Button
+                  onClick={async () => {
+                    if (commentText.trim()) {
+                      await addComment.mutateAsync({ id: handId, content: commentText });
+                      setCommentText("");
+                      await refetch();
+                      toast.success("Comment added!");
+                    }
+                  }}
+                  disabled={!commentText.trim()}
+                >
+                  Post
+                </Button>
+              </div>
+              
+              <Separator />
+              
+              {/* Comments List */}
+              <div className="space-y-4">
+                {comments && comments.length > 0 ? (
+                  comments.map((comment: any) => (
+                    <div key={comment.id} className="bg-muted/30 p-4 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-semibold">{comment.userName}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(comment.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <p className="text-sm">{comment.content}</p>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-center text-muted-foreground py-4">No comments yet. Be the first to comment!</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* Social Media Export Modal */}

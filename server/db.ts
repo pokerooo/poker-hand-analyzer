@@ -1,6 +1,7 @@
 import { eq, and, desc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, hands, InsertHand, userStats, InsertUserStats } from "../drizzle/schema";
+import { sql } from "drizzle-orm";
+import { InsertUser, users, hands, InsertHand, userStats, InsertUserStats, handUpvotes, handComments } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -497,4 +498,122 @@ export async function updateHandAIAnalysis(handId: number, userId: number, aiAna
     .update(hands)
     .set({ aiAnalysis })
     .where(eq(hands.id, handId));
+}
+
+
+// ============================================
+// Community Features
+// ============================================
+
+export async function toggleHandPublic(handId: number, userId: number, isPublic: boolean) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Verify ownership
+  const existing = await getHandById(handId, userId);
+  if (!existing) throw new Error("Hand not found or access denied");
+  
+  await db
+    .update(hands)
+    .set({ isPublic: isPublic ? 1 : 0 })
+    .where(eq(hands.id, handId));
+  
+  return { success: true };
+}
+
+export async function upvoteHand(handId: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Check if already upvoted
+  const existing = await db
+    .select()
+    .from(handUpvotes)
+    .where(and(eq(handUpvotes.handId, handId), eq(handUpvotes.userId, userId)))
+    .limit(1);
+  
+  if (existing.length > 0) {
+    // Remove upvote
+    await db
+      .delete(handUpvotes)
+      .where(and(eq(handUpvotes.handId, handId), eq(handUpvotes.userId, userId)));
+    
+    // Decrement count
+    await db.execute(sql`UPDATE hands SET upvoteCount = upvoteCount - 1 WHERE id = ${handId}`);
+    
+    return { upvoted: false };
+  } else {
+    // Add upvote
+    await db.insert(handUpvotes).values({
+      handId,
+      userId,
+    });
+    
+    // Increment count
+    await db.execute(sql`UPDATE hands SET upvoteCount = upvoteCount + 1 WHERE id = ${handId}`);
+    
+    return { upvoted: true };
+  }
+}
+
+export async function hasUserUpvoted(handId: number, userId: number): Promise<boolean> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db
+    .select()
+    .from(handUpvotes)
+    .where(and(eq(handUpvotes.handId, handId), eq(handUpvotes.userId, userId)))
+    .limit(1);
+  
+  return result.length > 0;
+}
+
+export async function addComment(handId: number, userId: number, userName: string, content: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(handComments).values({
+    handId,
+    userId,
+    userName,
+    content,
+  });
+  
+  // Increment comment count
+  await db.execute(sql`UPDATE hands SET commentCount = commentCount + 1 WHERE id = ${handId}`);
+  
+  return { success: true, commentId: result[0]?.insertId };
+}
+
+export async function getHandComments(handId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  return await db
+    .select()
+    .from(handComments)
+    .where(eq(handComments.handId, handId))
+    .orderBy(desc(handComments.createdAt));
+}
+
+export async function getPublicHands(limit: number = 50, sortBy: "recent" | "top" | "rating" = "recent") {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  let query = db
+    .select()
+    .from(hands)
+    .where(eq(hands.isPublic, 1))
+    .limit(limit);
+  
+  if (sortBy === "recent") {
+    query = query.orderBy(desc(hands.createdAt)) as any;
+  } else if (sortBy === "top") {
+    query = query.orderBy(desc(hands.upvoteCount)) as any;
+  } else if (sortBy === "rating") {
+    query = query.orderBy(desc(hands.overallRating)) as any;
+  }
+  
+  return await query;
 }

@@ -22,6 +22,20 @@
       "when": 1770295168855,
       "tag": "0002_public_wilson_fisk",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1770296293868,
+      "tag": "0003_youthful_fat_cobra",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1770296353450,
+      "tag": "0004_smart_rocket_racer",
+      "breakpoints": true
     }
   ]
 }

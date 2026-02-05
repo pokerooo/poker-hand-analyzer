@@ -256,3 +256,40 @@
   - [x] Add download buttons for each platform format
   - [x] Include hand analysis highlights in export
   - [x] Test exports on actual social media platforms
+
+
+## Current Task: Hand Comparison Tool & Community Features ✓
+- [x] Hand Comparison Tool:
+  - [x] Create database schema for hand comparisons
+  - [x] Build HandComparison component with side-by-side layout
+  - [x] Add hand selector to choose two hands from archive
+  - [x] Display key differences (position, actions, ratings)
+  - [x] Highlight pattern similarities across hands
+  - [x] Add comparison insights (e.g., "Both hands: passive flop play")
+  - [x] Create route /compare for comparison page
+- [x] Community Features - Database Schema:
+  - [x] Add isPublic column to hands table
+  - [x] Create upvotes table (handId, userId, createdAt)
+  - [x] Create comments table (id, handId, userId, content, createdAt)
+  - [x] Add upvoteCount column to hands table for performance
+  - [x] Add commentCount column to hands table
+- [x] Community Features - Backend:
+  - [x] Create tRPC procedures for upvoting hands
+  - [x] Create tRPC procedures for commenting on hands
+  - [x] Create tRPC procedure to get public hands (leaderboard)
+  - [x] Create tRPC procedure to toggle hand visibility (public/private)
+  - [x] Add pagination for community hands list
+  - [x] Add sorting options (top rated, most upvoted, recent)
+- [x] Community Features - Frontend:
+  - [x] Create Community page (/community) with leaderboard
+  - [x] Add upvote button to hand detail page
+  - [x] Add comments section to hand detail page
+  - [x] Add "Make Public" toggle to hand detail page
+  - [x] Display upvote and comment counts in archive
+  - [x] Show community badge for public hands
+  - [x] Add filters for community page (time range, rating)
+- [x] Testing:
+  - [x] Test hand comparison with various hand pairs
+  - [x] Test upvoting and commenting functionality
+  - [x] Test leaderboard sorting and pagination
+  - [x] Write vitest tests for community features

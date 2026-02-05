@@ -9,7 +9,8 @@ import HandArchive from "./pages/HandArchive";
 import HandInputSequential from "./pages/HandInputSequential";
 import UserStats from "./pages/UserStats";
 import HandShare from "./pages/HandShare";
-import HandCompare from "./pages/HandCompare";
+import HandComparison from "./pages/HandComparison";
+import Community from "./pages/Community";
 import NotFound from "./pages/NotFound";
 
 function Router() {
@@ -22,7 +23,8 @@ function Router() {
       <Route path={"/hand/:id"} component={HandDetail} />
       <Route path={"/stats"} component={UserStats} />
       <Route path={"/share/:token"} component={HandShare} />
-      <Route path={"/compare"} component={HandCompare} />
+      <Route path={"/compare"} component={HandComparison} />
+      <Route path={"/community"} component={Community} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>

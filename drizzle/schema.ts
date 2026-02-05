@@ -76,6 +76,10 @@ export const hands = mysqlTable("hands", {
   shareToken: varchar("shareToken", { length: 32 }).unique(), // Unique token for public sharing
   isPublic: int("isPublic").default(0).notNull(), // 0 = private, 1 = public
   
+  // Community engagement
+  upvoteCount: int("upvoteCount").default(0).notNull(),
+  commentCount: int("commentCount").default(0).notNull(),
+  
   // Timestamps
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -135,3 +139,32 @@ export const userStats = mysqlTable("userStats", {
 
 export type UserStats = typeof userStats.$inferSelect;
 export type InsertUserStats = typeof userStats.$inferInsert;
+
+/**
+ * Hand upvotes - tracks user upvotes on public hands
+ */
+export const handUpvotes = mysqlTable("handUpvotes", {
+  id: int("id").autoincrement().primaryKey(),
+  handId: int("handId").notNull(),
+  userId: int("userId").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type HandUpvote = typeof handUpvotes.$inferSelect;
+export type InsertHandUpvote = typeof handUpvotes.$inferInsert;
+
+/**
+ * Hand comments - community discussion on public hands
+ */
+export const handComments = mysqlTable("handComments", {
+  id: int("id").autoincrement().primaryKey(),
+  handId: int("handId").notNull(),
+  userId: int("userId").notNull(),
+  userName: varchar("userName", { length: 255 }).notNull(), // Denormalized for performance
+  content: text("content").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type HandComment = typeof handComments.$inferSelect;
+export type InsertHandComment = typeof handComments.$inferInsert;
