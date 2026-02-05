@@ -149,3 +149,24 @@
 - [x] Create insights summary panel
 - [x] Add navigation from archive page
 - [x] Style with Casino Noir theme
+
+## Current Task: Redesigning Sequential Hand Input Flow ✓
+- [x] Create new VisualCardSelector component:
+  - [x] Display all 4 suits as large card icons at top (♠ black, ♥ red, ♣ green, ♦ blue)
+  - [x] Show rank grid below (A, K, Q, J, 10, 9, 8, 7, 6, 5, 4, 3, 2)
+  - [x] Add Clear and Random buttons
+  - [x] Highlight selected suit and rank
+- [x] Build sequential flow:
+  - [x] Step 1: Game setup (blinds, ante)
+  - [x] Step 2: Hero position and cards (visual selector)
+  - [x] Step 3: Preflop action placeholder
+  - [x] Step 4: Flop cards (visual selector for 3 cards)
+  - [x] Step 5: Flop action placeholder
+  - [x] Step 6: Turn card (visual selector)
+  - [x] Step 7: Turn action placeholder
+  - [x] Step 8: River card (visual selector)
+  - [x] Step 9: River action placeholder
+  - [x] Step 10: Review and submit
+- [ ] Create TableVisualization component (future enhancement)
+- [ ] Add detailed ActionTracker for each player (future enhancement)
+- [x] Style with Casino Noir theme

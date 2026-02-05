@@ -6,7 +6,7 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import HandDetail from "./pages/HandDetail";
 import HandArchive from "./pages/HandArchive";
-import HandInput from "./pages/HandInput";
+import HandInputSequential from "./pages/HandInputSequential";
 import UserStats from "./pages/UserStats";
 import HandShare from "./pages/HandShare";
 import HandCompare from "./pages/HandCompare";
@@ -17,7 +17,7 @@ function Router() {
   return (
     <Switch>
       <Route path={"/"} component={Home} />
-      <Route path={"/input"} component={HandInput} />
+      <Route path="/input" component={HandInputSequential} />
       <Route path={"/archive"} component={HandArchive} />
       <Route path={"/hand/:id"} component={HandDetail} />
       <Route path={"/stats"} component={UserStats} />
