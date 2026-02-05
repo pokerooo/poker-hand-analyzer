@@ -1,0 +1,8 @@
+{
+  "query": "ALTER TABLE hands ADD COLUMN shareToken VARCHAR(32) UNIQUE DEFAULT NULL;\nALTER TABLE hands ADD COLUMN isPublic INT NOT NULL DEFAULT 0;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3S5EK7kkwn3cfqa.root --database g6HPzuQNwUJzsGs4mHVNkx --execute ALTER TABLE hands ADD COLUMN shareToken VARCHAR(32) UNIQUE DEFAULT NULL;\nALTER TABLE hands ADD COLUMN isPublic INT NOT NULL DEFAULT 0;",
+  "returncode": 1,
+  "logs": [
+    "ERROR 8200 (HY000) at line 1: unsupported add column 'sharetoken' constraint UNIQUE KEY when altering 'g6HPzuQNwUJzsGs4mHVNkx.hands'"
+  ]
+}

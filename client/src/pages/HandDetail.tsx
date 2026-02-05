@@ -6,15 +6,21 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, Share2, Check, Copy } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 import { Link } from "wouter";
 import { Streamdown } from "streamdown";
 
 export default function HandDetail() {
   const [, params] = useRoute("/hand/:id");
   const handId = parseInt(params?.id || "0");
+  const [shareToken, setShareToken] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const { data: hand, isLoading, error } = trpc.hands.get.useQuery({ id: handId });
+  const generateShare = trpc.hands.generateShareToken.useMutation();
+  const revokeShare = trpc.hands.revokeSharing.useMutation();
 
   if (isLoading) {
     return (
@@ -103,7 +109,37 @@ export default function HandDetail() {
               <span className="text-2xl text-accent">♠</span>
               <h1 className="text-2xl font-bold">Hand Analysis</h1>
             </div>
-            <div className="w-24" /> {/* Spacer for centering */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={async () => {
+                if (shareToken || hand.shareToken) {
+                  const token = shareToken || hand.shareToken;
+                  const shareUrl = `${window.location.origin}/share/${token}`;
+                  await navigator.clipboard.writeText(shareUrl);
+                  setCopied(true);
+                  toast.success("Link copied to clipboard!");
+                  setTimeout(() => setCopied(false), 2000);
+                } else {
+                  const result = await generateShare.mutateAsync({ id: handId });
+                  if (result.shareToken) {
+                    setShareToken(result.shareToken);
+                    const shareUrl = `${window.location.origin}/share/${result.shareToken}`;
+                    await navigator.clipboard.writeText(shareUrl);
+                    setCopied(true);
+                    toast.success("Share link generated and copied!");
+                    setTimeout(() => setCopied(false), 2000);
+                  }
+                }
+              }}
+            >
+              {copied ? (
+                <Check className="mr-2 h-4 w-4" />
+              ) : (
+                <Share2 className="mr-2 h-4 w-4" />
+              )}
+              {shareToken || hand.shareToken ? "Copy Link" : "Share Hand"}
+            </Button>
           </div>
         </div>
       </div>

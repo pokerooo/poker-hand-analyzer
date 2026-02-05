@@ -8,6 +8,7 @@ import HandDetail from "./pages/HandDetail";
 import HandArchive from "./pages/HandArchive";
 import HandInput from "./pages/HandInput";
 import UserStats from "./pages/UserStats";
+import HandShare from "./pages/HandShare";
 import NotFound from "./pages/NotFound";
 
 function Router() {
@@ -19,6 +20,7 @@ function Router() {
       <Route path={"/archive"} component={HandArchive} />
       <Route path={"/hand/:id"} component={HandDetail} />
       <Route path={"/stats"} component={UserStats} />
+      <Route path={"/share/:token"} component={HandShare} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>

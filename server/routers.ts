@@ -107,6 +107,29 @@ export const appRouter = router({
         await db.deleteHand(input.id, ctx.user.id);
         return { success: true };
       }),
+    
+    generateShareToken: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const shareToken = await db.generateHandShareToken(input.id, ctx.user.id);
+        if (!shareToken) {
+          throw new Error("Failed to generate share token");
+        }
+        return { shareToken };
+      }),
+    
+    getByShareToken: publicProcedure
+      .input(z.object({ token: z.string() }))
+      .query(async ({ input }) => {
+        return await db.getHandByShareToken(input.token);
+      }),
+    
+    revokeSharing: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const success = await db.revokeHandSharing(input.id, ctx.user.id);
+        return { success };
+      }),
   }),
 });
 

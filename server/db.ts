@@ -1,4 +1,4 @@
-import { eq, desc } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { InsertUser, users, hands, InsertHand, userStats, InsertUserStats } from "../drizzle/schema";
 import { ENV } from './_core/env';
@@ -291,5 +291,87 @@ export async function getMistakePatterns(userId: number) {
   } catch (error) {
     console.error("[Database] Failed to get mistake patterns:", error);
     return [];
+  }
+}
+
+// Generate a random share token
+function generateShareToken(): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let token = '';
+  for (let i = 0; i < 16; i++) {
+    token += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return token;
+}
+
+// Generate and save a share token for a hand
+export async function generateHandShareToken(handId: number, userId: number): Promise<string | null> {
+  const db = await getDb();
+  if (!db) return null;
+
+  try {
+    // Verify the hand belongs to the user
+    const hand = await getHandById(handId, userId);
+    if (!hand) {
+      throw new Error("Hand not found or access denied");
+    }
+
+    // Generate a unique token
+    const shareToken = generateShareToken();
+
+    // Update the hand with the share token and make it public
+    await db
+      .update(hands)
+      .set({ shareToken, isPublic: 1 })
+      .where(eq(hands.id, handId));
+
+    return shareToken;
+  } catch (error) {
+    console.error("[Database] Failed to generate share token:", error);
+    return null;
+  }
+}
+
+// Get a hand by share token (public access)
+export async function getHandByShareToken(shareToken: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  try {
+    const result = await db
+      .select()
+      .from(hands)
+      .where(and(eq(hands.shareToken, shareToken), eq(hands.isPublic, 1)))
+      .limit(1);
+
+    return result.length > 0 ? result[0] : undefined;
+  } catch (error) {
+    console.error("[Database] Failed to get hand by share token:", error);
+    return undefined;
+  }
+}
+
+// Revoke sharing (make hand private again)
+export async function revokeHandSharing(handId: number, userId: number): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+
+  try {
+    // Verify the hand belongs to the user
+    const hand = await getHandById(handId, userId);
+    if (!hand) {
+      return false;
+    }
+
+    // Make the hand private and clear the share token
+    await db
+      .update(hands)
+      .set({ isPublic: 0, shareToken: null })
+      .where(eq(hands.id, handId));
+
+    return true;
+  } catch (error) {
+    console.error("[Database] Failed to revoke hand sharing:", error);
+    return false;
   }
 }

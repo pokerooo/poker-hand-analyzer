@@ -71,6 +71,10 @@ export const hands = mysqlTable("hands", {
   // Analysis text
   analysis: text("analysis"), // Full analysis markdown
   
+  // Sharing
+  shareToken: varchar("shareToken", { length: 32 }).unique(), // Unique token for public sharing
+  isPublic: int("isPublic").default(0).notNull(), // 0 = private, 1 = public
+  
   // Timestamps
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
