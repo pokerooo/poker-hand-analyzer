@@ -6,10 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
 import { useState } from "react";
-import { Search, Trash2, Eye, TrendingUp } from "lucide-react";
+import { Search, Trash2, Eye, TrendingUp, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { TagFilter } from "@/components/TagFilter";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { ShareHandDialog } from "@/components/ShareHandDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,6 +29,8 @@ export default function HandArchive() {
   const { isAuthenticated } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterPosition, setFilterPosition] = useState<string>("all");
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [selectedHandForShare, setSelectedHandForShare] = useState<any>(null);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
   const { data: handsAll, isLoading: loadingAll, refetch: refetchAll } = trpc.hands.list.useQuery(undefined, {
@@ -258,6 +261,17 @@ export default function HandArchive() {
                       </Button>
                     </Link>
                     
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedHandForShare(hand);
+                        setShareDialogOpen(true);
+                      }}
+                    >
+                      <Share2 className="h-4 w-4" />
+                    </Button>
+                    
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
@@ -308,6 +322,15 @@ export default function HandArchive() {
           </Card>
         )}
       </div>
+
+      {/* Share Hand Dialog */}
+      {selectedHandForShare && (
+        <ShareHandDialog
+          open={shareDialogOpen}
+          onOpenChange={setShareDialogOpen}
+          hand={selectedHandForShare}
+        />
+      )}
     </div>
   );
 }

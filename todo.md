@@ -471,3 +471,22 @@
   - [x] Persist theme preference in localStorage
   - [x] Add smooth transition animations
   - [x] Added ThemeToggle component to Home, Archive, and Detail pages
+
+
+## Current Task: Social Media Sharing Feature ✓
+- [x] Design share card generator:
+  - [x] Existing SocialMediaExport component generates platform-optimized images
+  - [x] Supports Instagram, Twitter, TikTok, WhatsApp formats
+  - [x] Professional visual cards with hand details, board, and rating
+  - [x] Uses html2canvas to generate downloadable images
+- [x] Implement share functionality:
+  - [x] Created ShareHandDialog component with social media integration
+  - [x] Added share buttons for Twitter, Facebook, LinkedIn with proper URLs
+  - [x] Implemented copy link functionality with clipboard API
+  - [x] Added link to image export feature
+  - [x] Share text includes hand details and hashtags
+- [x] Integration:
+  - [x] Added share button to HandDetail page header
+  - [x] Added share button to HandArchive cards
+  - [x] Share dialog shows hand preview with key stats
+  - [x] Mobile-friendly dialog with responsive layout

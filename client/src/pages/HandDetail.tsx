@@ -18,6 +18,7 @@ import { EquityCalculator } from "@/components/EquityCalculator";
 import { HandReplayer } from "@/components/HandReplayer";
 import { TagManager } from "@/components/TagManager";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { ShareHandDialog } from "@/components/ShareHandDialog";
 
 export default function HandDetail() {
   const [, params] = useRoute("/hand/:id");
@@ -27,6 +28,7 @@ export default function HandDetail() {
   const [showExport, setShowExport] = useState(false);
   const [aiAnalysisLoading, setAiAnalysisLoading] = useState(false);
   const [commentText, setCommentText] = useState("");
+  const [showShareDialog, setShowShareDialog] = useState(false);
   const [activeTab, setActiveTab] = useState("summary");
 
   const { data: hand, isLoading, error, refetch } = trpc.hands.get.useQuery({ id: handId });
@@ -193,33 +195,10 @@ export default function HandDetail() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={async () => {
-                  if (shareToken || hand.shareToken) {
-                    const token = shareToken || hand.shareToken;
-                    const shareUrl = `${window.location.origin}/share/${token}`;
-                    await navigator.clipboard.writeText(shareUrl);
-                    setCopied(true);
-                    toast.success("Link copied to clipboard!");
-                    setTimeout(() => setCopied(false), 2000);
-                  } else {
-                    const result = await generateShare.mutateAsync({ id: handId });
-                    if (result.shareToken) {
-                      setShareToken(result.shareToken);
-                      const shareUrl = `${window.location.origin}/share/${result.shareToken}`;
-                      await navigator.clipboard.writeText(shareUrl);
-                      setCopied(true);
-                      toast.success("Share link generated and copied!");
-                      setTimeout(() => setCopied(false), 2000);
-                    }
-                  }
-                }}
+                onClick={() => setShowShareDialog(true)}
               >
-                {copied ? (
-                  <Check className="mr-2 h-4 w-4" />
-                ) : (
-                  <Share2 className="mr-2 h-4 w-4" />
-                )}
-                {shareToken || hand.shareToken ? "Copy Link" : "Share Hand"}
+                <Share2 className="mr-2 h-4 w-4" />
+                Share
               </Button>
             </div>
           </div>
@@ -734,6 +713,15 @@ export default function HandDetail() {
         <div className="fixed inset-0 z-50">
           <SocialMediaExport hand={hand} onClose={() => setShowExport(false)} />
         </div>
+      )}
+
+      {/* Share Hand Dialog */}
+      {hand && (
+        <ShareHandDialog
+          open={showShareDialog}
+          onOpenChange={setShowShareDialog}
+          hand={hand}
+        />
       )}
     </div>
   );
