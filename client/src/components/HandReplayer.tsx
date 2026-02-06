@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Play, Pause, SkipBack, SkipForward, RotateCcw } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useSwipe } from "@/hooks/useSwipe";
 
 interface HandReplayerProps {
   hand: any; // Full hand object with all data
@@ -20,6 +21,22 @@ export function HandReplayer({ hand }: HandReplayerProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [speed, setSpeed] = useState(1); // 0.5x, 1x, 2x
+  
+  // Swipe gesture handlers for step navigation
+  useSwipe({
+    onSwipeLeft: () => {
+      if (currentStep < steps.length - 1) {
+        setCurrentStep(prev => prev + 1);
+        setIsPlaying(false);
+      }
+    },
+    onSwipeRight: () => {
+      if (currentStep > 0) {
+        setCurrentStep(prev => prev - 1);
+        setIsPlaying(false);
+      }
+    },
+  });
   
   // Build replay timeline
   const steps: ReplayStep[] = [];

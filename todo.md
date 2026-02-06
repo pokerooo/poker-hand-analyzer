@@ -448,3 +448,26 @@
 - [x] Optimize UserStats page for mobile
 - [x] Test mobile layout in responsive design mode
 - [x] Verify touch interactions work properly
+
+
+## Current Task: Enhanced Mobile Features ✓
+- [x] Swipe Gestures:
+  - [x] Add swipe left/right to navigate between streets in HandDetail tabs
+  - [x] Add swipe left/right to navigate steps in HandReplayer
+  - [x] Implement touch event handlers for swipe detection
+  - [x] Created useSwipe custom hook for gesture detection
+  - [x] Integrated swipe navigation in HandDetail and HandReplayer
+- [x] PWA Features:
+  - [x] Create manifest.json with app metadata
+  - [x] Add service worker for offline support
+  - [x] Implement install prompt for "Add to Home Screen"
+  - [x] Cache critical assets for offline use
+  - [x] Add PWA icons in multiple sizes (192x192, 512x512)
+  - [x] Generated professional poker-themed app icons
+  - [x] Added PWA meta tags to index.html
+- [x] Theme Toggle:
+  - [x] Add theme toggle button to navigation/header
+  - [x] Enable switchable theme in ThemeProvider
+  - [x] Persist theme preference in localStorage
+  - [x] Add smooth transition animations
+  - [x] Added ThemeToggle component to Home, Archive, and Detail pages

@@ -9,6 +9,7 @@ import { useState } from "react";
 import { Search, Trash2, Eye, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import { TagFilter } from "@/components/TagFilter";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -131,7 +132,9 @@ export default function HandArchive() {
                 Review and analyze your poker hands
               </p>
             </div>
-            <div className="flex gap-3">
+            <div className="flex gap-2">
+              <ThemeToggle />
+              <div className="flex gap-3">
               <Link href="/compare">
                 <Button variant="outline" className="gap-2">
                   <TrendingUp className="h-4 w-4" />
@@ -144,6 +147,7 @@ export default function HandArchive() {
                   New Hand
                 </Button>
               </Link>
+              </div>
             </div>
           </div>
 

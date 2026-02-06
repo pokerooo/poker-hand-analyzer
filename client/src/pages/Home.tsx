@@ -15,6 +15,7 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { getLoginUrl } from "@/const";
 import { Link } from "wouter";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default function Home() {
   const { user, isAuthenticated } = useAuth();
@@ -40,6 +41,10 @@ export default function Home() {
             <p className="text-base sm:text-lg lg:text-xl text-muted-foreground leading-relaxed mb-6">
               Professional hand analysis for serious players. Dissect every street, understand every decision, and elevate your game with data-driven insights.
             </p>
+            
+            <div className="flex items-center gap-3 mb-4">
+              <ThemeToggle />
+            </div>
             
             <div className="flex flex-wrap gap-3">
               {!isAuthenticated ? (

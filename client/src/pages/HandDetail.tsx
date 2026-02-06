@@ -7,7 +7,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Loader2, Share2, Check, Copy, Sparkles, Download, ThumbsUp, MessageCircle, Globe, Lock } from "lucide-react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { useSwipe } from "@/hooks/useSwipe";
 import { toast } from "sonner";
 import { Link } from "wouter";
 import { Streamdown } from "streamdown";
@@ -16,6 +17,7 @@ import { RangeAnalysis } from "@/components/RangeAnalysis";
 import { EquityCalculator } from "@/components/EquityCalculator";
 import { HandReplayer } from "@/components/HandReplayer";
 import { TagManager } from "@/components/TagManager";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default function HandDetail() {
   const [, params] = useRoute("/hand/:id");
@@ -25,6 +27,7 @@ export default function HandDetail() {
   const [showExport, setShowExport] = useState(false);
   const [aiAnalysisLoading, setAiAnalysisLoading] = useState(false);
   const [commentText, setCommentText] = useState("");
+  const [activeTab, setActiveTab] = useState("summary");
 
   const { data: hand, isLoading, error, refetch } = trpc.hands.get.useQuery({ id: handId });
   const { data: hasUpvoted } = trpc.hands.hasUpvoted.useQuery({ id: handId });
@@ -35,6 +38,33 @@ export default function HandDetail() {
   const togglePublic = trpc.hands.togglePublic.useMutation();
   const upvote = trpc.hands.upvote.useMutation();
   const addComment = trpc.hands.addComment.useMutation();
+
+  // Define tab order for swipe navigation
+  const tabOrder = useMemo(() => {
+    if (!hand) return ["summary"];
+    const tabs = ["preflop"];
+    if (hand.flopCard1) tabs.push("flop");
+    if (hand.turnCard) tabs.push("turn");
+    if (hand.riverCard) tabs.push("river");
+    tabs.push("ai-analysis", "summary", "replayer");
+    return tabs;
+  }, [hand]);
+
+  // Swipe gesture handlers
+  useSwipe({
+    onSwipeLeft: () => {
+      const currentIndex = tabOrder.indexOf(activeTab);
+      if (currentIndex < tabOrder.length - 1) {
+        setActiveTab(tabOrder[currentIndex + 1]);
+      }
+    },
+    onSwipeRight: () => {
+      const currentIndex = tabOrder.indexOf(activeTab);
+      if (currentIndex > 0) {
+        setActiveTab(tabOrder[currentIndex - 1]);
+      }
+    },
+  });
 
   if (isLoading) {
     return (
@@ -113,12 +143,15 @@ export default function HandDetail() {
       <div className="border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="container py-4">
           <div className="flex items-center justify-between">
-            <Link href="/archive">
-              <Button variant="ghost" size="sm">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Archive
-              </Button>
-            </Link>
+              <div className="flex items-center gap-2">
+                <ThemeToggle />
+                <Link href="/archive">
+                  <Button variant="ghost" size="sm">
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Back to Archive
+                  </Button>
+                </Link>
+              </div>
             <div className="flex items-center gap-3">
               <span className="text-2xl text-accent">♠</span>
               <h1 className="text-2xl font-bold">Hand Analysis</h1>
@@ -347,7 +380,7 @@ export default function HandDetail() {
             )}
 
             {/* Street-by-Street Analysis */}
-            <Tabs defaultValue="summary" className="w-full">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="grid w-full grid-cols-7 bg-card">
                 <TabsTrigger value="preflop">Preflop</TabsTrigger>
                 <TabsTrigger value="flop" disabled={!hand.flopCard1}>
