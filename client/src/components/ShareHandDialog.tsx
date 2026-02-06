@@ -7,9 +7,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Share2, Twitter, Facebook, Linkedin, Link as LinkIcon, Download, Check } from "lucide-react";
+import { Share2, Twitter, Facebook, Linkedin, Link as LinkIcon, Download, Check, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "wouter";
+import { trpc } from "@/lib/trpc";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type ShareHandDialogProps = {
   open: boolean;
@@ -26,6 +34,11 @@ type ShareHandDialogProps = {
 
 export function ShareHandDialog({ open, onOpenChange, hand }: ShareHandDialogProps) {
   const [copied, setCopied] = useState(false);
+  const [selectedWebhook, setSelectedWebhook] = useState<string>("");
+  const [isSharing, setIsSharing] = useState(false);
+
+  const { data: webhooks } = trpc.discord.listWebhooks.useQuery();
+  const shareToDiscord = trpc.discord.shareHand.useMutation();
 
   const formatCard = (card: string | null) => {
     if (!card) return "";
@@ -131,6 +144,58 @@ export function ShareHandDialog({ open, onOpenChange, hand }: ShareHandDialogPro
               </Button>
             </div>
           </div>
+
+          {/* Discord Share */}
+          {webhooks && webhooks.length > 0 && (
+            <div className="space-y-2">
+              <label className="text-sm font-semibold">Share to Discord</label>
+              <div className="flex gap-2">
+                <Select value={selectedWebhook} onValueChange={setSelectedWebhook}>
+                  <SelectTrigger className="flex-1">
+                    <SelectValue placeholder="Select Discord server" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {webhooks.map((webhook: any) => (
+                      <SelectItem key={webhook.id} value={webhook.id.toString()}>
+                        {webhook.name}
+                        {webhook.isDefault && " (Default)"}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  variant="outline"
+                  onClick={async () => {
+                    if (!selectedWebhook && !webhooks.find((w: any) => w.isDefault)) {
+                      toast.error("Please select a Discord server");
+                      return;
+                    }
+                    setIsSharing(true);
+                    try {
+                      await shareToDiscord.mutateAsync({
+                        handId: hand.id,
+                        webhookId: selectedWebhook ? parseInt(selectedWebhook) : undefined,
+                      });
+                      toast.success("Hand shared to Discord!");
+                    } catch (error) {
+                      toast.error("Failed to share to Discord");
+                      console.error(error);
+                    } finally {
+                      setIsSharing(false);
+                    }
+                  }}
+                  disabled={isSharing}
+                  className="gap-2 shrink-0"
+                >
+                  <MessageSquare className="h-4 w-4" />
+                  {isSharing ? "Sharing..." : "Share"}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Share this hand analysis as a rich embed to your Discord server
+              </p>
+            </div>
+          )}
 
           {/* Copy Link */}
           <div className="space-y-2">

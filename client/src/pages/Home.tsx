@@ -73,6 +73,11 @@ export default function Home() {
                 Your Statistics
               </Button>
             </Link>
+            <Link href="/discord">
+              <Button size="lg" variant="outline" className="gap-2">
+                Discord Settings
+              </Button>
+            </Link>
                 </>
               )}
             </div>

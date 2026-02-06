@@ -43,6 +43,13 @@
       "when": 1770299756263,
       "tag": "0005_robust_wilson_fisk",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1770346117944,
+      "tag": "0006_vengeful_lilandra",
+      "breakpoints": true
     }
   ]
 }

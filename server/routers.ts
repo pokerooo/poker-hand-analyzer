@@ -214,6 +214,54 @@ export const appRouter = router({
         return await db.filterHandsByTags(ctx.user.id, input.tags);
       }),
   }),
+
+  discord: router({
+    // Get all webhooks for the current user
+    listWebhooks: protectedProcedure
+      .query(async ({ ctx }) => {
+        return await db.getDiscordWebhooks(ctx.user.id);
+      }),
+    
+    // Add a new webhook
+    addWebhook: protectedProcedure
+      .input(z.object({
+        name: z.string().min(1).max(100),
+        webhookUrl: z.string().url(),
+        isDefault: z.boolean().default(false),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        return await db.addDiscordWebhook(ctx.user.id, input.name, input.webhookUrl, input.isDefault);
+      }),
+    
+    // Update a webhook
+    updateWebhook: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        name: z.string().min(1).max(100).optional(),
+        webhookUrl: z.string().url().optional(),
+        isDefault: z.boolean().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        return await db.updateDiscordWebhook(input.id, ctx.user.id, input.name, input.webhookUrl, input.isDefault);
+      }),
+    
+    // Delete a webhook
+    deleteWebhook: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        return await db.deleteDiscordWebhook(input.id, ctx.user.id);
+      }),
+    
+    // Share a hand to Discord
+    shareHand: protectedProcedure
+      .input(z.object({
+        handId: z.number(),
+        webhookId: z.number().optional(), // If not provided, use default webhook
+      }))
+      .mutation(async ({ ctx, input }) => {
+        return await db.shareHandToDiscord(input.handId, ctx.user.id, input.webhookId);
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;

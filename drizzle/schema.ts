@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, json, decimal } from "drizzle-orm/mysql-core";
+import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, json, decimal, boolean } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -183,3 +183,19 @@ export const handTags = mysqlTable("handTags", {
 
 export type HandTag = typeof handTags.$inferSelect;
 export type InsertHandTag = typeof handTags.$inferInsert;
+
+/**
+ * Discord webhooks - stores user's Discord webhook URLs for sharing hands
+ */
+export const discordWebhooks = mysqlTable("discordWebhooks", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(), // Owner of this webhook
+  name: varchar("name", { length: 100 }).notNull(), // User-friendly name (e.g., "Study Group", "Main Server")
+  webhookUrl: text("webhookUrl").notNull(), // Discord webhook URL
+  isDefault: boolean("isDefault").default(false).notNull(), // Whether this is the default webhook for sharing
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type DiscordWebhook = typeof discordWebhooks.$inferSelect;
+export type InsertDiscordWebhook = typeof discordWebhooks.$inferInsert;

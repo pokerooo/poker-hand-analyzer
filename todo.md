@@ -490,3 +490,25 @@
   - [x] Added share button to HandArchive cards
   - [x] Share dialog shows hand preview with key stats
   - [x] Mobile-friendly dialog with responsive layout
+
+
+## Current Task: Discord Webhook Integration ✓
+- [x] Backend Implementation:
+  - [x] Created discordWebhooks table in database schema
+  - [x] Added tRPC procedures for webhook CRUD operations (list, add, update, delete, share)
+  - [x] Implemented Discord webhook posting with rich embeds
+  - [x] Added webhook validation and error handling
+  - [x] Formatted hand data for Discord embed (cards, position, rating, board, street ratings, URL)
+  - [x] Rich embed includes hero hand, overall rating, blinds, board cards, street ratings, and analysis link
+- [x] Frontend Implementation:
+  - [x] Created DiscordWebhookManager component for webhook settings
+  - [x] Added Discord share section to ShareHandDialog
+  - [x] Built webhook configuration UI (add/edit/delete webhooks with default selection)
+  - [x] Added webhook selection dropdown for sharing
+  - [x] Implemented success/error feedback for Discord shares with toast notifications
+- [x] Integration:
+  - [x] Created dedicated Discord settings page at /discord route
+  - [x] Integrated Discord share with existing share dialog
+  - [x] Added Discord Settings button to Home page
+  - [x] Mobile-friendly webhook management and sharing UI
+  - [x] Webhook manager shows default badge and allows setting default

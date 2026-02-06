@@ -11,6 +11,7 @@ import UserStats from "./pages/UserStats";
 import HandShare from "./pages/HandShare";
 import HandComparison from "./pages/HandComparison";
 import Community from "./pages/Community";
+import DiscordSettings from "./pages/DiscordSettings";
 import NotFound from "./pages/NotFound";
 import { PWAInstallPrompt } from "./components/PWAInstallPrompt";
 
@@ -26,6 +27,7 @@ function Router() {
       <Route path={"/share/:token"} component={HandShare} />
       <Route path={"/compare"} component={HandComparison} />
       <Route path={"/community"} component={Community} />
+      <Route path={"/discord"} component={DiscordSettings} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>

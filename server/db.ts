@@ -1,7 +1,7 @@
 import { eq, and, desc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { sql, inArray } from "drizzle-orm";
-import { InsertUser, users, hands, InsertHand, userStats, InsertUserStats, handUpvotes, handComments, handTags } from "../drizzle/schema";
+import { InsertUser, users, hands, InsertHand, userStats, InsertUserStats, handUpvotes, handComments, handTags, discordWebhooks, InsertDiscordWebhook } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -732,4 +732,231 @@ export async function filterHandsByTags(userId: number, tags: string[]) {
       inArray(hands.id, ids)
     ))
     .orderBy(desc(hands.createdAt));
+}
+
+
+// ===== Discord Webhooks =====
+
+export async function getDiscordWebhooks(userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  return await db
+    .select()
+    .from(discordWebhooks)
+    .where(eq(discordWebhooks.userId, userId))
+    .orderBy(desc(discordWebhooks.isDefault), desc(discordWebhooks.createdAt));
+}
+
+export async function addDiscordWebhook(userId: number, name: string, webhookUrl: string, isDefault: boolean) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // If this is set as default, unset all other defaults for this user
+  if (isDefault) {
+    await db
+      .update(discordWebhooks)
+      .set({ isDefault: false })
+      .where(eq(discordWebhooks.userId, userId));
+  }
+  
+  const result = await db
+    .insert(discordWebhooks)
+    .values({
+      userId,
+      name,
+      webhookUrl,
+      isDefault,
+    });
+  
+  return { id: Number((result as any).insertId), success: true };
+}
+
+export async function updateDiscordWebhook(
+  id: number,
+  userId: number,
+  name?: string,
+  webhookUrl?: string,
+  isDefault?: boolean
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // If setting as default, unset all other defaults for this user
+  if (isDefault) {
+    await db
+      .update(discordWebhooks)
+      .set({ isDefault: false })
+      .where(eq(discordWebhooks.userId, userId));
+  }
+  
+  const updateData: any = {};
+  if (name !== undefined) updateData.name = name;
+  if (webhookUrl !== undefined) updateData.webhookUrl = webhookUrl;
+  if (isDefault !== undefined) updateData.isDefault = isDefault;
+  
+  await db
+    .update(discordWebhooks)
+    .set(updateData)
+    .where(and(
+      eq(discordWebhooks.id, id),
+      eq(discordWebhooks.userId, userId)
+    ));
+  
+  return { success: true };
+}
+
+export async function deleteDiscordWebhook(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db
+    .delete(discordWebhooks)
+    .where(and(
+      eq(discordWebhooks.id, id),
+      eq(discordWebhooks.userId, userId)
+    ));
+  
+  return { success: true };
+}
+
+export async function shareHandToDiscord(handId: number, userId: number, webhookId?: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Get the hand data
+  const hand = await getHandById(handId, userId);
+  if (!hand) {
+    throw new Error("Hand not found");
+  }
+  
+  // Get the webhook
+  let webhook;
+  if (webhookId) {
+    const webhooks = await db
+      .select()
+      .from(discordWebhooks)
+      .where(and(
+        eq(discordWebhooks.id, webhookId),
+        eq(discordWebhooks.userId, userId)
+      ))
+      .limit(1);
+    webhook = webhooks[0];
+  } else {
+    // Use default webhook
+    const webhooks = await db
+      .select()
+      .from(discordWebhooks)
+      .where(and(
+        eq(discordWebhooks.userId, userId),
+        eq(discordWebhooks.isDefault, true)
+      ))
+      .limit(1);
+    webhook = webhooks[0];
+  }
+  
+  if (!webhook) {
+    throw new Error("No webhook found. Please add a Discord webhook first.");
+  }
+  
+  // Format cards for display
+  const formatCard = (card: string | null) => {
+    if (!card) return "";
+    const rank = card.slice(0, -1);
+    const suit = card.slice(-1);
+    const suitMap: Record<string, string> = { h: "♥️", d: "♦️", s: "♠️", c: "♣️" };
+    return `${rank}${suitMap[suit] || suit}`;
+  };
+  
+  const heroCards = `${formatCard(hand.heroCard1)}${formatCard(hand.heroCard2)}`;
+  const boardCards = [
+    hand.flopCard1 ? formatCard(hand.flopCard1) : null,
+    hand.flopCard2 ? formatCard(hand.flopCard2) : null,
+    hand.flopCard3 ? formatCard(hand.flopCard3) : null,
+    hand.turnCard ? formatCard(hand.turnCard) : null,
+    hand.riverCard ? formatCard(hand.riverCard) : null,
+  ].filter(Boolean).join(" ");
+  
+  // Create Discord embed
+  const embed = {
+    title: hand.title || `${heroCards} from ${hand.heroPosition}`,
+    description: hand.description || "Poker hand analysis",
+    color: 0xD4AF37, // Gold color
+    fields: [
+      {
+        name: "🎴 Hero Hand",
+        value: `${heroCards} from ${hand.heroPosition}`,
+        inline: true,
+      },
+      {
+        name: "📊 Overall Rating",
+        value: hand.overallRating ? `${hand.overallRating}/10` : "Not rated",
+        inline: true,
+      },
+      {
+        name: "💰 Blinds",
+        value: `${hand.smallBlind}/${hand.bigBlind}${hand.ante ? ` (Ante: ${hand.ante})` : ""}`,
+        inline: true,
+      },
+    ],
+    timestamp: new Date().toISOString(),
+    footer: {
+      text: "Poker Hand Analyzer",
+    },
+  };
+  
+  // Add board if available
+  if (boardCards) {
+    embed.fields.push({
+      name: "🃏 Board",
+      value: boardCards,
+      inline: false,
+    });
+  }
+  
+  // Add street ratings if available
+  const ratings = [];
+  if (hand.preflopRating) ratings.push(`Preflop: ${hand.preflopRating}/10`);
+  if (hand.flopRating) ratings.push(`Flop: ${hand.flopRating}/10`);
+  if (hand.turnRating) ratings.push(`Turn: ${hand.turnRating}/10`);
+  if (hand.riverRating) ratings.push(`River: ${hand.riverRating}/10`);
+  
+  if (ratings.length > 0) {
+    embed.fields.push({
+      name: "📈 Street Ratings",
+      value: ratings.join("\n"),
+      inline: false,
+    });
+  }
+  
+  // Add hand URL
+  const handUrl = `${process.env.VITE_APP_URL || "https://poker-hand-analyzer.manus.space"}/hand/${handId}`;
+  embed.fields.push({
+    name: "🔗 View Full Analysis",
+    value: handUrl,
+    inline: false,
+  });
+  
+  // Send to Discord
+  try {
+    const response = await fetch(webhook.webhookUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        embeds: [embed],
+      }),
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Discord webhook failed: ${response.status} ${errorText}`);
+    }
+    
+    return { success: true, message: "Hand shared to Discord successfully!" };
+  } catch (error) {
+    console.error("Discord webhook error:", error);
+    throw new Error(`Failed to share to Discord: ${error instanceof Error ? error.message : "Unknown error"}`);
+  }
 }
