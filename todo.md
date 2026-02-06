@@ -544,3 +544,24 @@
   - [x] Sticky positioning keeps preview visible while scrolling
   - [x] Responsive design works on mobile and desktop
   - [x] Only shows when there's data to display (conditional rendering)
+
+
+## Current Task: Optional Authentication (Guest Mode) ✓
+- [x] Backend changes:
+  - [x] Added hands.analyzeGuest publicProcedure for guest analysis
+  - [x] Guest users can analyze hands without saving to database
+  - [x] Protected endpoints remain for saving, archive, stats, community
+  - [x] Analysis engine works identically for both guest and authenticated users
+- [x] Frontend changes:
+  - [x] Removed auth requirement from Home page
+  - [x] Removed auth requirement from HandInputSequential
+  - [x] Created GuestAnalysisResults component with signup prompts
+  - [x] Updated Home page CTA to "Try It Free - No Signup" for guests
+  - [x] HandInputSequential uses analyzeGuest mutation for unauthenticated users
+  - [x] HandInputSequential uses create mutation for authenticated users
+- [x] User experience:
+  - [x] Guest users can analyze hands immediately without signup
+  - [x] Multiple clear CTAs to sign up for saving hands (top, middle, bottom of results)
+  - [x] Seamless upgrade path - just click "Sign Up Free" button
+  - [x] Guest results show full analysis with ratings and detailed feedback
+  - [x] After analysis, guests can start another hand or sign up to save

@@ -148,6 +148,51 @@ export const appRouter = router({
         return { success: true, aiAnalysis };
       }),
     
+    // Guest users can analyze hands without saving
+    analyzeGuest: publicProcedure
+      .input(z.object({
+        smallBlind: z.number(),
+        bigBlind: z.number(),
+        ante: z.number().default(0),
+        heroPosition: z.enum(["UTG", "UTG+1", "UTG+2", "MP", "MP+1", "CO", "BTN", "SB", "BB"]),
+        heroCard1: z.string(),
+        heroCard2: z.string(),
+        flopCard1: z.string().optional(),
+        flopCard2: z.string().optional(),
+        flopCard3: z.string().optional(),
+        turnCard: z.string().optional(),
+        riverCard: z.string().optional(),
+        actions: z.array(z.object({
+          street: z.enum(["preflop", "flop", "turn", "river"]),
+          player: z.string(),
+          action: z.enum(["fold", "check", "call", "bet", "raise", "allin"]),
+          amount: z.number().optional(),
+        })),
+      }))
+      .mutation(async ({ input }) => {
+        // Run analysis engine without saving to database
+        const analysis = analyzeHand({
+          smallBlind: input.smallBlind,
+          bigBlind: input.bigBlind,
+          ante: input.ante,
+          heroPosition: input.heroPosition,
+          heroCard1: input.heroCard1,
+          heroCard2: input.heroCard2,
+          flopCard1: input.flopCard1,
+          flopCard2: input.flopCard2,
+          flopCard3: input.flopCard3,
+          turnCard: input.turnCard,
+          riverCard: input.riverCard,
+          actions: input.actions,
+        });
+        
+        return { 
+          success: true, 
+          analysis: analysis,
+          isGuest: true,
+        };
+      }),
+    
     togglePublic: protectedProcedure
       .input(z.object({ id: z.number(), isPublic: z.boolean() }))
       .mutation(async ({ ctx, input }) => {

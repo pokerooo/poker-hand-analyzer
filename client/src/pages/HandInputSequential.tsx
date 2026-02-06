@@ -11,6 +11,7 @@ import { Link, useLocation } from "wouter";
 import { toast } from "sonner";
 import VisualCardSelector from "@/components/VisualCardSelector";
 import HandInputPreview from "@/components/HandInputPreview";
+import GuestAnalysisResults from "@/components/GuestAnalysisResults";
 import { PlayerActionInterface, ActionHistory, PlayerAction as ActionData } from "@/components/PlayerActionInterface";
 import { BulkActionEntry } from "@/components/BulkActionEntry";
 import { getNextPlayer, BulkAction } from "@/utils/pokerUtils";
@@ -65,6 +66,8 @@ export default function HandInputSequential() {
   const [bulkEntryMode, setBulkEntryMode] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [showBatchImport, setShowBatchImport] = useState(false);
+  const [guestAnalysis, setGuestAnalysis] = useState<any>(null);
+  const [showGuestResults, setShowGuestResults] = useState(false);
   const [handState, setHandState] = useState<HandState>({
     smallBlind: 200,
     bigBlind: 400,
@@ -91,6 +94,17 @@ export default function HandInputSequential() {
     },
     onError: (error) => {
       toast.error(`Failed to save hand: ${error.message}`);
+    },
+  });
+
+  const analyzeGuestMutation = trpc.hands.analyzeGuest.useMutation({
+    onSuccess: (data) => {
+      // Store analysis in state to show results
+      setGuestAnalysis(data.analysis);
+      setShowGuestResults(true);
+    },
+    onError: (error) => {
+      toast.error(`Failed to analyze hand: ${error.message}`);
     },
   });
 
@@ -196,12 +210,12 @@ export default function HandInputSequential() {
   };
 
   const handleSubmit = () => {
-    if (!handState.heroPosition) {
-      toast.error("Invalid hand data");
+    if (!handState.heroPosition || !handState.heroCard1 || !handState.heroCard2) {
+      toast.error("Please complete all required fields");
       return;
     }
 
-    createMutation.mutate({
+    const handData = {
       title: `${handState.heroPosition} Hand`,
       smallBlind: handState.smallBlind,
       bigBlind: handState.bigBlind,
@@ -220,19 +234,28 @@ export default function HandInputSequential() {
         ...handState.turnActions.map(a => ({ street: 'turn' as const, player: a.position, action: a.action, amount: a.amount })),
         ...handState.riverActions.map(a => ({ street: 'river' as const, player: a.position, action: a.action, amount: a.amount })),
       ],
-    });
+    };
+
+    // If authenticated, save to database; otherwise analyze as guest
+    if (isAuthenticated) {
+      createMutation.mutate(handData);
+    } else {
+      analyzeGuestMutation.mutate(handData);
+    }
   };
 
-  if (!isAuthenticated) {
+  // Show guest analysis results if available
+  if (showGuestResults && guestAnalysis) {
     return (
-      <div className="min-h-screen bg-background felt-texture flex items-center justify-center">
-        <Card>
-          <CardHeader>
-            <CardTitle>Authentication Required</CardTitle>
-            <CardDescription>Please sign in to input hands.</CardDescription>
-          </CardHeader>
-        </Card>
-      </div>
+      <GuestAnalysisResults
+        analysis={guestAnalysis}
+        onClose={() => {
+          setShowGuestResults(false);
+          setGuestAnalysis(null);
+          // Reset to step 1
+          setStep(1);
+        }}
+      />
     );
   }
 

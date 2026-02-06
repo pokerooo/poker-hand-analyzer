@@ -47,37 +47,38 @@ export default function Home() {
             </div>
             
             <div className="flex flex-wrap gap-3">
+              <Link href="/input">
+                <Button size="lg" className="gap-2 bg-accent text-accent-foreground hover:bg-accent/90">
+                  <span className="text-lg">+</span>
+                  {isAuthenticated ? 'Input New Hand' : 'Try It Free - No Signup'}
+                </Button>
+              </Link>
+              
               {!isAuthenticated ? (
                 <Button 
                   size="lg" 
-                  className="bg-accent text-accent-foreground hover:bg-accent/90"
+                  variant="outline"
                   onClick={() => window.location.href = getLoginUrl()}
                 >
-                  Sign In to Analyze Your Hands
+                  Sign In to Save Hands
                 </Button>
               ) : (
                 <>
-            <Link href="/input">
-              <Button size="lg" className="gap-2">
-                <span className="text-lg">+</span>
-                Input New Hand
-              </Button>
-            </Link>
-            <Link href="/archive">
-              <Button size="lg" variant="outline" className="gap-2">
-                View Archive
-              </Button>
-            </Link>
-            <Link href="/stats">
-              <Button size="lg" variant="outline" className="gap-2">
-                Your Statistics
-              </Button>
-            </Link>
-            <Link href="/discord">
-              <Button size="lg" variant="outline" className="gap-2">
-                Discord Settings
-              </Button>
-            </Link>
+                  <Link href="/archive">
+                    <Button size="lg" variant="outline" className="gap-2">
+                      View Archive
+                    </Button>
+                  </Link>
+                  <Link href="/stats">
+                    <Button size="lg" variant="outline" className="gap-2">
+                      Your Statistics
+                    </Button>
+                  </Link>
+                  <Link href="/discord">
+                    <Button size="lg" variant="outline" className="gap-2">
+                      Discord Settings
+                    </Button>
+                  </Link>
                 </>
               )}
             </div>
