@@ -57,22 +57,23 @@ export default function VisualCardSelector({ value, onChange, label }: VisualCar
   const displaySuit = selectedSuit || currentSuit;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2">
       {label && <label className="text-sm font-medium text-muted-foreground">{label}</label>}
       
       <Card className="bg-muted/50 border-border">
-        <CardContent className="p-6 space-y-6">
+        <CardContent className="p-2 sm:p-3 space-y-2">
           {/* Suit Selection - Top Row */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="grid grid-cols-4 sm:flex gap-2 sm:gap-3 flex-1 w-full">
+          <div className="flex items-center gap-1.5">
+            <div className="grid grid-cols-4 gap-1 flex-1">
               {SUITS.map((suit) => (
                 <button
                   key={suit.name}
                   onClick={() => handleSuitClick(suit.name)}
                   className={`
-                    flex-1 aspect-[3/4] rounded-xl border-2 bg-background
+                    aspect-[3/4] rounded-lg border-2 bg-background
                     flex flex-col items-center justify-center
-                    transition-all hover:scale-105 hover:shadow-lg
+                    transition-all hover:scale-105 active:scale-95
+                    min-h-[50px]
                     ${
                       displaySuit === suit.name
                         ? `border-accent ${suit.bgColor} shadow-lg scale-105`
@@ -80,10 +81,10 @@ export default function VisualCardSelector({ value, onChange, label }: VisualCar
                     }
                   `}
                 >
-                  <div className="text-4xl font-bold">
+                  <div className="text-lg sm:text-xl font-bold">
                     {displayRank || "A"}
                   </div>
-                  <div className={`text-5xl ${suit.color}`}>
+                  <div className={`text-2xl sm:text-3xl ${suit.color}`}>
                     {suit.symbol}
                   </div>
                 </button>
@@ -92,27 +93,27 @@ export default function VisualCardSelector({ value, onChange, label }: VisualCar
             
             <Button
               variant="ghost"
-              size="lg"
+              size="sm"
               onClick={handleClear}
-              className="text-cyan-400 hover:text-cyan-300 hover:bg-cyan-400/10 w-full sm:w-auto min-h-[44px]"
+              className="text-cyan-400 hover:text-cyan-300 hover:bg-cyan-400/10 min-h-[40px] text-xs px-2"
             >
               Clear
             </Button>
           </div>
 
-          {/* Rank Selection - Grid */}
-          <div className="space-y-2">
-            <div className="grid grid-cols-7 gap-1.5 sm:gap-2">
+          {/* Rank Selection - Compact Grid */}
+          <div className="space-y-1">
+            <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
               {RANKS.slice(0, 7).map((rank) => (
                 <button
                   key={rank}
                   onClick={() => handleRankClick(rank)}
                   className={`
-                    aspect-square rounded-lg border-2
+                    aspect-square rounded border-2
                     flex items-center justify-center
-                    text-xl sm:text-2xl font-bold
+                    text-sm sm:text-base font-bold
                     transition-all hover:scale-105 active:scale-95
-                    min-h-[44px] min-w-[44px]
+                    min-h-[36px] min-w-[36px]
                     ${
                       displayRank === rank
                         ? "border-accent bg-accent/20 text-accent shadow-lg scale-105"
@@ -125,17 +126,17 @@ export default function VisualCardSelector({ value, onChange, label }: VisualCar
               ))}
             </div>
             
-            <div className="grid grid-cols-7 gap-1.5 sm:gap-2">
+            <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
               {RANKS.slice(7).map((rank) => (
                 <button
                   key={rank}
                   onClick={() => handleRankClick(rank)}
                   className={`
-                    aspect-square rounded-lg border-2
+                    aspect-square rounded border-2
                     flex items-center justify-center
-                    text-xl sm:text-2xl font-bold
+                    text-sm sm:text-base font-bold
                     transition-all hover:scale-105 active:scale-95
-                    min-h-[44px] min-w-[44px]
+                    min-h-[36px] min-w-[36px]
                     ${
                       displayRank === rank
                         ? "border-accent bg-accent/20 text-accent shadow-lg scale-105"
@@ -150,18 +151,18 @@ export default function VisualCardSelector({ value, onChange, label }: VisualCar
               {/* Random button in the grid */}
               <button
                 onClick={handleRandom}
-                className="aspect-square rounded-lg border-2 border-border bg-background/50 hover:border-accent/50 hover:bg-accent/10 flex items-center justify-center text-sm font-semibold text-cyan-400 hover:text-cyan-300 transition-all hover:scale-105"
+                className="aspect-square rounded border-2 border-border bg-background/50 hover:border-accent/50 hover:bg-accent/10 flex items-center justify-center text-[10px] sm:text-xs font-semibold text-cyan-400 hover:text-cyan-300 transition-all hover:scale-105 min-h-[36px]"
               >
                 Rng
               </button>
             </div>
           </div>
 
-          {/* Selected Card Display */}
+          {/* Selected Card Display - Compact */}
           {displayRank && displaySuit && (
-            <div className="text-center p-4 bg-accent/10 rounded-lg border border-accent/30">
-              <div className="text-sm text-muted-foreground mb-1">Selected Card</div>
-              <div className="text-3xl font-mono font-bold">
+            <div className="text-center p-2 bg-accent/10 rounded border border-accent/30">
+              <div className="text-xs text-muted-foreground">Selected</div>
+              <div className="text-xl font-mono font-bold">
                 {displayRank}
                 <span className={SUITS.find(s => s.name === displaySuit)?.color}>
                   {SUITS.find(s => s.name === displaySuit)?.symbol}

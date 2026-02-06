@@ -370,20 +370,20 @@ export default function HandInputSequential() {
 
         {/* Step 2: Hero Position & Cards */}
         {step === 2 && (
-          <div className="space-y-6">
+          <div className="space-y-3">
             <Card>
-              <CardHeader>
-                <CardTitle>Your Position</CardTitle>
-                <CardDescription>Select where you're sitting at the table</CardDescription>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">Your Position</CardTitle>
+                <CardDescription className="text-sm">Select where you're sitting</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
                   {POSITIONS.map((pos) => (
                     <Button
                       key={pos}
                       variant={handState.heroPosition === pos ? "default" : "outline"}
                       onClick={() => setHandState({ ...handState, heroPosition: pos })}
-                      className="h-16"
+                      className="h-12 text-sm"
                     >
                       {pos}
                     </Button>
@@ -392,19 +392,20 @@ export default function HandInputSequential() {
               </CardContent>
             </Card>
 
-            <VisualCardSelector
-              label="First Card"
-              value={handState.heroCard1}
-              onChange={(card) => setHandState({ ...handState, heroCard1: card })}
-            />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+              <VisualCardSelector
+                label="First Card"
+                value={handState.heroCard1}
+                onChange={(card) => setHandState({ ...handState, heroCard1: card })}
+              />
+              <VisualCardSelector
+                label="Second Card"
+                value={handState.heroCard2}
+                onChange={(card) => setHandState({ ...handState, heroCard2: card })}
+              />
+            </div>
 
-            <VisualCardSelector
-              label="Second Card"
-              value={handState.heroCard2}
-              onChange={(card) => setHandState({ ...handState, heroCard2: card })}
-            />
-
-            <div className="flex justify-between pt-4">
+            <div className="flex justify-between pt-3">
               <Button variant="outline" onClick={handleBack}>
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back
@@ -560,33 +561,33 @@ export default function HandInputSequential() {
 
         {/* Step 4: Flop Cards */}
         {step === 4 && (
-          <div className="space-y-6">
+          <div className="space-y-3">
             <Card>
-              <CardHeader>
-                <CardTitle>Flop Cards</CardTitle>
-                <CardDescription>Select the 3 cards that came on the flop</CardDescription>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">Flop Cards</CardTitle>
+                <CardDescription className="text-sm">Select the 3 cards that came on the flop</CardDescription>
               </CardHeader>
             </Card>
 
-            <VisualCardSelector
-              label="First Flop Card"
-              value={handState.flopCard1}
-              onChange={(card) => setHandState({ ...handState, flopCard1: card })}
-            />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+              <VisualCardSelector
+                label="First Flop Card"
+                value={handState.flopCard1}
+                onChange={(card) => setHandState({ ...handState, flopCard1: card })}
+              />
+              <VisualCardSelector
+                label="Second Flop Card"
+                value={handState.flopCard2}
+                onChange={(card) => setHandState({ ...handState, flopCard2: card })}
+              />
+              <VisualCardSelector
+                label="Third Flop Card"
+                value={handState.flopCard3}
+                onChange={(card) => setHandState({ ...handState, flopCard3: card })}
+              />
+            </div>
 
-            <VisualCardSelector
-              label="Second Flop Card"
-              value={handState.flopCard2}
-              onChange={(card) => setHandState({ ...handState, flopCard2: card })}
-            />
-
-            <VisualCardSelector
-              label="Third Flop Card"
-              value={handState.flopCard3}
-              onChange={(card) => setHandState({ ...handState, flopCard3: card })}
-            />
-
-            <div className="flex justify-between pt-4">
+            <div className="flex justify-between pt-3">
               <Button variant="outline" onClick={handleBack}>
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back
@@ -678,11 +679,11 @@ export default function HandInputSequential() {
 
         {/* Step 6: Turn Card */}
         {step === 6 && (
-          <div className="space-y-6">
+          <div className="space-y-3">
             <Card>
-              <CardHeader>
-                <CardTitle>Turn Card</CardTitle>
-                <CardDescription>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">Turn Card</CardTitle>
+                <CardDescription className="text-sm">
                   Board so far: {formatCard(handState.flopCard1)} {formatCard(handState.flopCard2)}{" "}
                   {formatCard(handState.flopCard3)}
                 </CardDescription>
@@ -695,7 +696,7 @@ export default function HandInputSequential() {
               onChange={(card) => setHandState({ ...handState, turnCard: card })}
             />
 
-            <div className="flex justify-between pt-4">
+            <div className="flex justify-between pt-3">
               <Button variant="outline" onClick={handleBack}>
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back
@@ -788,11 +789,11 @@ export default function HandInputSequential() {
 
         {/* Step 8: River Card */}
         {step === 8 && (
-          <div className="space-y-6">
+          <div className="space-y-3">
             <Card>
-              <CardHeader>
-                <CardTitle>River Card</CardTitle>
-                <CardDescription>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">River Card</CardTitle>
+                <CardDescription className="text-sm">
                   Board so far: {formatCard(handState.flopCard1)} {formatCard(handState.flopCard2)}{" "}
                   {formatCard(handState.flopCard3)} {formatCard(handState.turnCard)}
                 </CardDescription>
@@ -805,7 +806,7 @@ export default function HandInputSequential() {
               onChange={(card) => setHandState({ ...handState, riverCard: card })}
             />
 
-            <div className="flex justify-between pt-4">
+            <div className="flex justify-between pt-3">
               <Button variant="outline" onClick={handleBack}>
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back

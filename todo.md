@@ -512,3 +512,19 @@
   - [x] Added Discord Settings button to Home page
   - [x] Mobile-friendly webhook management and sharing UI
   - [x] Webhook manager shows default badge and allows setting default
+
+
+## Current Task: Improve Hand Input Interface ✓
+- [x] Make card selectors more compact:
+  - [x] Reduced card button sizes in VisualCardSelector (36px min height, smaller text)
+  - [x] Optimized grid layout with tighter spacing (0.5-1px gaps)
+  - [x] Hero cards now visible side-by-side on large screens (grid-cols-2)
+  - [x] All 3 flop cards visible together (grid-cols-3 on large screens)
+  - [x] Maintained touch-friendly tap targets (40px min for buttons, 36px for cards)
+- [x] Optimized HandInputSequential layout:
+  - [x] Reduced spacing between sections (space-y-3 instead of space-y-6)
+  - [x] Made step cards more compact (pb-3, text-lg titles, text-sm descriptions)
+  - [x] Reduced padding in card selectors (p-2 sm:p-3)
+  - [x] Improved visual hierarchy with smaller fonts and tighter spacing
+  - [x] Position buttons more compact (h-12 instead of h-16, 3x5 grid)
+  - [x] All card selection steps now fit better on screen without excessive scrolling
