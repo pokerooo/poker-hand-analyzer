@@ -10,6 +10,7 @@ import { ArrowLeft, ArrowRight, Check, Loader2, FileText, Upload } from "lucide-
 import { Link, useLocation } from "wouter";
 import { toast } from "sonner";
 import VisualCardSelector from "@/components/VisualCardSelector";
+import HandInputPreview from "@/components/HandInputPreview";
 import { PlayerActionInterface, ActionHistory, PlayerAction as ActionData } from "@/components/PlayerActionInterface";
 import { BulkActionEntry } from "@/components/BulkActionEntry";
 import { getNextPlayer, BulkAction } from "@/utils/pokerUtils";
@@ -291,6 +292,22 @@ export default function HandInputSequential() {
             />
           </div>
         </div>
+
+        {/* Card Preview - Shows selected cards across all steps */}
+        {step > 1 && (
+          <HandInputPreview
+            heroPosition={handState.heroPosition}
+            heroCard1={handState.heroCard1}
+            heroCard2={handState.heroCard2}
+            flopCard1={handState.flopCard1}
+            flopCard2={handState.flopCard2}
+            flopCard3={handState.flopCard3}
+            turnCard={handState.turnCard}
+            riverCard={handState.riverCard}
+            smallBlind={handState.smallBlind}
+            bigBlind={handState.bigBlind}
+          />
+        )}
 
         {/* Step 1: Game Setup */}
         {step === 1 && (

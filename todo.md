@@ -528,3 +528,19 @@
   - [x] Improved visual hierarchy with smaller fonts and tighter spacing
   - [x] Position buttons more compact (h-12 instead of h-16, 3x5 grid)
   - [x] All card selection steps now fit better on screen without excessive scrolling
+
+
+## Current Task: Visual Card Preview ✓
+- [x] Create HandInputPreview component:
+  - [x] Display hero cards when selected with proper formatting
+  - [x] Display board cards (flop/turn/river) as they're added
+  - [x] Show position and blinds info in compact format
+  - [x] Use card symbols (♠♥♣♦) with proper colors (red for hearts/diamonds, etc.)
+  - [x] Compact, sticky design at top of input area (z-10, sticky top-0)
+  - [x] Separators between flop/turn/river for clarity
+- [x] Integrate into HandInputSequential:
+  - [x] Added preview to all steps after initial setup (step > 1)
+  - [x] Preview updates dynamically as cards are selected
+  - [x] Sticky positioning keeps preview visible while scrolling
+  - [x] Responsive design works on mobile and desktop
+  - [x] Only shows when there's data to display (conditional rendering)
