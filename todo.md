@@ -158,3 +158,54 @@ Optional paid AI coach scores the hand and explains what to do differently.
 - [x] Persist villain type selection per hand
 - [x] Show villain type context in the analysis output
 - [x] Write tests for villain type prompt injection (9 tests added, 105 total passing)
+
+## Current Task: Growth Features (Streak, Roast, Spot the Mistake, EV Leaks)
+
+### Feature 8: Study Streak Counter
+- [x] Add streakCount and lastStudyDate columns to users table
+- [x] Update streak on every hand analysis or review action
+- [x] Show streak badge on dashboard/My Hands page
+- [x] Add streak milestone toasts (3, 7, 14, 30 days)
+
+### Feature 6: Villain Roast Mode
+- [x] Add roast field to coach analysis LLM response schema
+- [x] Generate punchy one-liner roast of villain's play in the hand
+- [x] Display roast card in Coach tab after analysis
+- [x] Make roast copyable for sharing in Discord/Telegram
+
+### Feature 4: Spot the Mistake Challenge Export
+- [x] Add challenge mode to Share tab in HandReplayer
+- [x] Generate share card showing board + action up to decision point (final action hidden)
+- [x] Add "What would you do?" CTA with link back to full analysis
+- [x] Generate unique challenge URL per hand
+- [x] Public challenge view page showing the spot without the answer
+
+### Feature 5: Session EV Leak Detection
+- [x] Add session grouping to My Hands (group by date)
+- [x] Build leak analysis tRPC procedure that scans multiple hands
+- [x] Detect recurring patterns: check-fold frequency, sizing tells, positional leaks
+- [x] Display leak report card on My Hands page per session
+- [x] Quantify leaks in estimated buy-in impact
+
+### Feature: Hand Edit Mode in Replayer
+- [x] Add Edit Hand button in replayer header/controls
+- [x] Show inline text editor pre-filled with current rawText
+- [x] Re-parse hand on save using existing parseText + create mutations
+- [x] Update the replayer state with new parsed data without page reload
+- [x] Show loading state during re-parse
+- [x] Persist updated rawText and parsedData to DB
+- [x] Add updateHand tRPC mutation (protected, owner only)
+
+### Feature: Accurate Stack Deduction
+- [x] Track per-player running stack across all streets (not just starting stack)
+- [x] Deduct bet/raise/call/all-in amounts from player stack per action
+- [x] Handle blind posts as initial deductions before preflop actions
+- [x] Show effective stack (min of hero and villain remaining) on each step
+- [x] Reset stacks correctly when moving between streets
+
+### Feature: 8-Max Table Population
+- [x] Define canonical 8-max seat order: BTN, SB, BB, UTG, UTG+1, MP, HJ, CO
+- [x] Populate all 8 seats in PokerTable, showing empty seats for positions not in hand
+- [x] Empty seats show greyed-out chip/avatar with position label
+- [x] Active players (in hand) show normally with cards and stacks
+- [x] Folded players show face-down cards and dimmed styling

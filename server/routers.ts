@@ -18,6 +18,10 @@ import {
   createDiscordWebhook,
   deleteDiscordWebhook,
   setDefaultDiscordWebhook,
+  updateStudyStreak,
+  getStudyStreak,
+  getUserHands as getUserHandsForLeaks,
+  updateHand,
 } from "./db";
 import { parseHandText } from "./handParser";
 import { invokeLLM } from "./_core/llm";
@@ -97,6 +101,26 @@ const handsRouter = router({
       await deleteHand(input.id, ctx.user.id);
       return { success: true };
     }),
+
+  // Update a hand's raw text and parsed data (must own it)
+  update: protectedProcedure
+    .input(z.object({
+      id: z.number(),
+      rawText: z.string().min(10).max(5000),
+      parsedData: z.any(),
+      title: z.string().max(255).optional().nullable(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const hand = await getHandById(input.id);
+      if (!hand) throw new TRPCError({ code: "NOT_FOUND", message: "Hand not found" });
+      if (hand.userId !== ctx.user.id) throw new TRPCError({ code: "FORBIDDEN", message: "You do not own this hand" });
+      await updateHand(input.id, ctx.user.id, {
+        rawText: input.rawText,
+        parsedData: input.parsedData,
+        title: input.title,
+      });
+      return { success: true };
+    }),
 });
 
 // ─── AI Coach Router ──────────────────────────────────────────────────────────
@@ -171,6 +195,7 @@ Provide your analysis in this exact JSON format:
   "mistakes": ["1-3 exploitative mistakes — what should have been done differently vs this villain"],
   "keyLesson": "The single most important exploitative adjustment for this villain type",
   "exploitativeAdjustments": ["2-3 specific line changes to maximise EV vs this villain type"],
+  "villainRoast": "A single punchy, sharp sentence roasting the villain's play in this hand. Direct and specific. E.g. 'Villain called off 80% of their stack with third pair on a four-flush board — textbook fish behaviour.' Keep it under 20 words.",
   "streets": {
     "preflop": { "score": 1-10, "comment": "brief comment on exploitative correctness" },
     "flop": { "score": 1-10, "comment": "brief comment" } | null,
@@ -203,7 +228,115 @@ Be direct and professional. No hand-holding. Focus on EV maximisation.`;
         await updateVillainType(input.handId, ctx.user.id, input.villainType);
       }
       await updateHandCoachAnalysis(input.handId, analysis);
-      return { analysis, cached: false, villainType: villainTypeKey };
+
+      // Update study streak
+      const streakResult = await updateStudyStreak(ctx.user.id);
+
+      return { analysis, cached: false, villainType: villainTypeKey, streak: streakResult };
+    }),
+});
+
+// ─── Streak Router ───────────────────────────────────────────────────────────
+
+const streakRouter = router({
+  get: protectedProcedure.query(async ({ ctx }) => {
+    return getStudyStreak(ctx.user.id);
+  }),
+  bump: protectedProcedure.mutation(async ({ ctx }) => {
+    return updateStudyStreak(ctx.user.id);
+  }),
+});
+
+// ─── Session Leak Detection Router ───────────────────────────────────────────────
+
+const leaksRouter = router({
+  analyze: protectedProcedure
+    .input(z.object({ sessionDate: z.string().optional() })) // YYYY-MM-DD, defaults to today
+    .query(async ({ input, ctx }) => {
+      const allHands = await getUserHandsForLeaks(ctx.user.id);
+      if (!allHands || allHands.length < 3) {
+        return { hasEnoughData: false, leaks: [], summary: null };
+      }
+
+      // Group by session date (UTC date of createdAt)
+      const targetDate = input.sessionDate || new Date().toISOString().slice(0, 10);
+      const sessionHands = allHands.filter((h) => {
+        const handDate = new Date(h.createdAt).toISOString().slice(0, 10);
+        return handDate === targetDate;
+      });
+
+      // Fall back to last 10 hands if no session hands
+      const handsToAnalyze = sessionHands.length >= 2 ? sessionHands : allHands.slice(0, 10);
+      if (handsToAnalyze.length < 2) return { hasEnoughData: false, leaks: [], summary: null };
+
+      const handSummaries = handsToAnalyze.map((h) => {
+        const p = h.parsedData as any;
+        return {
+          id: h.id,
+          rawText: h.rawText.slice(0, 300),
+          heroCards: p?.heroCards?.join(" ") || "?",
+          position: p?.heroPosition || "?",
+          streets: (p?.streets || []).map((s: any) => ({
+            name: s.name,
+            actions: (s.actions || []).map((a: any) => ({
+              player: a.player,
+              action: a.action,
+              amount: a.amount,
+              isHero: a.isHero,
+            })),
+          })),
+          result: p?.result,
+          coachGrade: (h.coachAnalysis as any)?.grade || null,
+        };
+      });
+
+      const prompt = `You are a professional poker coach analysing ${handsToAnalyze.length} hands from a single session to identify recurring EV leaks.
+
+Hands:
+${JSON.stringify(handSummaries, null, 2)}
+
+Identify 2-4 specific, recurring patterns that are costing this player money. Focus on:
+- Check-fold frequency with made hands
+- Missed c-bet spots
+- Sizing tells (always same size = exploitable)
+- Positional leaks (e.g. playing too many hands from early position)
+- Passive play patterns (calling when raising is better)
+
+For each leak, estimate the buy-in impact per 100 hands at these stakes.
+
+Respond in this exact JSON format:
+{
+  "summary": "1-2 sentence overall session assessment",
+  "leaks": [
+    {
+      "title": "Short leak name (e.g. Check-Fold Frequency)",
+      "description": "What the player is doing wrong",
+      "fix": "Specific actionable fix",
+      "severity": "high" | "medium" | "low",
+      "estimatedBuyinImpact": number (e.g. 1.5 = 1.5 buy-ins per 100 hands)
+    }
+  ],
+  "positivePatterns": ["1-2 things the player is doing well"]
+}`;
+
+      const response = await invokeLLM({
+        messages: [
+          { role: "system", content: "You are a professional poker coach. Respond with valid JSON only." },
+          { role: "user", content: prompt },
+        ],
+      });
+
+      let result: any;
+      try {
+        const content = response.choices[0].message.content;
+        const text = typeof content === "string" ? content : JSON.stringify(content);
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        result = jsonMatch ? JSON.parse(jsonMatch[0]) : JSON.parse(text);
+      } catch {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to parse leak analysis" });
+      }
+
+      return { hasEnoughData: true, ...result, handsAnalyzed: handsToAnalyze.length };
     }),
 });
 
@@ -274,6 +407,8 @@ export const appRouter = router({
   auth: authRouter,
   hands: handsRouter,
   coach: coachRouter,
+  streak: streakRouter,
+  leaks: leaksRouter,
   discord: discordRouter,
   system: systemRouter,
 });

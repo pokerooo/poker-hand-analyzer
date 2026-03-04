@@ -113,10 +113,85 @@ export async function deleteHand(id: number, userId: number) {
   await db.delete(hands).where(and(eq(hands.id, id), eq(hands.userId, userId)));
 }
 
+// ─── Study Streak ─────────────────────────────────────────────────────────────
+
+/**
+ * Called whenever a user performs a study action (analysis, review, etc.).
+ * Increments streak if last study was yesterday, resets if gap > 1 day, no-ops if already studied today.
+ * Returns the updated streak count and whether a milestone was hit.
+ */
+export async function updateStudyStreak(userId: number): Promise<{ streak: number; isNewDay: boolean; milestone: number | null }> {
+  const db = await getDb();
+  if (!db) return { streak: 0, isNewDay: false, milestone: null };
+
+  const result = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+  const user = result[0];
+  if (!user) return { streak: 0, isNewDay: false, milestone: null };
+
+  const todayUTC = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+  const lastDate = (user as any).lastStudyDate as string | null;
+
+  // Already studied today — no change
+  if (lastDate === todayUTC) {
+    return { streak: (user as any).studyStreak ?? 0, isNewDay: false, milestone: null };
+  }
+
+  // Calculate yesterday
+  const yesterday = new Date();
+  yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+  const yesterdayUTC = yesterday.toISOString().slice(0, 10);
+
+  const currentStreak = (user as any).studyStreak ?? 0;
+  const longestStreak = (user as any).longestStreak ?? 0;
+
+  // Continue streak if last study was yesterday, else reset to 1
+  const newStreak = lastDate === yesterdayUTC ? currentStreak + 1 : 1;
+  const newLongest = Math.max(longestStreak, newStreak);
+
+  await db.update(users).set({
+    studyStreak: newStreak,
+    lastStudyDate: todayUTC,
+    longestStreak: newLongest,
+  } as any).where(eq(users.id, userId));
+
+  // Check for milestone (3, 7, 14, 30, 60, 100)
+  const milestones = [3, 7, 14, 30, 60, 100];
+  const milestone = milestones.includes(newStreak) ? newStreak : null;
+
+  return { streak: newStreak, isNewDay: true, milestone };
+}
+
+export async function getStudyStreak(userId: number): Promise<{ streak: number; longestStreak: number; lastStudyDate: string | null }> {
+  const db = await getDb();
+  if (!db) return { streak: 0, longestStreak: 0, lastStudyDate: null };
+  const result = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+  const user = result[0];
+  if (!user) return { streak: 0, longestStreak: 0, lastStudyDate: null };
+  return {
+    streak: (user as any).studyStreak ?? 0,
+    longestStreak: (user as any).longestStreak ?? 0,
+    lastStudyDate: (user as any).lastStudyDate ?? null,
+  };
+}
+
 export async function updateVillainType(id: number, userId: number, villainType: string | null) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   await db.update(hands).set({ villainType }).where(and(eq(hands.id, id), eq(hands.userId, userId)));
+}
+
+export async function updateHand(id: number, userId: number, data: { rawText: string; parsedData: unknown; title?: string | null }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const updateSet: Record<string, unknown> = {
+    rawText: data.rawText,
+    parsedData: data.parsedData,
+    // Reset coach analysis when hand is edited
+    coachAnalysis: null,
+    coachUnlocked: false,
+  };
+  if (data.title !== undefined) updateSet.title = data.title;
+  await db.update(hands).set(updateSet as any).where(and(eq(hands.id, id), eq(hands.userId, userId)));
 }
 
 // ─── Discord Webhooks ─────────────────────────────────────────────────────────

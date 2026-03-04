@@ -143,20 +143,23 @@ function CommunityCards({ cards, prevCount }: { cards: string[]; prevCount: numb
 
 // ─── Seat Layout ──────────────────────────────────────────────────────────────
 
+// Fixed 8-max seat positions — hero always at bottom-center (index 0)
+const EIGHT_MAX_SEATS: Array<{ top: string; left: string; transform: string }> = [
+  { top: "88%", left: "50%", transform: "translate(-50%, -50%)" },   // 0 hero bottom-center
+  { top: "12%", left: "50%", transform: "translate(-50%, -50%)" },   // 1 top-center
+  { top: "50%", left: "5%",  transform: "translate(-50%, -50%)" },   // 2 left
+  { top: "50%", left: "95%", transform: "translate(-50%, -50%)" },   // 3 right
+  { top: "20%", left: "18%", transform: "translate(-50%, -50%)" },   // 4 top-left
+  { top: "20%", left: "82%", transform: "translate(-50%, -50%)" },   // 5 top-right
+  { top: "75%", left: "15%", transform: "translate(-50%, -50%)" },   // 6 bottom-left
+  { top: "75%", left: "85%", transform: "translate(-50%, -50%)" },   // 7 bottom-right
+];
+
+// Canonical 8-max position order (hero-relative rotation is handled by buildReplaySteps)
+const CANONICAL_POSITIONS = ["BTN", "SB", "BB", "UTG", "UTG+1", "MP", "HJ", "CO"];
+
 function getSeatPositions(count: number): Array<{ top: string; left: string; transform: string }> {
-  const seats: Array<{ top: string; left: string; transform: string }> = [
-    { top: "88%", left: "50%", transform: "translate(-50%, -50%)" },   // 0 hero bottom-center
-    { top: "12%", left: "50%", transform: "translate(-50%, -50%)" },   // 1 top-center
-    { top: "50%", left: "5%",  transform: "translate(-50%, -50%)" },   // 2 left
-    { top: "50%", left: "95%", transform: "translate(-50%, -50%)" },   // 3 right
-    { top: "20%", left: "18%", transform: "translate(-50%, -50%)" },   // 4 top-left
-    { top: "20%", left: "82%", transform: "translate(-50%, -50%)" },   // 5 top-right
-    { top: "75%", left: "15%", transform: "translate(-50%, -50%)" },   // 6 bottom-left
-    { top: "75%", left: "85%", transform: "translate(-50%, -50%)" },   // 7 bottom-right
-    { top: "40%", left: "5%",  transform: "translate(-50%, -50%)" },   // 8 mid-left
-    { top: "40%", left: "95%", transform: "translate(-50%, -50%)" },   // 9 mid-right
-  ];
-  return seats.slice(0, count);
+  return EIGHT_MAX_SEATS.slice(0, Math.max(count, 0));
 }
 
 // ─── Action colour ────────────────────────────────────────────────────────────
@@ -179,8 +182,51 @@ function formatAmount(n: number): string {
 
 // ─── Main Table ───────────────────────────────────────────────────────────────
 
+// Ghost seat for empty positions
+function GhostSeat({ position }: { position: string }) {
+  return (
+    <div className="flex flex-col items-center gap-0.5">
+      <div
+        className="flex flex-col items-center px-2 py-1 rounded-lg text-center"
+        style={{
+          minWidth: 44,
+          background: "rgba(15,23,42,0.3)",
+          border: "1px dashed rgba(148,163,184,0.08)",
+          opacity: 0.4,
+        }}
+      >
+        <span className="text-[10px] font-semibold" style={{ color: "rgba(148,163,184,0.4)" }}>{position}</span>
+        <span className="text-[9px]" style={{ color: "rgba(100,116,139,0.4)" }}>empty</span>
+      </div>
+    </div>
+  );
+}
+
 export function PokerTable({ players, communityCards, potSize, currentAction, street }: PokerTableProps) {
-  const seatPositions = useMemo(() => getSeatPositions(players.length), [players.length]);
+  // Build 8-seat layout: hero at index 0, fill remaining seats with active players then ghost seats
+  const fullSeats = useMemo(() => {
+    const hero = players.find((p) => p.isHero);
+    const villains = players.filter((p) => !p.isHero);
+
+    // Determine which canonical positions are NOT in the hand
+    const activePosSet = new Set(players.map((p) => p.position.toUpperCase()));
+    const emptyPositions = CANONICAL_POSITIONS.filter((pos) => !activePosSet.has(pos));
+
+    // Seat 0 = hero, seats 1..N = villains, remaining = ghost seats up to 8 total
+    const seats: Array<{ player: Player | null; ghostPos?: string }> = [];
+    if (hero) seats.push({ player: hero });
+    villains.forEach((v) => seats.push({ player: v }));
+
+    // Fill up to 8 seats with ghost positions
+    let ghostIdx = 0;
+    while (seats.length < 8 && ghostIdx < emptyPositions.length) {
+      seats.push({ player: null, ghostPos: emptyPositions[ghostIdx++] });
+    }
+
+    return seats;
+  }, [players]);
+
+  const seatPositions = EIGHT_MAX_SEATS; // always 8 fixed positions
   const [prevCardCount, setPrevCardCount] = useState(0);
 
   useEffect(() => {
@@ -295,10 +341,25 @@ export function PokerTable({ players, communityCards, potSize, currentAction, st
           )}
         </div>
 
-        {/* ── Player seats ── */}
-        {players.map((player, idx) => {
+        {/* ── Player seats (always 8) ── */}
+        {fullSeats.map((seat, idx) => {
           const pos = seatPositions[idx];
           if (!pos) return null;
+
+          // Ghost seat for empty positions
+          if (!seat.player) {
+            return (
+              <div
+                key={`ghost-${seat.ghostPos || idx}`}
+                className="absolute"
+                style={{ top: pos.top, left: pos.left, transform: pos.transform }}
+              >
+                <GhostSeat position={seat.ghostPos || "?"} />
+              </div>
+            );
+          }
+
+          const player = seat.player;
           const isCurrentActor = currentAction?.player === player.position;
           const actionStyle = isCurrentActor && currentAction ? getActionStyle(currentAction.action) : null;
 

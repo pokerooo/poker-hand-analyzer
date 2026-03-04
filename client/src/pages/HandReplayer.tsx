@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { VideoExport } from "@/components/VideoExport";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// --- Types ────────────────────────────────────────────────────────────────────
 
 interface ParsedAction {
   player: string;
@@ -52,7 +52,7 @@ interface ParsedHand {
   parseNotes?: string | null;
 }
 
-// ─── Build replay steps ───────────────────────────────────────────────────────
+// --- Build replay steps ───────────────────────────────────────────────────────
 
 interface ReplayStep {
   street: "preflop" | "flop" | "turn" | "river";
@@ -86,13 +86,13 @@ function sanitiseBoardCards(streets: ParsedStreet[]): ParsedStreet[] {
     let newCards: string[];
     // If LLM returned cumulative cards (e.g. all 5 on river), extract only the new ones
     if (cards.length === totalSoFar + allowed) {
-      // Incremental — already correct
+      // Incremental -- already correct
       newCards = cards;
     } else if (cards.length > allowed) {
-      // Cumulative — take the last `allowed` cards
+      // Cumulative -- take the last `allowed` cards
       newCards = cards.slice(cards.length - allowed);
     } else {
-      // Fewer than expected — take what we have
+      // Fewer than expected -- take what we have
       newCards = cards;
     }
     totalSoFar += newCards.length;
@@ -107,35 +107,108 @@ function heroFirst(players: ParsedPlayer[]): ParsedPlayer[] {
   return hero ? [hero, ...rest] : players;
 }
 
+// 8-max canonical seat order (hero always placed at BTN or their actual position)
+const SEAT_ORDER_8MAX = ["BTN", "SB", "BB", "UTG", "UTG+1", "MP", "HJ", "CO"];
+
+function build8MaxSeats(parsedPlayers: ParsedPlayer[], smallBlind: number, bigBlind: number): Array<ParsedPlayer & { isEmpty?: boolean }> {
+  // Build a map of position -> player for quick lookup
+  const playerMap = new Map<string, ParsedPlayer>();
+  for (const p of parsedPlayers) playerMap.set(p.position.toUpperCase(), p);
+
+  // Normalise common position aliases
+  const aliases: Record<string, string> = {
+    "UTG1": "UTG+1", "UTG 1": "UTG+1", "UTG2": "MP", "UTG 2": "MP",
+    "HIJACK": "HJ", "CUTOFF": "CO", "BUTTON": "BTN",
+    "SMALL BLIND": "SB", "BIG BLIND": "BB",
+  };
+  const normMap = new Map<string, ParsedPlayer>();
+  Array.from(playerMap.entries()).forEach(([pos, player]) => {
+    const norm = aliases[pos] || pos;
+    normMap.set(norm, player);
+  });
+
+  // Find hero seat index in canonical order to rotate hero to bottom (index 0)
+  const heroPlayer = parsedPlayers.find((p) => p.isHero);
+  const heroPos = heroPlayer ? (aliases[heroPlayer.position.toUpperCase()] || heroPlayer.position.toUpperCase()) : "BTN";
+  const heroIdx = SEAT_ORDER_8MAX.indexOf(heroPos);
+  const offset = heroIdx >= 0 ? heroIdx : 0;
+
+  // Rotate seat order so hero is first
+  const rotated = [...SEAT_ORDER_8MAX.slice(offset), ...SEAT_ORDER_8MAX.slice(0, offset)];
+
+  return rotated.map((seatPos) => {
+    const player = normMap.get(seatPos);
+    if (player) return { ...player, isEmpty: false };
+    // Empty seat -- ghost player
+    return {
+      position: seatPos,
+      isHero: false,
+      holeCards: null,
+      startingStack: null,
+      isEmpty: true,
+    };
+  });
+}
+
 function buildReplaySteps(parsed: ParsedHand): ReplayStep[] {
   const steps: ReplayStep[] = [];
   const foldedPlayers = new Set<string>();
   let communityCards: string[] = [];
-  let pot = (parsed.smallBlind || 0) + (parsed.bigBlind || 0) + (parsed.ante || 0) * (parsed.players?.length || 0);
 
   // Sanitise board cards and sort hero to front
   const sanitisedStreets = sanitiseBoardCards(parsed.streets || []);
-  const sortedPlayers = heroFirst(parsed.players || []);
 
-  // Track remaining stacks per player (deduct as actions happen)
+  // Build 8-max seats (hero first, empty seats for missing positions)
+  const allSeats = build8MaxSeats(parsed.players || [], parsed.smallBlind || 0, parsed.bigBlind || 0);
+
+  // Track remaining stacks per player -- deduct blind posts first
   const remainingStacks = new Map<string, number | undefined>();
-  for (const p of sortedPlayers) {
-    remainingStacks.set(p.position, p.startingStack ?? undefined);
+  for (const p of allSeats) {
+    if (!p.isEmpty) remainingStacks.set(p.position, p.startingStack ?? undefined);
   }
 
+  // Deduct blind posts from starting stacks
+  const sbPlayer = allSeats.find((p) => p.position === "SB" && !p.isEmpty);
+  const bbPlayer = allSeats.find((p) => p.position === "BB" && !p.isEmpty);
+  if (sbPlayer && parsed.smallBlind) {
+    const s = remainingStacks.get("SB");
+    if (s != null) remainingStacks.set("SB", Math.max(0, s - parsed.smallBlind));
+  }
+  if (bbPlayer && parsed.bigBlind) {
+    const b = remainingStacks.get("BB");
+    if (b != null) remainingStacks.set("BB", Math.max(0, b - parsed.bigBlind));
+  }
+
+  // Starting pot = blinds + antes
+  let pot = (parsed.smallBlind || 0) + (parsed.bigBlind || 0) + (parsed.ante || 0) * (parsed.players?.length || 0);
+
+  // Per-street: track amount each player has put in this street (for raise sizing)
+  // A "raise to X" means total bet is X, so deduct (X - alreadyInThisStreet)
+  let streetContributions = new Map<string, number>();
+
   const makePlayerState = (currentAction: ParsedAction | null) =>
-    sortedPlayers.map((p) => ({
+    allSeats.map((p) => ({
       position: p.position,
       isHero: p.isHero,
       holeCards: p.holeCards,
       hasFolded: foldedPlayers.has(p.position),
-      isActive: currentAction?.player === p.position,
-      betAmount: currentAction?.player === p.position && currentAction.amount ? currentAction.amount : 0,
-      isAllIn: currentAction?.player === p.position && currentAction.action === "allin",
-      stackSize: remainingStacks.get(p.position),
+      isActive: !p.isEmpty && currentAction?.player === p.position,
+      betAmount: !p.isEmpty && currentAction?.player === p.position && currentAction.amount ? currentAction.amount : 0,
+      isAllIn: !p.isEmpty && currentAction?.player === p.position && currentAction.action === "allin",
+      stackSize: p.isEmpty ? undefined : remainingStacks.get(p.position),
+      isEmpty: (p as any).isEmpty ?? false,
     }));
 
   for (const street of sanitisedStreets) {
+    // Reset per-street contributions at start of each street
+    streetContributions = new Map<string, number>();
+
+    // Preflop: SB and BB already contributed their blinds
+    if (street.name === "preflop") {
+      if (parsed.smallBlind) streetContributions.set("SB", parsed.smallBlind);
+      if (parsed.bigBlind) streetContributions.set("BB", parsed.bigBlind);
+    }
+
     // Reveal board cards for this street
     if (street.board && street.board.length > 0) {
       communityCards = [...communityCards, ...street.board];
@@ -148,7 +221,7 @@ function buildReplaySteps(parsed: ParsedHand): ReplayStep[] {
         description: `${street.name.charAt(0).toUpperCase() + street.name.slice(1)}: ${street.board.join(" ")}`,
       });
     } else if (street.name === "preflop") {
-      // Preflop — show cards dealt
+      // Preflop -- show cards dealt
       steps.push({
         street: "preflop",
         communityCards: [],
@@ -164,12 +237,34 @@ function buildReplaySteps(parsed: ParsedHand): ReplayStep[] {
       if (action.action === "fold") {
         foldedPlayers.add(action.player);
       }
-      if (action.amount) {
-        pot += action.amount;
+
+      if (action.amount && action.amount > 0) {
+        const alreadyIn = streetContributions.get(action.player) || 0;
+        const act = action.action.toLowerCase();
+
+        let actualDeduction = 0;
+
+        if (act === "raise" || act === "bet" || act === "allin") {
+          // amount is the TOTAL bet size for this street (raise TO X)
+          // deduct only the additional chips going in
+          actualDeduction = Math.max(0, action.amount - alreadyIn);
+          streetContributions.set(action.player, action.amount);
+        } else if (act === "call") {
+          // call amount is the additional chips needed
+          actualDeduction = action.amount;
+          streetContributions.set(action.player, alreadyIn + action.amount);
+        } else {
+          // generic -- treat as additional chips
+          actualDeduction = action.amount;
+          streetContributions.set(action.player, alreadyIn + action.amount);
+        }
+
+        pot += actualDeduction;
+
         // Deduct from remaining stack
         const currentStack = remainingStacks.get(action.player);
         if (currentStack != null) {
-          remainingStacks.set(action.player, Math.max(0, currentStack - action.amount));
+          remainingStacks.set(action.player, Math.max(0, currentStack - actualDeduction));
         }
       }
 
@@ -188,7 +283,7 @@ function buildReplaySteps(parsed: ParsedHand): ReplayStep[] {
     }
   }
 
-  // Final state — reveal all known community cards
+  // Final state -- reveal all known community cards
   if (steps.length > 0) {
     const last = steps[steps.length - 1];
     // Collect all board cards across all streets for the final summary view
@@ -209,7 +304,7 @@ function buildReplaySteps(parsed: ParsedHand): ReplayStep[] {
   return steps;
 }
 
-// ─── Share Sheet ──────────────────────────────────────────────────────────────
+// --- Share Sheet ──────────────────────────────────────────────────────────────
 
 function ShareSheet({ slug, rawText }: { slug: string; rawText: string }) {
   const shareUrl = `${window.location.origin}/hand/${slug}`;
@@ -306,7 +401,7 @@ function ShareSheet({ slug, rawText }: { slug: string; rawText: string }) {
   );
 }
 
-// ─── Villain type presets ─────────────────────────────────────────────────────
+// --- Villain type presets ─────────────────────────────────────────────────────
 
 const VILLAIN_PRESETS = [
   { id: "fish", label: "Fish", emoji: "🐟", description: "Calls too wide, chases draws" },
@@ -317,7 +412,7 @@ const VILLAIN_PRESETS = [
   { id: "maniac", label: "Maniac", emoji: "💥", description: "Bets/raises with anything" },
 ];
 
-// ─── AI Coach Panel ───────────────────────────────────────────────────────────
+// --- AI Coach Panel ───────────────────────────────────────────────────────────
 
 function CoachPanel({ handId, isUnlocked, cachedAnalysis, storedVillainType }: {
   handId: number;
@@ -364,7 +459,7 @@ function CoachPanel({ handId, isUnlocked, cachedAnalysis, storedVillainType }: {
 
   return (
     <div className="space-y-4">
-      {/* Villain type selector — always visible */}
+      {/* Villain type selector -- always visible */}
       <div>
         <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: "#4ade80" }}>Villain Type</p>
         <p className="text-xs mb-3" style={{ color: "#64748b" }}>Tag the opponent to get exploitative adjustments tailored to their tendencies.</p>
@@ -465,7 +560,7 @@ function CoachPanel({ handId, isUnlocked, cachedAnalysis, storedVillainType }: {
             </div>
           </div>
 
-          {/* Exploitative adjustments — new section */}
+          {/* Exploitative adjustments -- new section */}
           {analysis.exploitativeAdjustments?.length > 0 && (
             <div
               className="rounded-lg p-3 space-y-1.5"
@@ -473,7 +568,7 @@ function CoachPanel({ handId, isUnlocked, cachedAnalysis, storedVillainType }: {
             >
               <p className="text-xs font-bold uppercase tracking-widest" style={{ color: "#fbbf24" }}>⚡ Exploitative Adjustments</p>
               {analysis.exploitativeAdjustments.map((item: string, i: number) => (
-                <p key={i} className="text-xs" style={{ color: "#e2e8f0" }}>→ {item}</p>
+                <p key={i} className="text-xs" style={{ color: "#e2e8f0" }}><span style={{ color: "#fbbf24", marginRight: 4 }}>{"->"}</span>{item}</p>
               ))}
             </div>
           )}
@@ -501,7 +596,7 @@ function CoachPanel({ handId, isUnlocked, cachedAnalysis, storedVillainType }: {
               <p className="text-xs font-semibold mb-1.5" style={{ color: "#4ade80" }}>✓ What you did well</p>
               <div className="space-y-1">
                 {analysis.didWell.map((item: string, i: number) => (
-                  <p key={i} className="text-xs" style={{ color: "#94a3b8" }}>• {item}</p>
+                  <p key={i} className="text-xs" style={{ color: "#94a3b8" }}>* {item}</p>
                 ))}
               </div>
             </div>
@@ -511,7 +606,7 @@ function CoachPanel({ handId, isUnlocked, cachedAnalysis, storedVillainType }: {
               <p className="text-xs font-semibold mb-1.5" style={{ color: "#f87171" }}>✗ Where you went wrong</p>
               <div className="space-y-1">
                 {analysis.mistakes.map((item: string, i: number) => (
-                  <p key={i} className="text-xs" style={{ color: "#94a3b8" }}>• {item}</p>
+                  <p key={i} className="text-xs" style={{ color: "#94a3b8" }}>* {item}</p>
                 ))}
               </div>
             </div>
@@ -527,6 +622,9 @@ function CoachPanel({ handId, isUnlocked, cachedAnalysis, storedVillainType }: {
               <p className="text-xs" style={{ color: "#e2e8f0" }}>{analysis.keyLesson}</p>
             </div>
           )}
+
+          {/* Villain Roast */}
+          {analysis.roast && <VillainRoastCard roast={analysis.roast} />}
         </div>
       ) : (
         <div className="space-y-3">
@@ -561,7 +659,210 @@ function CoachPanel({ handId, isUnlocked, cachedAnalysis, storedVillainType }: {
   );
 }
 
-// ─── Main Replayer Page ───────────────────────────────────────────────────────
+// --- Villain Roast Card ─────────────────────────────────────────────────────
+
+function VillainRoastCard({ roast }: { roast: string }) {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = () => {
+    navigator.clipboard.writeText(`"${roast}" -- PokerReplay AI Coach`);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+    toast.success("Roast copied!");
+  };
+  return (
+    <div
+      className="rounded-xl p-4 space-y-2"
+      style={{ background: "linear-gradient(135deg, rgba(88,28,135,0.15), rgba(109,40,217,0.08))", border: "1px solid rgba(167,139,250,0.25)", boxShadow: "0 0 20px rgba(139,92,246,0.1)" }}
+    >
+      <p className="text-xs font-bold uppercase tracking-widest" style={{ color: "#a78bfa" }}>🎭 Villain Roast</p>
+      <p className="text-sm leading-relaxed italic" style={{ color: "#e2e8f0" }}>"{roast}"</p>
+      <button
+        onClick={handleCopy}
+        className="text-[10px] px-2.5 py-1 rounded-full transition-all"
+        style={{ background: copied ? "rgba(167,139,250,0.2)" : "rgba(255,255,255,0.05)", color: copied ? "#a78bfa" : "#64748b", border: "1px solid rgba(167,139,250,0.2)" }}
+      >
+        {copied ? "Copied!" : "Copy for Stories"}
+      </button>
+    </div>
+  );
+}
+
+// --- Spot the Mistake Challenge ───────────────────────────────────────────────
+
+function SpotTheMistake({ slug, parsed, steps, currentStepIndex }: {
+  slug: string;
+  parsed: ParsedHand | undefined;
+  steps: ReplayStep[];
+  currentStepIndex: number;
+}) {
+  const [revealed, setRevealed] = useState(false);
+  const shareUrl = `${window.location.origin}/hand/${slug}`;
+
+  if (!parsed) return null;
+
+  // Find the most critical decision point (first hero action with a bet/raise)
+  const criticalStep = steps.find((s) =>
+    s.currentAction &&
+    steps.indexOf(s) > 0 &&
+    (s.currentAction.action === "raise" || s.currentAction.action === "bet" || s.currentAction.action === "call" || s.currentAction.action === "fold")
+  );
+
+  const challengeText = criticalStep
+    ? `${criticalStep.street.toUpperCase()} -- ${criticalStep.players.find(p => p.isHero)?.position || "Hero"} faces a decision. What's the play?`
+    : "Can you spot the key mistake in this hand?";
+
+  const copyChallenge = () => {
+    const text = `🃏 SPOT THE MISTAKE\n\n${challengeText}\n\nSee the full hand: ${shareUrl}\n\n#poker #pokerstrategy #spotthemistake`;
+    navigator.clipboard.writeText(text);
+    toast.success("Challenge copied for Stories!");
+  };
+
+  return (
+    <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: "1rem" }}>
+      <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: "#f59e0b" }}>🎯 Spot the Mistake</p>
+      <div
+        className="rounded-xl p-4 space-y-3"
+        style={{ background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.2)" }}
+      >
+        <p className="text-sm font-semibold" style={{ color: "#fbbf24" }}>{challengeText}</p>
+        {!revealed ? (
+          <div className="space-y-2">
+            <p className="text-xs" style={{ color: "#64748b" }}>Share this as a challenge -- let your followers guess before revealing the answer.</p>
+            <div className="flex gap-2">
+              <button
+                onClick={copyChallenge}
+                className="flex-1 text-xs py-2 px-3 rounded-lg font-semibold transition-all"
+                style={{ background: "rgba(245,158,11,0.15)", color: "#fbbf24", border: "1px solid rgba(245,158,11,0.3)" }}
+              >
+                Copy for Stories
+              </button>
+              <button
+                onClick={() => setRevealed(true)}
+                className="flex-1 text-xs py-2 px-3 rounded-lg font-semibold transition-all"
+                style={{ background: "rgba(255,255,255,0.05)", color: "#94a3b8", border: "1px solid rgba(255,255,255,0.08)" }}
+              >
+                Reveal Answer
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <p className="text-xs font-semibold" style={{ color: "#4ade80" }}>Answer: Step {steps.indexOf(criticalStep!) + 1} of {steps.length}</p>
+            <p className="text-xs" style={{ color: "#94a3b8" }}>Use the replay controls to step through the hand and see the decision point.</p>
+            <button
+              onClick={() => setRevealed(false)}
+              className="text-xs py-1.5 px-3 rounded-lg"
+              style={{ background: "rgba(255,255,255,0.05)", color: "#64748b", border: "1px solid rgba(255,255,255,0.06)" }}
+            >
+              Hide answer
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// --- Hand Edit Mode ───────────────────────────────────────────────────────────
+
+function HandEditPanel({ hand, onSaved }: { hand: any; onSaved: (newParsed: any, newRawText: string) => void }) {
+  const [rawText, setRawText] = useState<string>(hand.rawText || "");
+  const [isEditing, setIsEditing] = useState(false);
+
+  const updateMutation = trpc.hands.update.useMutation({
+    onError: (err: any) => toast.error("Save failed", { description: err.message }),
+  });
+
+  const parseMutation = trpc.hands.parseText.useMutation({
+    onSuccess: async (data) => {
+      if (data.parsed) {
+        // Persist updated hand to DB
+        try {
+          await updateMutation.mutateAsync({ id: hand.id, rawText, parsedData: data.parsed });
+        } catch {
+          // DB save failed but we still update the UI
+        }
+        onSaved(data.parsed, rawText);
+        setIsEditing(false);
+        toast.success("Hand updated and re-simulated!");
+      } else {
+        toast.error("Could not parse the updated hand text.");
+      }
+    },
+    onError: (err: any) => toast.error("Parse failed", { description: err.message }),
+  });
+
+  const handleSave = () => {
+    parseMutation.mutate({ text: rawText });
+  };
+
+  if (!isEditing) {
+    return (
+      <button
+        onClick={() => setIsEditing(true)}
+        className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-all"
+        style={{ background: "rgba(255,255,255,0.05)", color: "#94a3b8", border: "1px solid rgba(255,255,255,0.08)" }}
+      >
+        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+        Edit Hand
+      </button>
+    );
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center"
+      style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(4px)" }}
+    >
+      <div
+        className="w-full max-w-lg rounded-t-2xl p-5 space-y-4"
+        style={{ background: "#0f172a", border: "1px solid rgba(255,255,255,0.1)", maxHeight: "85vh", display: "flex", flexDirection: "column" }}
+      >
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-bold" style={{ color: "#e2e8f0" }}>Edit Hand</p>
+          <button onClick={() => setIsEditing(false)} style={{ color: "#64748b" }}>✕</button>
+        </div>
+        <p className="text-xs" style={{ color: "#475569" }}>Edit the hand text below. Saving will re-parse and re-simulate the hand from scratch. Coach analysis will be reset.</p>
+        <textarea
+          value={rawText}
+          onChange={(e) => setRawText(e.target.value)}
+          className="flex-1 w-full text-xs rounded-lg p-3 font-mono resize-none outline-none"
+          style={{
+            background: "rgba(255,255,255,0.04)",
+            border: "1px solid rgba(255,255,255,0.1)",
+            color: "#e2e8f0",
+            minHeight: 200,
+            maxHeight: 400,
+          }}
+          rows={12}
+        />
+        <div className="flex gap-2">
+          <button
+            onClick={() => setIsEditing(false)}
+            className="flex-1 py-2.5 rounded-lg text-sm"
+            style={{ background: "rgba(255,255,255,0.05)", color: "#94a3b8", border: "1px solid rgba(255,255,255,0.08)" }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={parseMutation.isPending || !rawText.trim()}
+            className="flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all"
+            style={{
+              background: parseMutation.isPending ? "rgba(16,185,129,0.3)" : "linear-gradient(135deg, #065f46, #047857)",
+              color: "#6ee7b7",
+              border: "1px solid rgba(16,185,129,0.3)",
+            }}
+          >
+            {parseMutation.isPending ? "Re-simulating..." : "Save & Re-simulate"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// --- Main Replayer Page ───────────────────────────────────────────────────────
 
 export default function HandReplayer() {
   const [, params] = useRoute("/hand/:slug");
@@ -577,9 +878,21 @@ export default function HandReplayer() {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const captureRef = useRef<HTMLDivElement | null>(null); // ref for video export capture
 
-  const parsed = hand?.parsedData as ParsedHand | undefined;
+  // Allow local override when user edits the hand
+  const [localParsed, setLocalParsed] = useState<ParsedHand | null>(null);
+  const [localRawText, setLocalRawText] = useState<string | null>(null);
+
+  const parsed = (localParsed || hand?.parsedData) as ParsedHand | undefined;
   const steps = parsed ? buildReplaySteps(parsed) : [];
   const currentStep = steps[stepIndex];
+
+  const handleHandSaved = (newParsed: ParsedHand, newRawText: string) => {
+    setLocalParsed(newParsed);
+    setLocalRawText(newRawText);
+    setStepIndex(0);
+    setIsPlaying(false);
+    setTimeout(() => setIsPlaying(true), 600);
+  };
 
   // Auto-start playback once hand is loaded
   useEffect(() => {
@@ -595,7 +908,7 @@ export default function HandReplayer() {
     setDescriptionKey((k) => k + 1);
   }, [stepIndex]);
 
-  // Auto-play — 2.5s per step so it feels like a live hand
+  // Auto-play -- 2.5s per step so it feels like a live hand
   useEffect(() => {
     if (intervalRef.current) clearInterval(intervalRef.current);
     if (isPlaying) {
@@ -674,12 +987,13 @@ export default function HandReplayer() {
             )}
             <div className="flex items-center gap-1.5">
               <span className="font-mono font-bold text-sm" style={{ color: "#4ade80", textShadow: "0 0 8px rgba(74,222,128,0.4)" }}>{heroCards}</span>
-              <span className="text-xs" style={{ color: "#64748b" }}>{parsed.heroPosition} · {blinds}</span>
+              <span className="text-xs" style={{ color: "#64748b" }}>{parsed.heroPosition} . {blinds}</span>
             </div>
           </div>
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
           <ThemeToggle />
+          <HandEditPanel hand={{ ...hand, rawText: localRawText || hand.rawText }} onSaved={handleHandSaved} />
           <button
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
             style={{
@@ -695,9 +1009,9 @@ export default function HandReplayer() {
         </div>
       </header>
 
-      {/* Table + narration — captured for video export */}
+      {/* Table + narration -- captured for video export */}
       <div ref={captureRef} style={{ background: "linear-gradient(160deg, #0a0f0d 0%, #0d1a12 50%, #0a0f0d 100%)" }}>
-      {/* Table — swipe left/right to step through hand */}
+      {/* Table -- swipe left/right to step through hand */}
       <div
         className="w-full max-w-lg mx-auto px-4 pt-4"
         {...swipeHandlers}
@@ -713,7 +1027,7 @@ export default function HandReplayer() {
         )}
       </div>
 
-      {/* Action description — always visible, fades in on each step */}
+      {/* Action description -- always visible, fades in on each step */}
       <div className="px-4 pt-3 pb-2 max-w-lg mx-auto w-full">
         {currentStep && (
           <div
@@ -781,7 +1095,7 @@ export default function HandReplayer() {
           >
             <ArrowLeft className="h-3.5 w-3.5" />
           </button>
-          {/* Play/Pause — hero button */}
+          {/* Play/Pause -- hero button */}
           <button
             className="w-12 h-12 flex items-center justify-center rounded-full transition-all"
             style={{
@@ -862,6 +1176,10 @@ export default function HandReplayer() {
           {activeTab === "share" && (
             <div className="space-y-4">
               <ShareSheet slug={slug} rawText={hand.rawText} />
+
+              {/* Spot the Mistake Challenge */}
+              <SpotTheMistake slug={slug} parsed={parsed} steps={steps} currentStepIndex={stepIndex} />
+
               <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: "1rem" }}>
                 <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: "#4ade80" }}>Video Export</p>
                 <VideoExport
