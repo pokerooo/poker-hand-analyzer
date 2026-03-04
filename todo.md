@@ -132,3 +132,19 @@ Optional paid AI coach scores the hand and explains what to do differently.
 - [x] Update community card reveal with premium card-flip animation
 - [x] Update replayer UI chrome to match gaming aesthetic (dark header, neon controls, green glow)
 - [x] Update global CSS theme to support dark gaming palette
+
+## Current Task: Stack Display + Auto-Play + Video Export
+- [x] Show effective stack on player chips in replayer (remaining stack per step)
+- [x] Update PokerTable to accept and display stack sizes per player
+- [x] Update HandReplayer to pass stack sizes through replay steps
+- [x] Update hand parser to extract starting stack sizes
+- [x] Real-time auto-play: 2-3s per step with play/pause toggle
+- [x] Auto-play replaces manual step-through as default mode
+- [x] Keep manual prev/next controls for scrubbing
+- [x] Smooth CSS transitions between steps (fade/slide on narration card)
+- [x] Video/GIF export of hand replay
+- [x] Install html2canvas for frame capture
+- [x] Render each replay step to canvas
+- [x] Stitch frames into downloadable video/GIF
+- [x] Add export button to share tab in replayer
+- [x] Support portrait format for TikTok/IG Stories

@@ -157,3 +157,201 @@ describe("heroFirst", () => {
     expect(result[0].position).toBe("UTG");
   });
 });
+
+// ─── Stack tracking (mirrored from HandReplayer.tsx buildReplaySteps) ─────────
+
+interface MockPlayer {
+  position: string;
+  isHero: boolean;
+  holeCards?: string[] | null;
+  startingStack?: number | null;
+}
+
+interface MockAction {
+  player: string;
+  action: string;
+  amount?: number | null;
+  isHero?: boolean;
+}
+
+interface MockStreet {
+  name: "preflop" | "flop" | "turn" | "river";
+  board?: string[] | null;
+  actions: MockAction[];
+  pot?: number | null;
+}
+
+interface MockParsedHand {
+  smallBlind: number;
+  bigBlind: number;
+  ante?: number | null;
+  players: MockPlayer[];
+  heroPosition: string;
+  heroCards: string[];
+  streets: MockStreet[];
+  potSize?: number | null;
+  result?: string | null;
+  parseNotes?: string | null;
+}
+
+// Minimal re-implementation of buildReplaySteps stack tracking logic for testing
+function buildStackTracking(parsed: MockParsedHand) {
+  const remainingStacks = new Map<string, number | undefined>();
+  for (const p of parsed.players) {
+    remainingStacks.set(p.position, p.startingStack ?? undefined);
+  }
+
+  const snapshots: Array<{ step: number; stacks: Record<string, number | undefined> }> = [];
+  let stepCount = 0;
+
+  for (const street of parsed.streets) {
+    for (const action of street.actions) {
+      if (action.amount) {
+        const current = remainingStacks.get(action.player);
+        if (current != null) {
+          remainingStacks.set(action.player, Math.max(0, current - action.amount));
+        }
+      }
+      snapshots.push({
+        step: stepCount++,
+        stacks: Object.fromEntries(remainingStacks),
+      });
+    }
+  }
+
+  return { snapshots, finalStacks: Object.fromEntries(remainingStacks) };
+}
+
+describe("stack tracking in buildReplaySteps", () => {
+  it("deducts bet amount from player stack", () => {
+    const parsed: MockParsedHand = {
+      smallBlind: 500,
+      bigBlind: 1000,
+      players: [
+        { position: "co", isHero: true, startingStack: 20000 },
+        { position: "btn", isHero: false, startingStack: 20000 },
+      ],
+      heroPosition: "co",
+      heroCards: ["As", "Td"],
+      streets: [
+        {
+          name: "preflop",
+          actions: [
+            { player: "co", action: "raise", amount: 2500, isHero: true },
+            { player: "btn", action: "call", amount: 2500 },
+          ],
+        },
+      ],
+    };
+
+    const { finalStacks } = buildStackTracking(parsed);
+    expect(finalStacks["co"]).toBe(17500);
+    expect(finalStacks["btn"]).toBe(17500);
+  });
+
+  it("does not deduct for fold actions (no amount)", () => {
+    const parsed: MockParsedHand = {
+      smallBlind: 500,
+      bigBlind: 1000,
+      players: [
+        { position: "utg", isHero: false, startingStack: 10000 },
+        { position: "co", isHero: true, startingStack: 10000 },
+      ],
+      heroPosition: "co",
+      heroCards: ["Kh", "Qd"],
+      streets: [
+        {
+          name: "preflop",
+          actions: [
+            { player: "utg", action: "fold" },
+          ],
+        },
+      ],
+    };
+
+    const { finalStacks } = buildStackTracking(parsed);
+    expect(finalStacks["utg"]).toBe(10000); // unchanged
+    expect(finalStacks["co"]).toBe(10000);  // unchanged
+  });
+
+  it("does not go below zero on all-in", () => {
+    const parsed: MockParsedHand = {
+      smallBlind: 500,
+      bigBlind: 1000,
+      players: [
+        { position: "co", isHero: true, startingStack: 5000 },
+        { position: "btn", isHero: false, startingStack: 10000 },
+      ],
+      heroPosition: "co",
+      heroCards: ["As", "Ks"],
+      streets: [
+        {
+          name: "preflop",
+          actions: [
+            { player: "co", action: "allin", amount: 5000, isHero: true },
+            { player: "btn", action: "call", amount: 5000 },
+          ],
+        },
+      ],
+    };
+
+    const { finalStacks } = buildStackTracking(parsed);
+    expect(finalStacks["co"]).toBe(0);
+    expect(finalStacks["btn"]).toBe(5000);
+  });
+
+  it("tracks stacks correctly across multiple streets", () => {
+    const parsed: MockParsedHand = {
+      smallBlind: 500,
+      bigBlind: 1000,
+      players: [
+        { position: "co", isHero: true, startingStack: 20000 },
+        { position: "btn", isHero: false, startingStack: 20000 },
+      ],
+      heroPosition: "co",
+      heroCards: ["As", "Td"],
+      streets: [
+        {
+          name: "preflop",
+          actions: [
+            { player: "co", action: "raise", amount: 2500, isHero: true },
+            { player: "btn", action: "call", amount: 2500 },
+          ],
+        },
+        {
+          name: "flop",
+          board: ["Ah", "8s", "4c"],
+          actions: [
+            { player: "co", action: "bet", amount: 3500, isHero: true },
+            { player: "btn", action: "call", amount: 3500 },
+          ],
+        },
+      ],
+    };
+
+    const { finalStacks } = buildStackTracking(parsed);
+    expect(finalStacks["co"]).toBe(14000);  // 20000 - 2500 - 3500
+    expect(finalStacks["btn"]).toBe(14000);
+  });
+
+  it("returns undefined stack when no startingStack provided", () => {
+    const parsed: MockParsedHand = {
+      smallBlind: 500,
+      bigBlind: 1000,
+      players: [
+        { position: "co", isHero: true, startingStack: null },
+      ],
+      heroPosition: "co",
+      heroCards: ["As", "Td"],
+      streets: [
+        {
+          name: "preflop",
+          actions: [{ player: "co", action: "raise", amount: 2500, isHero: true }],
+        },
+      ],
+    };
+
+    const { finalStacks } = buildStackTracking(parsed);
+    expect(finalStacks["co"]).toBeUndefined();
+  });
+});

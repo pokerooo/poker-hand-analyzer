@@ -117,6 +117,12 @@ function buildReplaySteps(parsed: ParsedHand): ReplayStep[] {
   const sanitisedStreets = sanitiseBoardCards(parsed.streets || []);
   const sortedPlayers = heroFirst(parsed.players || []);
 
+  // Track remaining stacks per player (deduct as actions happen)
+  const remainingStacks = new Map<string, number | undefined>();
+  for (const p of sortedPlayers) {
+    remainingStacks.set(p.position, p.startingStack ?? undefined);
+  }
+
   const makePlayerState = (currentAction: ParsedAction | null) =>
     sortedPlayers.map((p) => ({
       position: p.position,
@@ -126,7 +132,7 @@ function buildReplaySteps(parsed: ParsedHand): ReplayStep[] {
       isActive: currentAction?.player === p.position,
       betAmount: currentAction?.player === p.position && currentAction.amount ? currentAction.amount : 0,
       isAllIn: currentAction?.player === p.position && currentAction.action === "allin",
-      stackSize: p.startingStack ?? undefined,
+      stackSize: remainingStacks.get(p.position),
     }));
 
   for (const street of sanitisedStreets) {
@@ -160,6 +166,11 @@ function buildReplaySteps(parsed: ParsedHand): ReplayStep[] {
       }
       if (action.amount) {
         pot += action.amount;
+        // Deduct from remaining stack
+        const currentStack = remainingStacks.get(action.player);
+        if (currentStack != null) {
+          remainingStacks.set(action.player, Math.max(0, currentStack - action.amount));
+        }
       }
 
       steps.push({
@@ -421,6 +432,7 @@ export default function HandReplayer() {
   const [activeTab, setActiveTab] = useState<"replay" | "share" | "coach">("replay");
   const [descriptionKey, setDescriptionKey] = useState(0); // increment to trigger fade-in
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const captureRef = useRef<HTMLDivElement | null>(null); // ref for video export capture
 
   const parsed = hand?.parsedData as ParsedHand | undefined;
   const steps = parsed ? buildReplaySteps(parsed) : [];
@@ -540,6 +552,8 @@ export default function HandReplayer() {
         </div>
       </header>
 
+      {/* Table + narration — captured for video export */}
+      <div ref={captureRef} style={{ background: "linear-gradient(160deg, #0a0f0d 0%, #0d1a12 50%, #0a0f0d 100%)" }}>
       {/* Table — swipe left/right to step through hand */}
       <div
         className="w-full max-w-lg mx-auto px-4 pt-4"
@@ -590,6 +604,7 @@ export default function HandReplayer() {
           </div>
         )}
       </div>
+      </div>{/* end captureRef */}
 
       {/* Controls */}
       <div className="px-4 pb-3 max-w-lg mx-auto w-full space-y-3">
@@ -702,7 +717,18 @@ export default function HandReplayer() {
           )}
 
           {activeTab === "share" && (
-            <ShareSheet slug={slug} rawText={hand.rawText} />
+            <div className="space-y-4">
+              <ShareSheet slug={slug} rawText={hand.rawText} />
+              <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: "1rem" }}>
+                <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: "#4ade80" }}>Video Export</p>
+                <VideoExport
+                  captureRef={captureRef}
+                  totalSteps={steps.length}
+                  goToStep={(i) => { setStepIndex(i); setIsPlaying(false); }}
+                  title={(hand as any).title as string | undefined}
+                />
+              </div>
+            </div>
           )}
 
           {activeTab === "coach" && (
