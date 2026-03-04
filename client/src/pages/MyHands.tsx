@@ -3,7 +3,7 @@ import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import { Button } from "@/components/ui/button";
-import { Loader2, ArrowLeft, Plus, Share2, Trash2, ChevronRight, Flame, TrendingDown, AlertTriangle } from "lucide-react";
+import { Loader2, ArrowLeft, Plus, Share2, Trash2, ChevronRight, Flame, TrendingDown, AlertTriangle, Upload, BarChart2 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -245,6 +245,30 @@ export default function MyHands() {
         </div>
         <div className="flex items-center gap-2">
           <ThemeToggle />
+          <button
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+            style={{
+              background: "rgba(16,185,129,0.08)",
+              color: "#6ee7b7",
+              border: "1px solid rgba(16,185,129,0.2)",
+            }}
+            onClick={() => navigate("/import")}
+            title="Import hand history"
+          >
+            <Upload className="h-3.5 w-3.5" /> Import
+          </button>
+          <button
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+            style={{
+              background: "rgba(139,92,246,0.08)",
+              color: "#a78bfa",
+              border: "1px solid rgba(139,92,246,0.2)",
+            }}
+            onClick={() => navigate("/patterns")}
+            title="Pattern recognition"
+          >
+            <BarChart2 className="h-3.5 w-3.5" /> Patterns
+          </button>
           <button
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
             style={{

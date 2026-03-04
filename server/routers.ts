@@ -25,6 +25,8 @@ import {
 } from "./db";
 import { parseHandText } from "./handParser";
 import { invokeLLM } from "./_core/llm";
+import { stripeRouter } from "./stripeRouter";
+import { splitHandHistory, parseHandHistory, historyHandToText } from "./historyParser";
 
 // ─── Auth Router ──────────────────────────────────────────────────────────────
 
@@ -100,6 +102,76 @@ const handsRouter = router({
     .mutation(async ({ input, ctx }) => {
       await deleteHand(input.id, ctx.user.id);
       return { success: true };
+    }),
+
+  // Import hand history file (Pro only)
+  importHistory: protectedProcedure
+    .input(z.object({
+      fileContent: z.string().min(50).max(500000), // up to 500KB of hand history text
+    }))
+    .mutation(async ({ input, ctx }) => {
+      // Check Pro status
+      const user = ctx.user as any;
+      if (!user.isPro) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Hand history import requires a Pro subscription" });
+      }
+
+      const hands = splitHandHistory(input.fileContent);
+      if (hands.length === 0) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "No valid hands found in the uploaded file" });
+      }
+
+      // Limit to 50 hands per import
+      const handsToProcess = hands.slice(0, 50);
+      const results: Array<{ shareSlug: string; title: string; success: boolean; error?: string }> = [];
+
+      for (const handText of handsToProcess) {
+        try {
+          const parsed = parseHandHistory(handText);
+          if (!parsed) {
+            results.push({ shareSlug: "", title: "Unknown hand", success: false, error: "Could not parse hand" });
+            continue;
+          }
+
+          // Convert to natural language for AI parser compatibility
+          const naturalText = historyHandToText(parsed);
+
+          // Build parsedData in the same schema as the AI parser
+          const parsedData = {
+            title: parsed.title,
+            gameType: parsed.gameType,
+            stakes: parsed.stakes,
+            heroPosition: parsed.heroPosition,
+            heroCards: parsed.heroCards,
+            villains: parsed.villains,
+            board: parsed.board,
+            streets: parsed.streets,
+            heroStartingStack: parsed.heroStartingStack,
+            potSize: parsed.potSize,
+            result: parsed.result,
+          };
+
+          const { shareSlug } = await createHand({
+            userId: ctx.user.id,
+            rawText: naturalText,
+            parsedData,
+            title: parsed.title,
+            isPublic: false,
+          });
+
+          results.push({ shareSlug, title: parsed.title, success: true });
+        } catch (err: any) {
+          results.push({ shareSlug: "", title: "Error", success: false, error: err.message });
+        }
+      }
+
+      const successCount = results.filter((r) => r.success).length;
+      return {
+        total: hands.length,
+        processed: handsToProcess.length,
+        imported: successCount,
+        results,
+      };
     }),
 
   // Update a hand's raw text and parsed data (must own it)
@@ -401,6 +473,144 @@ const discordRouter = router({
     }),
 });
 
+// ─── Pattern Recognition Router ────────────────────────────────────────────
+
+const patternsRouter = router({
+  // Full cross-hand pattern recognition (Pro only)
+  analyze: protectedProcedure
+    .input(z.object({
+      minHands: z.number().min(3).max(200).default(10),
+    }))
+    .query(async ({ input, ctx }) => {
+      const user = ctx.user as any;
+      if (!user.isPro) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Pattern recognition requires a Pro subscription" });
+      }
+
+      const allHands = await getUserHandsForLeaks(ctx.user.id);
+      if (!allHands || allHands.length < input.minHands) {
+        return {
+          hasEnoughData: false,
+          handsAnalyzed: allHands?.length || 0,
+          minRequired: input.minHands,
+          patterns: [],
+          strengths: [],
+          summary: null,
+          gradeDistribution: null,
+        };
+      }
+
+      // Take up to 50 most recent coached hands for pattern analysis
+      const coachedHands = allHands.filter((h) => h.coachAnalysis).slice(0, 50);
+      const allHandsSample = allHands.slice(0, 50);
+      const handsToAnalyze = coachedHands.length >= 5 ? coachedHands : allHandsSample;
+
+      // Compute grade distribution from coached hands
+      const gradeCounts: Record<string, number> = { A: 0, B: 0, C: 0, D: 0, F: 0 };
+      for (const h of coachedHands) {
+        const grade = (h.coachAnalysis as any)?.grade;
+        if (grade && grade in gradeCounts) gradeCounts[grade]++;
+      }
+
+      // Build position frequency map
+      const positionCounts: Record<string, number> = {};
+      for (const h of allHands) {
+        const pos = (h.parsedData as any)?.heroPosition || "unknown";
+        positionCounts[pos] = (positionCounts[pos] || 0) + 1;
+      }
+
+      // Build hand summaries for LLM
+      const handSummaries = handsToAnalyze.map((h) => {
+        const p = h.parsedData as any;
+        const coach = h.coachAnalysis as any;
+        return {
+          id: h.id,
+          heroCards: p?.heroCards?.join(" ") || "?",
+          position: p?.heroPosition || "?",
+          gameType: p?.gameType || "cash",
+          streets: (p?.streets || []).map((s: any) => ({
+            name: s.name,
+            actions: (s.actions || []).filter((a: any) => a.isHero).map((a: any) => ({
+              action: a.action,
+              amount: a.amount,
+            })),
+          })),
+          result: p?.result,
+          coachGrade: coach?.grade || null,
+          coachMistakes: coach?.mistakes || [],
+          coachKeyLesson: coach?.keyLesson || null,
+        };
+      });
+
+      const prompt = `You are a world-class poker coach analysing ${handsToAnalyze.length} hands to identify deep strategic patterns and recurring leaks in this player's game.
+
+Hand data:
+${JSON.stringify(handSummaries, null, 2)}
+
+Position frequency: ${JSON.stringify(positionCounts)}
+Grade distribution: ${JSON.stringify(gradeCounts)}
+
+Provide a comprehensive pattern analysis covering:
+1. The 3-5 most significant recurring leaks across all hands
+2. Positional tendencies and leaks (e.g. too passive from BB, over-folding from BTN)
+3. Street-by-street tendencies (e.g. always c-bets flop but gives up on turn)
+4. Hand selection patterns
+5. Sizing patterns (always same size = exploitable by opponents)
+6. 2-3 genuine strengths to reinforce
+
+For each pattern, provide a concrete drill or exercise to fix it.
+
+Respond in this exact JSON format:
+{
+  "summary": "2-3 sentence overall assessment of this player's game",
+  "overallLevel": "beginner" | "recreational" | "semi-pro" | "regular" | "strong reg",
+  "patterns": [
+    {
+      "category": "Preflop" | "Postflop" | "Sizing" | "Positional" | "Mental Game" | "Range Construction",
+      "title": "Short pattern name",
+      "description": "What the player is doing and why it costs money",
+      "frequency": "always" | "often" | "sometimes",
+      "severity": "critical" | "high" | "medium" | "low",
+      "estimatedBuyinImpact": number,
+      "drill": "Specific exercise to fix this pattern"
+    }
+  ],
+  "strengths": [
+    {
+      "title": "Strength name",
+      "description": "What the player does well"
+    }
+  ],
+  "nextStudyFocus": "The single most important area to study next"
+}`;
+
+      const response = await invokeLLM({
+        messages: [
+          { role: "system", content: "You are a professional poker coach. Respond with valid JSON only." },
+          { role: "user", content: prompt },
+        ],
+      });
+
+      let result: any;
+      try {
+        const content = response.choices[0].message.content;
+        const text = typeof content === "string" ? content : JSON.stringify(content);
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        result = jsonMatch ? JSON.parse(jsonMatch[0]) : JSON.parse(text);
+      } catch {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to parse pattern analysis" });
+      }
+
+      return {
+        hasEnoughData: true,
+        handsAnalyzed: handsToAnalyze.length,
+        gradeDistribution: gradeCounts,
+        positionFrequency: positionCounts,
+        ...result,
+      };
+    }),
+});
+
 // ─── Root Router ──────────────────────────────────────────────────────────────
 
 export const appRouter = router({
@@ -410,6 +620,8 @@ export const appRouter = router({
   streak: streakRouter,
   leaks: leaksRouter,
   discord: discordRouter,
+  stripe: stripeRouter,
+  patterns: patternsRouter,
   system: systemRouter,
 });
 

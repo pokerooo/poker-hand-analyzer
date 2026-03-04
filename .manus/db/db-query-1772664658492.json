@@ -1,0 +1,9 @@
+{
+  "query": "\nALTER TABLE users \nADD COLUMN stripe_customer_id VARCHAR(255) NULL,\nADD COLUMN stripe_subscription_id VARCHAR(255) NULL,\nADD COLUMN is_pro BOOLEAN NOT NULL DEFAULT FALSE;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3S5EK7kkwn3cfqa.root --database g6HPzuQNwUJzsGs4mHVNkx --execute \nALTER TABLE users \nADD COLUMN stripe_customer_id VARCHAR(255) NULL,\nADD COLUMN stripe_subscription_id VARCHAR(255) NULL,\nADD COLUMN is_pro BOOLEAN NOT NULL DEFAULT FALSE;\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 2964
+}

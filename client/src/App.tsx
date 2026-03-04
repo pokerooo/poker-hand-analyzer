@@ -6,6 +6,9 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import Home from "@/pages/Home";
 import HandReplayer from "@/pages/HandReplayer";
 import MyHands from "@/pages/MyHands";
+import ImportHistory from "@/pages/ImportHistory";
+import PatternRecognition from "@/pages/PatternRecognition";
+import ProSuccess from "@/pages/ProSuccess";
 import NotFound from "@/pages/NotFound";
 
 function Router() {
@@ -14,6 +17,9 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/hand/:slug" component={HandReplayer} />
       <Route path="/my-hands" component={MyHands} />
+      <Route path="/import" component={ImportHistory} />
+      <Route path="/patterns" component={PatternRecognition} />
+      <Route path="/pro-success" component={ProSuccess} />
       <Route component={NotFound} />
     </Switch>
   );

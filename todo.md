@@ -227,3 +227,70 @@ Optional paid AI coach scores the hand and explains what to do differently.
 - [x] Add twitter:card, twitter:image meta tags
 - [x] OG image endpoint tested and returning 200 PNG at 65KB
 - [x] Fix stale Vite parse error (JSX > character in exploitative adjustments)
+
+## Current Task: Stripe Paywall + Hand History Import + Pattern Recognition
+
+### Stripe Integration
+- [ ] Add Stripe via webdev_add_feature
+- [ ] Define pricing: Pro subscription ($19.99/mo) unlocks AI Coach + Hand History Import + Pattern Recognition
+- [ ] Create Stripe products and price IDs
+- [ ] Build checkout session creation tRPC procedure
+- [ ] Build Stripe webhook handler for payment events
+- [ ] Add subscription status to users table (isPro, stripeCustomerId, stripeSubscriptionId)
+- [ ] Gate AI Coach behind Pro check (show paywall if not Pro)
+- [ ] Gate Hand History Import behind Pro check
+- [ ] Gate Pattern Recognition behind Pro check
+
+### Hand History Import (Paywalled)
+- [ ] Build server-side PokerStars hand history .txt parser
+- [ ] Build server-side GGPoker hand history .txt parser
+- [ ] Parse: blinds, positions, hole cards, board cards, actions per street
+- [ ] Add hands.importHistory tRPC procedure (protected + Pro only)
+- [ ] Build drag-and-drop file upload UI on My Hands page
+- [ ] Show import progress (parsing N hands...)
+- [ ] Show import results (X hands imported, Y skipped)
+- [ ] Add import history tab to My Hands page
+
+### Pattern Recognition (Paywalled)
+- [ ] Build server-side LLM pattern analysis across all user hands
+- [ ] Detect: positional leaks, sizing tells, check-fold frequency, 3bet frequency
+- [ ] Quantify leaks in BB/100 or buy-in impact
+- [ ] Build Pattern Recognition dashboard page
+- [ ] Show leak breakdown by position, street, action type
+- [ ] Show trend over time (improving/worsening)
+- [ ] Add charts (bar chart by position, line chart over sessions)
+
+## Session: Stripe Paywall + Import + Pattern Recognition — COMPLETED
+
+### Stripe Integration ✓
+- [x] Stripe router with checkout session creation (createCheckout, createPortal)
+- [x] Stripe webhook handler for checkout.session.completed, subscription.deleted, subscription.updated, invoice.payment_failed
+- [x] isPro, stripeCustomerId, stripeSubscriptionId columns on users table
+- [x] AI Coach gated behind Pro check (ProPaywall shown if not Pro)
+- [x] Hand History Import gated behind Pro check
+- [x] Pattern Recognition gated behind Pro check
+- [x] ProPaywall component with loading spinner and Stripe checkout redirect
+- [x] ProSuccess page at /pro-success with feature unlock confirmation
+- [x] Stripe price updated to $19.99/month
+
+### Hand History Import ✓
+- [x] PokerStars hand history .txt parser (splitHandHistory, parseHandHistory, historyHandToText)
+- [x] GGPoker hand history .txt parser
+- [x] hands.importHistory tRPC procedure (protected + Pro only, up to 50 hands per import)
+- [x] ImportHistory page at /import with drag-and-drop file upload
+- [x] Import results display (X imported, Y skipped, per-hand status)
+- [x] Import nav button on My Hands page
+- [x] 16 hand history parser tests passing
+
+### Pattern Recognition ✓
+- [x] patterns.analyze tRPC procedure (Pro only, LLM-powered cross-hand analysis)
+- [x] Detects: positional leaks, sizing tells, street tendencies, range construction issues
+- [x] Quantifies leaks in estimated buy-in impact per 100 hands
+- [x] PatternRecognition dashboard page at /patterns with Pro paywall gate
+- [x] Grade distribution bar chart
+- [x] Expandable pattern cards with study drills
+- [x] Strengths section to reinforce good habits
+- [x] Overall player level classification
+- [x] Patterns nav button on My Hands page
+
+### All tests: 105 passing (7 test files), 0 TypeScript errors

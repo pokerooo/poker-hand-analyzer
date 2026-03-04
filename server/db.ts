@@ -221,3 +221,44 @@ export async function setDefaultDiscordWebhook(id: number, userId: number) {
   await db.update(discordWebhooks).set({ isDefault: false }).where(eq(discordWebhooks.userId, userId));
   await db.update(discordWebhooks).set({ isDefault: true }).where(and(eq(discordWebhooks.id, id), eq(discordWebhooks.userId, userId)));
 }
+
+// ─── Stripe / Subscription ────────────────────────────────────────────────────
+
+export async function getUserById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
+  return result[0] ?? undefined;
+}
+
+export async function setUserPro(userId: number, stripeCustomerId: string, stripeSubscriptionId: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(users).set({
+    stripeCustomerId,
+    stripeSubscriptionId,
+    isPro: true,
+  } as any).where(eq(users.id, userId));
+}
+
+export async function setUserProByCustomerId(stripeCustomerId: string, isPro: boolean, stripeSubscriptionId?: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const updateSet: Record<string, unknown> = { isPro };
+  if (stripeSubscriptionId) updateSet.stripeSubscriptionId = stripeSubscriptionId;
+  await db.update(users).set(updateSet as any).where(eq(users.stripeCustomerId as any, stripeCustomerId));
+}
+
+export async function getUserByStripeCustomerId(stripeCustomerId: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(users).where(eq(users.stripeCustomerId as any, stripeCustomerId)).limit(1);
+  return result[0] ?? undefined;
+}
+
+export async function isUserPro(userId: number): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+  const result = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+  return (result[0] as any)?.isPro ?? false;
+}

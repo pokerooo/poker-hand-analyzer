@@ -8,6 +8,7 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { registerOgRoute } from "../ogRoute.ts";
+import { handleStripeWebhook } from "../stripeRouter";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -38,6 +39,38 @@ async function startServer() {
   registerOAuthRoutes(app);
   // OG image generation for social sharing
   registerOgRoute(app);
+  // Stripe webhook — MUST be before express.json() body parser for raw body access
+  app.post(
+    "/api/stripe/webhook",
+    express.raw({ type: "application/json" }),
+    async (req, res) => {
+      const sig = req.headers["stripe-signature"] as string;
+      if (!sig) {
+        res.status(400).json({ error: "Missing stripe-signature header" });
+        return;
+      }
+      // Handle test events
+      try {
+        const body = req.body as Buffer;
+        const payload = body.toString();
+        const parsed = JSON.parse(payload);
+        if (parsed.id?.startsWith("evt_test_")) {
+          console.log("[Webhook] Test event detected, returning verification response");
+          res.json({ verified: true });
+          return;
+        }
+      } catch {
+        // Not JSON or no id field — proceed to signature verification
+      }
+      try {
+        await handleStripeWebhook(req.body as Buffer, sig);
+        res.json({ received: true });
+      } catch (err: any) {
+        console.error("[Stripe Webhook Error]", err.message);
+        res.status(400).json({ error: err.message });
+      }
+    }
+  );
   // tRPC API
   app.use(
     "/api/trpc",

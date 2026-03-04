@@ -16,6 +16,10 @@ export const users = mysqlTable("users", {
   studyStreak: int("studyStreak").default(0).notNull(),
   lastStudyDate: varchar("lastStudyDate", { length: 10 }), // YYYY-MM-DD UTC
   longestStreak: int("longestStreak").default(0).notNull(),
+  // Stripe subscription
+  stripeCustomerId: varchar("stripe_customer_id", { length: 255 }),
+  stripeSubscriptionId: varchar("stripe_subscription_id", { length: 255 }),
+  isPro: boolean("is_pro").default(false).notNull(),
 });
 
 export type User = typeof users.$inferSelect;
