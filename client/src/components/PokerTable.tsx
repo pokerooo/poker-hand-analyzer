@@ -1,4 +1,4 @@
-import { useMemo, useRef, useEffect, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 
 interface Player {
   position: string;
@@ -8,6 +8,7 @@ interface Player {
   isActive?: boolean;
   betAmount?: number;
   isAllIn?: boolean;
+  stackSize?: number;
 }
 
 interface PokerTableProps {
@@ -18,43 +19,71 @@ interface PokerTableProps {
   street: "preflop" | "flop" | "turn" | "river";
 }
 
-const SUIT_COLORS: Record<string, string> = {
-  h: "#e11d48",
-  d: "#e11d48",
-  s: "#1e293b",
-  c: "#15803d",
+// ─── Suit colours & symbols ───────────────────────────────────────────────────
+
+const SUIT_META: Record<string, { color: string; symbol: string; isRed: boolean }> = {
+  s: { color: "#1a1a2e", symbol: "♠", isRed: false },
+  h: { color: "#c0392b", symbol: "♥", isRed: true },
+  d: { color: "#c0392b", symbol: "♦", isRed: true },
+  c: { color: "#1a2e1a", symbol: "♣", isRed: false },
 };
 
-const SUIT_SYMBOLS: Record<string, string> = {
-  h: "♥",
-  d: "♦",
-  s: "♠",
-  c: "♣",
-};
-
-function parseCard(card: string) {
-  if (!card || card.length < 2) return { rank: "?", suit: "s" };
-  const rank = card.slice(0, -1).toUpperCase();
+function parseCard(card: string): { rank: string; suit: string; meta: typeof SUIT_META[string] } {
+  if (!card || card.length < 2) return { rank: "?", suit: "?", meta: { color: "#94a3b8", symbol: "?", isRed: false } };
   const suit = card.slice(-1).toLowerCase();
-  return { rank, suit };
+  const rank = card.slice(0, -1).toUpperCase();
+  return { rank, suit, meta: SUIT_META[suit] ?? { color: "#94a3b8", symbol: suit, isRed: false } };
 }
 
-// Animated card that plays deal animation when it first appears
+// ─── Card Face Component ───────────────────────────────────────────────────────
+
 function CardFace({ card, small = false, animate = false }: { card: string; small?: boolean; animate?: boolean }) {
-  const { rank, suit } = parseCard(card);
-  const color = SUIT_COLORS[suit] || "#1e293b";
+  const [visible, setVisible] = useState(!animate);
+
+  useEffect(() => {
+    if (animate) {
+      const t = setTimeout(() => setVisible(true), 80);
+      return () => clearTimeout(t);
+    }
+  }, [animate]);
+
+  const { rank, meta } = parseCard(card);
+
   const w = small ? 28 : 40;
   const h = small ? 40 : 56;
-  const rankSize = small ? "text-[11px]" : "text-sm";
-  const suitSize = small ? "text-[10px]" : "text-xs";
+  const cornerSize = small ? 9 : 12;
 
   return (
     <div
-      className={`rounded-md bg-white shadow-md border border-gray-100 flex flex-col items-center justify-center select-none shrink-0 ${animate ? "card-deal" : ""}`}
-      style={{ width: w, height: h, color }}
+      style={{
+        width: w,
+        height: h,
+        opacity: visible ? 1 : 0,
+        transform: visible ? "scale(1)" : "scale(0.7) rotateY(90deg)",
+        transition: "opacity 0.25s ease, transform 0.35s cubic-bezier(0.34,1.56,0.64,1)",
+        background: "linear-gradient(160deg, #ffffff 0%, #f5f5f5 100%)",
+        border: "1.5px solid rgba(0,0,0,0.18)",
+        borderRadius: 5,
+        position: "relative",
+        boxShadow: "0 3px 10px rgba(0,0,0,0.5), 0 1px 3px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.9)",
+        flexShrink: 0,
+        overflow: "hidden",
+      }}
     >
-      <span className={`font-black ${rankSize} leading-none`}>{rank}</span>
-      <span className={`${suitSize} leading-none`}>{SUIT_SYMBOLS[suit] || suit}</span>
+      {/* Top-left corner */}
+      <div style={{ position: "absolute", top: 2, left: 2.5, display: "flex", flexDirection: "column", alignItems: "center", lineHeight: 1, gap: 0 }}>
+        <span style={{ fontSize: cornerSize, fontWeight: 900, color: meta.color, fontFamily: "'Arial Black', Arial, sans-serif", lineHeight: 1 }}>{rank}</span>
+        <span style={{ fontSize: cornerSize - 1, color: meta.color, lineHeight: 1 }}>{meta.symbol}</span>
+      </div>
+      {/* Center watermark */}
+      <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <span style={{ fontSize: cornerSize + 6, color: meta.color, opacity: 0.12, userSelect: "none" }}>{meta.symbol}</span>
+      </div>
+      {/* Bottom-right corner (rotated) */}
+      <div style={{ position: "absolute", bottom: 2, right: 2.5, display: "flex", flexDirection: "column", alignItems: "center", lineHeight: 1, gap: 0, transform: "rotate(180deg)" }}>
+        <span style={{ fontSize: cornerSize, fontWeight: 900, color: meta.color, fontFamily: "'Arial Black', Arial, sans-serif", lineHeight: 1 }}>{rank}</span>
+        <span style={{ fontSize: cornerSize - 1, color: meta.color, lineHeight: 1 }}>{meta.symbol}</span>
+      </div>
     </div>
   );
 }
@@ -64,173 +93,233 @@ function CardBack({ small = false }: { small?: boolean }) {
   const h = small ? 40 : 56;
   return (
     <div
-      className="rounded-md shadow-md border border-blue-700 flex items-center justify-center shrink-0"
       style={{
-        width: w,
-        height: h,
-        background: "linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%)",
+        width: w, height: h,
+        background: "linear-gradient(145deg, #1e3a5f 0%, #0f172a 100%)",
+        border: "1px solid #334155",
+        borderRadius: 5,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        boxShadow: "0 2px 6px rgba(0,0,0,0.6)",
+        flexShrink: 0,
       }}
     >
-      <div
-        className="rounded border border-blue-500/40 opacity-60"
-        style={{ width: w * 0.55, height: h * 0.65 }}
-      />
+      <div style={{
+        width: w - 8, height: h - 8,
+        border: "1px solid #1e40af40",
+        borderRadius: 3,
+        background: "repeating-linear-gradient(45deg, #1e3a5f 0px, #1e3a5f 2px, #0f172a 2px, #0f172a 6px)",
+      }} />
     </div>
   );
 }
 
-// Track which community cards are new in this render to trigger animation
-function CommunityCards({ cards }: { cards: string[] }) {
-  const prevCardsRef = useRef<string[]>([]);
-  const [newCardIndices, setNewCardIndices] = useState<Set<number>>(new Set());
+// ─── Community Cards ──────────────────────────────────────────────────────────
 
-  useEffect(() => {
-    const prev = prevCardsRef.current;
-    const newIndices = new Set<number>();
-    for (let i = 0; i < cards.length; i++) {
-      if (i >= prev.length || prev[i] !== cards[i]) {
-        newIndices.add(i);
-      }
-    }
-    if (newIndices.size > 0) {
-      setNewCardIndices(newIndices);
-      const timer = setTimeout(() => setNewCardIndices(new Set()), 500);
-      prevCardsRef.current = [...cards];
-      return () => clearTimeout(timer);
-    }
-    prevCardsRef.current = [...cards];
-  }, [cards]);
-
-  if (cards.length === 0) {
-    return (
-      <div className="flex gap-1.5">
-        {[0, 1, 2, 3, 4].map((i) => (
-          <div
-            key={i}
-            className="rounded-md border border-white/10 bg-white/5"
-            style={{ width: 28, height: 40 }}
-          />
-        ))}
-      </div>
-    );
-  }
-
+function CommunityCards({ cards, prevCount }: { cards: string[]; prevCount: number }) {
   return (
-    <div className="flex gap-1.5 items-center">
-      {cards.map((card, i) => (
-        <CardFace key={`${card}-${i}`} card={card} small animate={newCardIndices.has(i)} />
-      ))}
+    <div className="flex gap-1.5 justify-center items-center">
+      {[0, 1, 2, 3, 4].map((i) => {
+        if (i < cards.length) {
+          return <CardFace key={`${cards[i]}-${i}`} card={cards[i]} animate={i >= prevCount} />;
+        }
+        return (
+          <div
+            key={`empty-${i}`}
+            style={{
+              width: 40, height: 56,
+              borderRadius: 5,
+              border: "1px dashed rgba(148,163,184,0.12)",
+              background: "rgba(0,0,0,0.2)",
+              flexShrink: 0,
+            }}
+          />
+        );
+      })}
     </div>
   );
 }
 
-// Seat positions around the ellipse — hero always at index 0 = bottom center
-function getSeatPositions(count: number): Array<{ x: number; y: number }> {
-  const positions: Array<{ x: number; y: number }> = [];
-  const heroAngle = Math.PI / 2; // 90° = bottom
-  for (let i = 0; i < count; i++) {
-    const angle = heroAngle - (2 * Math.PI * i) / count;
-    const rx = 0.42;
-    const ry = 0.36;
-    positions.push({
-      x: 0.5 + rx * Math.cos(angle),
-      y: 0.5 + ry * Math.sin(angle),
-    });
-  }
-  return positions;
+// ─── Seat Layout ──────────────────────────────────────────────────────────────
+
+function getSeatPositions(count: number): Array<{ top: string; left: string; transform: string }> {
+  const seats: Array<{ top: string; left: string; transform: string }> = [
+    { top: "88%", left: "50%", transform: "translate(-50%, -50%)" },   // 0 hero bottom-center
+    { top: "12%", left: "50%", transform: "translate(-50%, -50%)" },   // 1 top-center
+    { top: "50%", left: "5%",  transform: "translate(-50%, -50%)" },   // 2 left
+    { top: "50%", left: "95%", transform: "translate(-50%, -50%)" },   // 3 right
+    { top: "20%", left: "18%", transform: "translate(-50%, -50%)" },   // 4 top-left
+    { top: "20%", left: "82%", transform: "translate(-50%, -50%)" },   // 5 top-right
+    { top: "75%", left: "15%", transform: "translate(-50%, -50%)" },   // 6 bottom-left
+    { top: "75%", left: "85%", transform: "translate(-50%, -50%)" },   // 7 bottom-right
+    { top: "40%", left: "5%",  transform: "translate(-50%, -50%)" },   // 8 mid-left
+    { top: "40%", left: "95%", transform: "translate(-50%, -50%)" },   // 9 mid-right
+  ];
+  return seats.slice(0, count);
 }
 
-const ACTION_COLORS: Record<string, string> = {
-  fold: "bg-gray-500 text-white",
-  check: "bg-sky-500 text-white",
-  call: "bg-emerald-500 text-white",
-  bet: "bg-amber-500 text-black",
-  raise: "bg-orange-500 text-white",
-  "all-in": "bg-red-500 text-white",
-  allin: "bg-red-500 text-white",
-  jam: "bg-red-500 text-white",
-};
+// ─── Action colour ────────────────────────────────────────────────────────────
+
+function getActionStyle(action: string): { bg: string; text: string; glow: string } {
+  const a = action.toLowerCase();
+  if (a === "fold")   return { bg: "#7f1d1d", text: "#fca5a5", glow: "#ef444440" };
+  if (a === "call")   return { bg: "#1e3a5f", text: "#93c5fd", glow: "#3b82f640" };
+  if (a === "check")  return { bg: "#14532d", text: "#86efac", glow: "#22c55e40" };
+  if (a === "raise" || a === "bet") return { bg: "#78350f", text: "#fcd34d", glow: "#f59e0b60" };
+  if (a === "allin")  return { bg: "#581c87", text: "#e879f9", glow: "#d946ef60" };
+  return { bg: "#1e293b", text: "#e2e8f0", glow: "#64748b40" };
+}
+
+function formatAmount(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}k`;
+  return n.toLocaleString();
+}
+
+// ─── Main Table ───────────────────────────────────────────────────────────────
 
 export function PokerTable({ players, communityCards, potSize, currentAction, street }: PokerTableProps) {
   const seatPositions = useMemo(() => getSeatPositions(players.length), [players.length]);
+  const [prevCardCount, setPrevCardCount] = useState(0);
 
-  const formatAmount = (n: number) => {
-    if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-    if (n >= 1_000) return `${(n / 1_000).toFixed(1)}k`;
-    return n.toLocaleString();
-  };
+  useEffect(() => {
+    const t = setTimeout(() => setPrevCardCount(communityCards.length), 400);
+    return () => clearTimeout(t);
+  }, [communityCards.length]);
 
   const streetLabel = street.charAt(0).toUpperCase() + street.slice(1);
 
   return (
-    <div className="relative w-full select-none" style={{ paddingBottom: "60%" }}>
-      {/* Table felt — bright green with warm rim */}
+    <div className="relative w-full select-none" style={{ paddingBottom: "65%" }}>
+      {/* ── Outer ambient glow ── */}
+      <div
+        className="absolute"
+        style={{
+          inset: "-20px",
+          borderRadius: "50%",
+          background: "radial-gradient(ellipse at 50% 50%, rgba(16,185,129,0.06) 0%, transparent 70%)",
+          pointerEvents: "none",
+        }}
+      />
+
+      {/* ── Table surface ── */}
       <div
         className="absolute inset-0 overflow-visible"
         style={{
           borderRadius: "50%",
-          background: "radial-gradient(ellipse at 40% 35%, #22c55e 0%, #16a34a 45%, #15803d 100%)",
-          border: "5px solid #92400e",
-          boxShadow: "0 0 0 2px #d97706, 0 8px 32px rgba(0,0,0,0.35), inset 0 2px 8px rgba(255,255,255,0.12)",
+          background: "radial-gradient(ellipse at 40% 35%, #0f4a2a 0%, #063a1a 40%, #021a0d 100%)",
+          border: "4px solid #0a3d20",
+          boxShadow: [
+            "0 0 0 1px rgba(16,185,129,0.15)",
+            "0 0 0 5px #080e0a",
+            "0 0 0 7px rgba(16,185,129,0.08)",
+            "0 0 0 8px #080e0a",
+            "0 16px 60px rgba(0,0,0,0.85)",
+            "inset 0 2px 0 rgba(255,255,255,0.05)",
+            "inset 0 -4px 16px rgba(0,0,0,0.5)",
+            "inset 0 0 80px rgba(0,0,0,0.3)",
+          ].join(", "),
         }}
       >
-        {/* Inner felt ring */}
+        {/* Felt texture overlay */}
+        <div
+          className="absolute inset-0"
+          style={{
+            borderRadius: "50%",
+            backgroundImage: [
+              "radial-gradient(ellipse at 50% 40%, rgba(16,185,129,0.04) 0%, transparent 65%)",
+              "repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(255,255,255,0.006) 3px, rgba(255,255,255,0.006) 6px)",
+              "repeating-linear-gradient(90deg, transparent, transparent 3px, rgba(255,255,255,0.003) 3px, rgba(255,255,255,0.003) 6px)",
+            ].join(", "),
+            pointerEvents: "none",
+          }}
+        />
+        {/* Gold rail ring */}
         <div
           className="absolute"
           style={{
-            inset: 10,
+            inset: 6,
             borderRadius: "50%",
-            border: "1px solid rgba(255,255,255,0.12)",
+            border: "1.5px solid rgba(212,175,55,0.12)",
+            boxShadow: "inset 0 0 30px rgba(0,0,0,0.25), 0 0 0 1px rgba(212,175,55,0.06)",
+            pointerEvents: "none",
+          }}
+        />
+        {/* Inner glow ring */}
+        <div
+          className="absolute"
+          style={{
+            inset: 14,
+            borderRadius: "50%",
+            border: "1px solid rgba(16,185,129,0.06)",
+            pointerEvents: "none",
           }}
         />
 
-        {/* Center: street label + community cards + pot */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5">
-          <span className="text-[10px] text-white/60 uppercase tracking-widest font-semibold">
+        {/* ── Centre: street + cards + pot ── */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+          {/* Street label */}
+          <span
+            className="text-[9px] font-bold uppercase tracking-[0.2em]"
+            style={{ color: "#10b98180", letterSpacing: "0.25em" }}
+          >
             {streetLabel}
           </span>
 
-          <CommunityCards cards={communityCards} />
+          {/* Community cards */}
+          <CommunityCards cards={communityCards} prevCount={prevCardCount} />
 
+          {/* Pot */}
           {potSize > 0 && (
-            <div className="flex items-center gap-1.5 bg-black/40 backdrop-blur-sm px-3 py-1 rounded-full mt-0.5">
-              <div className="w-2.5 h-2.5 rounded-full bg-amber-400 shadow-sm shadow-amber-400/50" />
-              <span className="text-amber-300 text-xs font-bold tracking-wide">{formatAmount(potSize)}</span>
+            <div
+              className="flex items-center gap-1.5 px-3 py-1 rounded-full mt-0.5"
+              style={{
+                background: "rgba(0,0,0,0.55)",
+                border: "1px solid rgba(16,185,129,0.25)",
+                backdropFilter: "blur(4px)",
+                boxShadow: "0 0 12px rgba(16,185,129,0.15)",
+              }}
+            >
+              <div
+                className="w-2 h-2 rounded-full"
+                style={{
+                  background: "radial-gradient(circle, #fbbf24, #d97706)",
+                  boxShadow: "0 0 6px #f59e0b80",
+                }}
+              />
+              <span className="text-[11px] font-bold" style={{ color: "#fbbf24", textShadow: "0 0 8px #f59e0b60" }}>
+                {formatAmount(potSize)}
+              </span>
             </div>
           )}
         </div>
-      </div>
 
-      {/* Players */}
-      {players.map((player, i) => {
-        const pos = seatPositions[i];
-        if (!pos) return null;
+        {/* ── Player seats ── */}
+        {players.map((player, idx) => {
+          const pos = seatPositions[idx];
+          if (!pos) return null;
+          const isCurrentActor = currentAction?.player === player.position;
+          const actionStyle = isCurrentActor && currentAction ? getActionStyle(currentAction.action) : null;
 
-        const isCurrentActor = currentAction?.player === player.position;
-        const actionKey = currentAction?.action?.toLowerCase() || "";
-        const actionColorClass = ACTION_COLORS[actionKey] || "bg-white text-black";
-
-        return (
-          <div
-            key={player.position}
-            className="absolute"
-            style={{
-              left: `${pos.x * 100}%`,
-              top: `${pos.y * 100}%`,
-              transform: "translate(-50%, -50%)",
-            }}
-          >
-            <div className={`flex flex-col items-center gap-0.5 ${player.hasFolded ? "opacity-35" : ""}`}>
-              {/* Hole cards (above name for non-hero, below for hero) */}
-              {!player.isHero && player.holeCards && player.holeCards.length > 0 && !player.hasFolded && (
-                <div className="flex gap-0.5 mb-0.5">
-                  {player.holeCards.map((_, ci) => <CardBack key={ci} small />)}
-                </div>
-              )}
-
+          return (
+            <div
+              key={player.position}
+              className="absolute flex flex-col items-center gap-0.5"
+              style={{ top: pos.top, left: pos.left, transform: pos.transform }}
+            >
               {/* Action bubble */}
               {isCurrentActor && currentAction && (
-                <div className={`text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap shadow-lg mb-0.5 ${actionColorClass}`}>
+                <div
+                  className="text-[10px] font-black px-2 py-0.5 rounded-full whitespace-nowrap mb-0.5"
+                  style={{
+                    background: actionStyle!.bg,
+                    color: actionStyle!.text,
+                    border: `1px solid ${actionStyle!.text}30`,
+                    boxShadow: `0 0 10px ${actionStyle!.glow}`,
+                    animation: "popIn 0.2s cubic-bezier(0.34,1.56,0.64,1)",
+                  }}
+                >
                   {currentAction.action.toUpperCase()}
                   {currentAction.amount ? ` ${formatAmount(currentAction.amount)}` : ""}
                 </div>
@@ -238,41 +327,91 @@ export function PokerTable({ players, communityCards, potSize, currentAction, st
 
               {/* Player chip */}
               <div
-                className={`
-                  flex flex-col items-center px-2 py-1 rounded-lg text-center
-                  ${player.isHero
-                    ? "bg-amber-400 text-gray-900 font-bold shadow-lg shadow-amber-400/40 ring-2 ring-amber-300"
-                    : "bg-white/90 text-gray-800 border border-gray-200 shadow-md"
-                  }
-                  ${isCurrentActor && !currentAction ? "ring-2 ring-white animate-pulse" : ""}
-                `}
-                style={{ minWidth: 52 }}
+                className="flex flex-col items-center px-2.5 py-1.5 rounded-lg text-center"
+                style={{
+                  minWidth: 54,
+                  background: player.hasFolded
+                    ? "rgba(15,23,42,0.6)"
+                    : player.isHero
+                      ? "linear-gradient(135deg, #065f46 0%, #047857 100%)"
+                      : "linear-gradient(135deg, #1e293b 0%, #0f172a 100%)",
+                  border: player.isHero
+                    ? "1px solid #10b98160"
+                    : isCurrentActor
+                      ? "1px solid #f59e0b60"
+                      : "1px solid rgba(148,163,184,0.15)",
+                  boxShadow: player.isHero
+                    ? "0 0 16px rgba(16,185,129,0.3), 0 2px 8px rgba(0,0,0,0.5)"
+                    : isCurrentActor
+                      ? "0 0 12px rgba(245,158,11,0.25), 0 2px 8px rgba(0,0,0,0.5)"
+                      : "0 2px 8px rgba(0,0,0,0.4)",
+                  opacity: player.hasFolded ? 0.45 : 1,
+                  transition: "all 0.3s ease",
+                }}
               >
-                <span className="text-[11px] font-bold leading-tight">{player.position}</span>
-                {player.betAmount && player.betAmount > 0 && (
-                  <span className={`text-[10px] font-mono leading-tight ${player.isHero ? "text-gray-700" : "text-emerald-600 font-semibold"}`}>
+                <span
+                  className="text-[11px] font-bold leading-tight"
+                  style={{
+                    color: player.isHero ? "#6ee7b7" : "#cbd5e1",
+                    textShadow: player.isHero ? "0 0 8px rgba(16,185,129,0.5)" : "none",
+                  }}
+                >
+                  {player.position}
+                </span>
+
+                {/* Stack size (when no active bet) */}
+                {player.stackSize != null && player.stackSize > 0 &&
+                  !(player.betAmount && player.betAmount > 0) && !player.isAllIn && (
+                  <span className="text-[10px] font-mono leading-tight" style={{ color: "#64748b" }}>
+                    {formatAmount(player.stackSize)}
+                  </span>
+                )}
+
+                {/* Active bet */}
+                {player.betAmount != null && player.betAmount > 0 && (
+                  <span
+                    className="text-[10px] font-mono font-bold leading-tight"
+                    style={{ color: "#fbbf24", textShadow: "0 0 6px #f59e0b50" }}
+                  >
                     {formatAmount(player.betAmount)}
                   </span>
                 )}
+
+                {/* All-in badge */}
                 {player.isAllIn && (
-                  <span className="text-[9px] text-red-600 font-black leading-tight">ALL IN</span>
+                  <span
+                    className="text-[9px] font-black leading-tight px-1 rounded"
+                    style={{ color: "#e879f9", background: "#581c8740", textShadow: "0 0 6px #d946ef60" }}
+                  >
+                    ALL IN
+                  </span>
                 )}
               </div>
 
-              {/* Hero hole cards below */}
+              {/* Hero hole cards */}
               {player.isHero && player.holeCards && player.holeCards.length > 0 && !player.hasFolded && (
-                <div className="flex gap-0.5 mt-0.5">
+                <div className="flex gap-1 mt-0.5">
                   {player.holeCards.map((c, ci) => <CardFace key={ci} card={c} small />)}
                 </div>
               )}
 
+              {/* Non-hero cards (face down) */}
+              {!player.isHero && !player.hasFolded && (
+                <div className="flex gap-0.5 mt-0.5">
+                  <CardBack small />
+                  <CardBack small />
+                </div>
+              )}
+
               {player.hasFolded && (
-                <span className="text-[9px] text-white/50 italic mt-0.5">folded</span>
+                <span className="text-[9px] italic mt-0.5" style={{ color: "rgba(148,163,184,0.4)" }}>
+                  folded
+                </span>
               )}
             </div>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 }

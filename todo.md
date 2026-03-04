@@ -104,3 +104,31 @@ Optional paid AI coach scores the hand and explains what to do differently.
 - [x] Updated HandReplayer header with sticky backdrop, title display
 - [x] Updated MyHands header with sticky backdrop
 - [x] 91 unit tests passing across 7 test files
+
+## Current Task: Stack Display + Video Export
+- [ ] Show effective stack on player chips in replayer
+- [ ] Update PokerTable to accept and display stack sizes per player
+- [ ] Update HandReplayer to pass stack sizes through replay steps
+- [ ] Update hand parser to extract starting stack sizes
+- [ ] Build video/GIF export of hand replay
+- [ ] Render each replay step to canvas using html2canvas
+- [ ] Stitch frames into a downloadable video/GIF
+- [ ] Add export button to share tab in replayer
+- [ ] Support portrait format for TikTok/IG Stories
+
+## Current Task: Narration Visibility + Real-Time Playback
+- [ ] Fix narration text visibility below the poker table (remove overflow clipping)
+- [ ] Replace step-by-step controls with real-time auto-play timer
+- [ ] Auto-advance steps on a 2-3 second interval like watching a live hand
+- [ ] Keep manual prev/next controls for scrubbing
+- [ ] Add play/pause button for user control
+- [ ] Smooth CSS transitions between steps (fade/slide)
+
+## Current Task: Modern Gaming Design ✓
+- [x] Redesign PokerTable with premium dark felt, glow rim, neon accents
+- [x] Redesign card faces with sharp modern typography and suit icons (white cards, proper red/black suits)
+- [x] Update player chips with gaming-style badges and stack displays
+- [x] Add glow effects on active player and hero seat
+- [x] Update community card reveal with premium card-flip animation
+- [x] Update replayer UI chrome to match gaming aesthetic (dark header, neon controls, green glow)
+- [x] Update global CSS theme to support dark gaming palette

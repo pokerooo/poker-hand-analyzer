@@ -14,6 +14,7 @@ import {
   Share2, Copy, Loader2, Sparkles, Lock, ChevronDown, ChevronUp,
   MessageCircle
 } from "lucide-react";
+import { VideoExport } from "@/components/VideoExport";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -65,6 +66,7 @@ interface ReplayStep {
     isActive: boolean;
     betAmount: number;
     isAllIn: boolean;
+    stackSize?: number;
   }>;
   currentAction: { player: string; action: string; amount?: number } | null;
   description: string;
@@ -124,6 +126,7 @@ function buildReplaySteps(parsed: ParsedHand): ReplayStep[] {
       isActive: currentAction?.player === p.position,
       betAmount: currentAction?.player === p.position && currentAction.amount ? currentAction.amount : 0,
       isAllIn: currentAction?.player === p.position && currentAction.action === "allin",
+      stackSize: p.startingStack ?? undefined,
     }));
 
   for (const street of sanitisedStreets) {
@@ -416,24 +419,41 @@ export default function HandReplayer() {
   const [stepIndex, setStepIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [activeTab, setActiveTab] = useState<"replay" | "share" | "coach">("replay");
+  const [descriptionKey, setDescriptionKey] = useState(0); // increment to trigger fade-in
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const parsed = hand?.parsedData as ParsedHand | undefined;
   const steps = parsed ? buildReplaySteps(parsed) : [];
   const currentStep = steps[stepIndex];
 
-  // Auto-play
+  // Auto-start playback once hand is loaded
   useEffect(() => {
+    if (steps.length > 0) {
+      const timer = setTimeout(() => setIsPlaying(true), 600);
+      return () => clearTimeout(timer);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [steps.length]);
+
+  // Trigger fade-in animation on each step change
+  useEffect(() => {
+    setDescriptionKey((k) => k + 1);
+  }, [stepIndex]);
+
+  // Auto-play — 2.5s per step so it feels like a live hand
+  useEffect(() => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
     if (isPlaying) {
       intervalRef.current = setInterval(() => {
         setStepIndex((i) => {
           if (i >= steps.length - 1) {
             setIsPlaying(false);
+            clearInterval(intervalRef.current!);
             return i;
           }
           return i + 1;
         });
-      }, 1500);
+      }, 2500);
     }
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
   }, [isPlaying, steps.length]);
@@ -471,32 +491,52 @@ export default function HandReplayer() {
   const handTitle = (hand as any).title as string | undefined;
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
+    <div
+      className="min-h-screen flex flex-col"
+      style={{ background: "linear-gradient(160deg, #0a0f0d 0%, #0d1a12 50%, #0a0f0d 100%)" }}
+    >
       {/* Header */}
-      <header className="flex items-center justify-between px-4 py-3 border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-10">
+      <header
+        className="flex items-center justify-between px-4 py-3 sticky top-0 z-10"
+        style={{
+          background: "rgba(10,15,13,0.85)",
+          backdropFilter: "blur(12px)",
+          borderBottom: "1px solid rgba(16,185,129,0.12)",
+          boxShadow: "0 1px 0 rgba(16,185,129,0.06)",
+        }}
+      >
         <div className="flex items-center gap-2 min-w-0">
-          <Button variant="ghost" size="icon" className="shrink-0" onClick={() => navigate("/")}>
+          <button
+            className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg transition-colors"
+            style={{ color: "#6ee7b7", background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.2)" }}
+            onClick={() => navigate("/")}
+          >
             <ArrowLeft className="h-4 w-4" />
-          </Button>
+          </button>
           <div className="min-w-0">
             {handTitle && (
-              <div className="font-semibold text-sm truncate leading-tight">{handTitle}</div>
+              <div className="font-semibold text-sm truncate leading-tight" style={{ color: "#e2e8f0" }}>{handTitle}</div>
             )}
             <div className="flex items-center gap-1.5">
-              <span className="font-mono font-bold text-sm text-primary">{heroCards}</span>
-              <span className="text-xs text-muted-foreground">{parsed.heroPosition} · {blinds}</span>
+              <span className="font-mono font-bold text-sm" style={{ color: "#4ade80", textShadow: "0 0 8px rgba(74,222,128,0.4)" }}>{heroCards}</span>
+              <span className="text-xs" style={{ color: "#64748b" }}>{parsed.heroPosition} · {blinds}</span>
             </div>
           </div>
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
           <ThemeToggle />
-          <Button
-            size="sm"
-            className="gap-1.5 text-xs"
+          <button
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+            style={{
+              background: "linear-gradient(135deg, #065f46, #047857)",
+              color: "#6ee7b7",
+              border: "1px solid rgba(16,185,129,0.3)",
+              boxShadow: "0 0 12px rgba(16,185,129,0.2)",
+            }}
             onClick={() => setActiveTab("share")}
           >
             <Share2 className="h-3.5 w-3.5" /> Share
-          </Button>
+          </button>
         </div>
       </header>
 
@@ -516,62 +556,112 @@ export default function HandReplayer() {
         )}
       </div>
 
-      {/* Action description */}
-      <div className="text-center py-2 min-h-[36px] px-4">
+      {/* Action description — always visible, fades in on each step */}
+      <div className="px-4 pt-3 pb-2 max-w-lg mx-auto w-full">
         {currentStep && (
-          <p className={`text-sm font-semibold ${
-            currentStep.currentAction === null
-              ? "text-primary"
-              : "text-foreground"
-          }`}>
-            {currentStep.description}
-          </p>
+          <div
+            key={descriptionKey}
+            className="rounded-xl px-4 py-3"
+            style={{
+              background: "rgba(15,23,42,0.7)",
+              border: "1px solid rgba(16,185,129,0.15)",
+              backdropFilter: "blur(8px)",
+              animation: "fadeSlideIn 0.35s ease",
+              boxShadow: "0 0 20px rgba(16,185,129,0.05)",
+            }}
+          >
+            {/* Street badge */}
+            <span
+              className="inline-block text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full mb-1.5"
+              style={{ color: "#4ade80", background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.2)" }}
+            >
+              {currentStep.street}
+            </span>
+            <p
+              className="text-sm font-semibold leading-snug"
+              style={{ color: currentStep.currentAction === null ? "#4ade80" : "#e2e8f0" }}
+            >
+              {currentStep.description}
+            </p>
+            {/* Step counter */}
+            <p className="text-[11px] mt-1" style={{ color: "#475569" }}>
+              Action {stepIndex + 1} of {steps.length}
+            </p>
+          </div>
         )}
       </div>
 
       {/* Controls */}
-      <div className="px-4 pb-2 max-w-lg mx-auto w-full space-y-2">
-        {/* Progress slider */}
-        <Slider
-          value={[stepIndex]}
-          min={0}
-          max={Math.max(0, steps.length - 1)}
-          step={1}
-          onValueChange={([v]) => goTo(v)}
-          className="w-full"
-        />
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>Step {stepIndex + 1} of {steps.length}</span>
-          <span>{currentStep?.street}</span>
+      <div className="px-4 pb-3 max-w-lg mx-auto w-full space-y-3">
+        {/* Progress bar (custom styled) */}
+        <div className="relative h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+          <div
+            className="absolute left-0 top-0 h-full rounded-full transition-all duration-300"
+            style={{
+              width: `${steps.length > 1 ? (stepIndex / (steps.length - 1)) * 100 : 0}%`,
+              background: "linear-gradient(90deg, #10b981, #4ade80)",
+              boxShadow: "0 0 8px rgba(16,185,129,0.5)",
+            }}
+          />
         </div>
 
         {/* Playback buttons */}
-        <div className="flex items-center justify-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => goTo(0)} disabled={stepIndex === 0}>
-            <SkipBack className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="icon" onClick={() => goTo(stepIndex - 1)} disabled={stepIndex === 0}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <Button
-            size="icon"
-            className="h-10 w-10 rounded-full"
+        <div className="flex items-center justify-center gap-2">
+          {/* Skip to start */}
+          <button
+            className="w-8 h-8 flex items-center justify-center rounded-lg transition-all"
+            style={{ color: stepIndex === 0 ? "#1e293b" : "#64748b", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}
+            onClick={() => goTo(0)} disabled={stepIndex === 0}
+          >
+            <SkipBack className="h-3.5 w-3.5" />
+          </button>
+          {/* Prev */}
+          <button
+            className="w-8 h-8 flex items-center justify-center rounded-lg transition-all"
+            style={{ color: stepIndex === 0 ? "#1e293b" : "#94a3b8", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}
+            onClick={() => goTo(stepIndex - 1)} disabled={stepIndex === 0}
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+          </button>
+          {/* Play/Pause — hero button */}
+          <button
+            className="w-12 h-12 flex items-center justify-center rounded-full transition-all"
+            style={{
+              background: isPlaying
+                ? "linear-gradient(135deg, #065f46, #047857)"
+                : "linear-gradient(135deg, #10b981, #4ade80)",
+              color: "#fff",
+              boxShadow: isPlaying
+                ? "0 0 20px rgba(16,185,129,0.3)"
+                : "0 0 24px rgba(74,222,128,0.5), 0 4px 12px rgba(0,0,0,0.4)",
+              border: "1px solid rgba(74,222,128,0.3)",
+            }}
             onClick={() => setIsPlaying(!isPlaying)}
             disabled={stepIndex >= steps.length - 1 && !isPlaying}
           >
-            {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
-          </Button>
-          <Button variant="ghost" size="icon" onClick={() => goTo(stepIndex + 1)} disabled={stepIndex >= steps.length - 1}>
-            <SkipForward className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="icon" onClick={() => goTo(steps.length - 1)} disabled={stepIndex >= steps.length - 1}>
-            <SkipBack className="h-4 w-4 rotate-180" />
-          </Button>
+            {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 ml-0.5" />}
+          </button>
+          {/* Next */}
+          <button
+            className="w-8 h-8 flex items-center justify-center rounded-lg transition-all"
+            style={{ color: stepIndex >= steps.length - 1 ? "#1e293b" : "#94a3b8", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}
+            onClick={() => goTo(stepIndex + 1)} disabled={stepIndex >= steps.length - 1}
+          >
+            <SkipForward className="h-3.5 w-3.5" />
+          </button>
+          {/* Skip to end */}
+          <button
+            className="w-8 h-8 flex items-center justify-center rounded-lg transition-all"
+            style={{ color: stepIndex >= steps.length - 1 ? "#1e293b" : "#64748b", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}
+            onClick={() => goTo(steps.length - 1)} disabled={stepIndex >= steps.length - 1}
+          >
+            <SkipBack className="h-3.5 w-3.5 rotate-180" />
+          </button>
         </div>
       </div>
 
       {/* Bottom tabs */}
-      <div className="border-t border-border max-w-lg mx-auto w-full">
+      <div className="max-w-lg mx-auto w-full" style={{ borderTop: "1px solid rgba(16,185,129,0.1)" }}>
         <div className="flex">
           {[
             { id: "replay" as const, label: "Replay", icon: "🎬" },
@@ -581,11 +671,12 @@ export default function HandReplayer() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 py-3 text-xs font-medium flex flex-col items-center gap-0.5 transition-colors ${
-                activeTab === tab.id
-                  ? "text-primary border-t-2 border-primary"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
+              className="flex-1 py-3 text-xs font-medium flex flex-col items-center gap-0.5 transition-all"
+              style={{
+                color: activeTab === tab.id ? "#4ade80" : "#475569",
+                borderTop: activeTab === tab.id ? "2px solid #4ade80" : "2px solid transparent",
+                textShadow: activeTab === tab.id ? "0 0 8px rgba(74,222,128,0.4)" : "none",
+              }}
             >
               <span className="text-base">{tab.icon}</span>
               {tab.label}
@@ -594,15 +685,18 @@ export default function HandReplayer() {
         </div>
 
         {/* Tab content */}
-        <div className="px-4 py-4 max-h-[40vh] overflow-y-auto">
+        <div className="px-4 py-4 max-h-[45vh] overflow-y-auto">
           {activeTab === "replay" && (
             <div className="space-y-2">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Hand Summary</p>
-              <div className="font-mono text-sm text-foreground leading-relaxed whitespace-pre-wrap">
+              <p className="text-xs font-bold uppercase tracking-widest" style={{ color: "#4ade80" }}>Hand Summary</p>
+              <div
+                className="font-mono text-sm leading-relaxed whitespace-pre-wrap p-3 rounded-lg"
+                style={{ color: "#94a3b8", background: "rgba(15,23,42,0.5)", border: "1px solid rgba(255,255,255,0.06)" }}
+              >
                 {hand.rawText}
               </div>
               {parsed.parseNotes && (
-                <p className="text-xs text-muted-foreground italic">Note: {parsed.parseNotes}</p>
+                <p className="text-xs italic" style={{ color: "#475569" }}>Note: {parsed.parseNotes}</p>
               )}
             </div>
           )}
