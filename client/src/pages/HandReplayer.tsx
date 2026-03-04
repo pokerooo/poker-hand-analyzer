@@ -174,11 +174,19 @@ function buildReplaySteps(parsed: ParsedHand): ReplayStep[] {
     }
   }
 
-  // Final state
+  // Final state — reveal all known community cards
   if (steps.length > 0) {
     const last = steps[steps.length - 1];
+    // Collect all board cards across all streets for the final summary view
+    const allBoardCards: string[] = [];
+    for (const street of sanitisedStreets) {
+      if (street.board && street.board.length > 0) {
+        allBoardCards.push(...street.board);
+      }
+    }
     steps.push({
       ...last,
+      communityCards: allBoardCards.length > 0 ? allBoardCards : last.communityCards,
       currentAction: null,
       description: parsed.result || "Hand complete",
     });
@@ -460,24 +468,29 @@ export default function HandReplayer() {
 
   const heroCards = parsed.heroCards?.join(" ") || "?";
   const blinds = `${parsed.smallBlind}/${parsed.bigBlind}`;
+  const handTitle = (hand as any).title as string | undefined;
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       {/* Header */}
-      <header className="flex items-center justify-between px-4 py-3 border-b border-border">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
+      <header className="flex items-center justify-between px-4 py-3 border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-10">
+        <div className="flex items-center gap-2 min-w-0">
+          <Button variant="ghost" size="icon" className="shrink-0" onClick={() => navigate("/")}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <div>
-            <div className="font-mono font-bold text-sm">{heroCards}</div>
-            <div className="text-xs text-muted-foreground">{parsed.heroPosition} · {blinds}</div>
+          <div className="min-w-0">
+            {handTitle && (
+              <div className="font-semibold text-sm truncate leading-tight">{handTitle}</div>
+            )}
+            <div className="flex items-center gap-1.5">
+              <span className="font-mono font-bold text-sm text-primary">{heroCards}</span>
+              <span className="text-xs text-muted-foreground">{parsed.heroPosition} · {blinds}</span>
+            </div>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 shrink-0">
           <ThemeToggle />
           <Button
-            variant="ghost"
             size="sm"
             className="gap-1.5 text-xs"
             onClick={() => setActiveTab("share")}
@@ -504,9 +517,13 @@ export default function HandReplayer() {
       </div>
 
       {/* Action description */}
-      <div className="text-center py-2 min-h-[32px]">
+      <div className="text-center py-2 min-h-[36px] px-4">
         {currentStep && (
-          <p className="text-sm font-medium text-foreground">
+          <p className={`text-sm font-semibold ${
+            currentStep.currentAction === null
+              ? "text-primary"
+              : "text-foreground"
+          }`}>
             {currentStep.description}
           </p>
         )}

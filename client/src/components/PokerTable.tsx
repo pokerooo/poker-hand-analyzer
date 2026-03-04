@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useRef, useEffect, useState } from "react";
 
 interface Player {
   position: string;
@@ -19,10 +19,10 @@ interface PokerTableProps {
 }
 
 const SUIT_COLORS: Record<string, string> = {
-  h: "#ef4444",
-  d: "#ef4444",
+  h: "#e11d48",
+  d: "#e11d48",
   s: "#1e293b",
-  c: "#166534",
+  c: "#15803d",
 };
 
 const SUIT_SYMBOLS: Record<string, string> = {
@@ -33,47 +33,105 @@ const SUIT_SYMBOLS: Record<string, string> = {
 };
 
 function parseCard(card: string) {
-  if (!card || card.length < 2) return { rank: "?", suit: "s", display: "?" };
+  if (!card || card.length < 2) return { rank: "?", suit: "s" };
   const rank = card.slice(0, -1).toUpperCase();
   const suit = card.slice(-1).toLowerCase();
-  return { rank, suit, display: `${rank}${SUIT_SYMBOLS[suit] || suit}` };
+  return { rank, suit };
 }
 
-function CardFace({ card, small = false }: { card: string; small?: boolean }) {
+// Animated card that plays deal animation when it first appears
+function CardFace({ card, small = false, animate = false }: { card: string; small?: boolean; animate?: boolean }) {
   const { rank, suit } = parseCard(card);
   const color = SUIT_COLORS[suit] || "#1e293b";
-  const size = small ? "w-7 h-10" : "w-10 h-14";
-  const textSize = small ? "text-xs" : "text-sm";
+  const w = small ? 28 : 40;
+  const h = small ? 40 : 56;
+  const rankSize = small ? "text-[11px]" : "text-sm";
+  const suitSize = small ? "text-[10px]" : "text-xs";
 
   return (
     <div
-      className={`${size} rounded bg-white border border-gray-200 flex flex-col items-center justify-center shadow-md select-none`}
-      style={{ color }}
+      className={`rounded-md bg-white shadow-md border border-gray-100 flex flex-col items-center justify-center select-none shrink-0 ${animate ? "card-deal" : ""}`}
+      style={{ width: w, height: h, color }}
     >
-      <span className={`font-bold ${textSize} leading-none`}>{rank}</span>
-      <span className={`${textSize} leading-none`}>{SUIT_SYMBOLS[suit] || suit}</span>
+      <span className={`font-black ${rankSize} leading-none`}>{rank}</span>
+      <span className={`${suitSize} leading-none`}>{SUIT_SYMBOLS[suit] || suit}</span>
     </div>
   );
 }
 
 function CardBack({ small = false }: { small?: boolean }) {
-  const size = small ? "w-7 h-10" : "w-10 h-14";
+  const w = small ? 28 : 40;
+  const h = small ? 40 : 56;
   return (
-    <div className={`${size} rounded bg-gradient-to-br from-blue-800 to-blue-900 border border-blue-700 flex items-center justify-center shadow-md`}>
-      <div className="w-4 h-6 rounded border border-blue-600 opacity-50" />
+    <div
+      className="rounded-md shadow-md border border-blue-700 flex items-center justify-center shrink-0"
+      style={{
+        width: w,
+        height: h,
+        background: "linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%)",
+      }}
+    >
+      <div
+        className="rounded border border-blue-500/40 opacity-60"
+        style={{ width: w * 0.55, height: h * 0.65 }}
+      />
     </div>
   );
 }
 
-// Position seats around the table (normalized 0-1 coordinates)
+// Track which community cards are new in this render to trigger animation
+function CommunityCards({ cards }: { cards: string[] }) {
+  const prevCardsRef = useRef<string[]>([]);
+  const [newCardIndices, setNewCardIndices] = useState<Set<number>>(new Set());
+
+  useEffect(() => {
+    const prev = prevCardsRef.current;
+    const newIndices = new Set<number>();
+    for (let i = 0; i < cards.length; i++) {
+      if (i >= prev.length || prev[i] !== cards[i]) {
+        newIndices.add(i);
+      }
+    }
+    if (newIndices.size > 0) {
+      setNewCardIndices(newIndices);
+      const timer = setTimeout(() => setNewCardIndices(new Set()), 500);
+      prevCardsRef.current = [...cards];
+      return () => clearTimeout(timer);
+    }
+    prevCardsRef.current = [...cards];
+  }, [cards]);
+
+  if (cards.length === 0) {
+    return (
+      <div className="flex gap-1.5">
+        {[0, 1, 2, 3, 4].map((i) => (
+          <div
+            key={i}
+            className="rounded-md border border-white/10 bg-white/5"
+            style={{ width: 28, height: 40 }}
+          />
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex gap-1.5 items-center">
+      {cards.map((card, i) => (
+        <CardFace key={`${card}-${i}`} card={card} small animate={newCardIndices.has(i)} />
+      ))}
+    </div>
+  );
+}
+
+// Seat positions around the ellipse — hero always at index 0 = bottom center
 function getSeatPositions(count: number): Array<{ x: number; y: number }> {
   const positions: Array<{ x: number; y: number }> = [];
-  // Always place hero at bottom center
-  const heroAngle = Math.PI / 2; // 90 degrees = bottom
+  const heroAngle = Math.PI / 2; // 90° = bottom
   for (let i = 0; i < count; i++) {
     const angle = heroAngle - (2 * Math.PI * i) / count;
-    const rx = 0.42; // horizontal radius
-    const ry = 0.38; // vertical radius
+    const rx = 0.42;
+    const ry = 0.36;
     positions.push({
       x: 0.5 + rx * Math.cos(angle),
       y: 0.5 + ry * Math.sin(angle),
@@ -82,49 +140,62 @@ function getSeatPositions(count: number): Array<{ x: number; y: number }> {
   return positions;
 }
 
+const ACTION_COLORS: Record<string, string> = {
+  fold: "bg-gray-500 text-white",
+  check: "bg-sky-500 text-white",
+  call: "bg-emerald-500 text-white",
+  bet: "bg-amber-500 text-black",
+  raise: "bg-orange-500 text-white",
+  "all-in": "bg-red-500 text-white",
+  allin: "bg-red-500 text-white",
+  jam: "bg-red-500 text-white",
+};
+
 export function PokerTable({ players, communityCards, potSize, currentAction, street }: PokerTableProps) {
   const seatPositions = useMemo(() => getSeatPositions(players.length), [players.length]);
 
   const formatAmount = (n: number) => {
-    if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
-    if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
-    return n.toString();
+    if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+    if (n >= 1_000) return `${(n / 1_000).toFixed(1)}k`;
+    return n.toLocaleString();
   };
 
-  return (
-    <div className="relative w-full" style={{ paddingBottom: "62%" }}>
-      {/* Table felt */}
-      <div className="absolute inset-0 rounded-[50%] bg-gradient-to-br from-emerald-800 to-emerald-900 border-4 border-amber-700/60 shadow-2xl overflow-visible">
-        {/* Inner felt ring */}
-        <div className="absolute inset-3 rounded-[50%] border border-emerald-600/40" />
+  const streetLabel = street.charAt(0).toUpperCase() + street.slice(1);
 
-        {/* Community cards + pot */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-          {/* Street label */}
-          <span className="text-xs text-emerald-300/70 uppercase tracking-widest font-medium">
-            {street}
+  return (
+    <div className="relative w-full select-none" style={{ paddingBottom: "60%" }}>
+      {/* Table felt — bright green with warm rim */}
+      <div
+        className="absolute inset-0 overflow-visible"
+        style={{
+          borderRadius: "50%",
+          background: "radial-gradient(ellipse at 40% 35%, #22c55e 0%, #16a34a 45%, #15803d 100%)",
+          border: "5px solid #92400e",
+          boxShadow: "0 0 0 2px #d97706, 0 8px 32px rgba(0,0,0,0.35), inset 0 2px 8px rgba(255,255,255,0.12)",
+        }}
+      >
+        {/* Inner felt ring */}
+        <div
+          className="absolute"
+          style={{
+            inset: 10,
+            borderRadius: "50%",
+            border: "1px solid rgba(255,255,255,0.12)",
+          }}
+        />
+
+        {/* Center: street label + community cards + pot */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5">
+          <span className="text-[10px] text-white/60 uppercase tracking-widest font-semibold">
+            {streetLabel}
           </span>
 
-          {/* Community cards */}
-          <div className="flex gap-1.5 items-center">
-            {communityCards.length === 0 ? (
-              <div className="flex gap-1.5">
-                {[0, 1, 2, 3, 4].map((i) => (
-                  <div key={i} className="w-8 h-11 rounded border border-emerald-600/30 bg-emerald-700/20" />
-                ))}
-              </div>
-            ) : (
-              communityCards.map((card, i) => (
-                <CardFace key={i} card={card} small />
-              ))
-            )}
-          </div>
+          <CommunityCards cards={communityCards} />
 
-          {/* Pot */}
           {potSize > 0 && (
-            <div className="flex items-center gap-1.5 bg-black/30 px-3 py-1 rounded-full">
-              <div className="w-2.5 h-2.5 rounded-full bg-amber-400" />
-              <span className="text-amber-300 text-xs font-bold">{formatAmount(potSize)}</span>
+            <div className="flex items-center gap-1.5 bg-black/40 backdrop-blur-sm px-3 py-1 rounded-full mt-0.5">
+              <div className="w-2.5 h-2.5 rounded-full bg-amber-400 shadow-sm shadow-amber-400/50" />
+              <span className="text-amber-300 text-xs font-bold tracking-wide">{formatAmount(potSize)}</span>
             </div>
           )}
         </div>
@@ -136,57 +207,67 @@ export function PokerTable({ players, communityCards, potSize, currentAction, st
         if (!pos) return null;
 
         const isCurrentActor = currentAction?.player === player.position;
-        const left = `${pos.x * 100}%`;
-        const top = `${pos.y * 100}%`;
+        const actionKey = currentAction?.action?.toLowerCase() || "";
+        const actionColorClass = ACTION_COLORS[actionKey] || "bg-white text-black";
 
         return (
           <div
             key={player.position}
-            className="absolute transform -translate-x-1/2 -translate-y-1/2"
-            style={{ left, top }}
+            className="absolute"
+            style={{
+              left: `${pos.x * 100}%`,
+              top: `${pos.y * 100}%`,
+              transform: "translate(-50%, -50%)",
+            }}
           >
-            <div className={`flex flex-col items-center gap-1 ${player.hasFolded ? "opacity-40" : ""}`}>
-              {/* Cards above player (except hero who is at bottom) */}
-              {player.holeCards && player.holeCards.length > 0 && !player.hasFolded && (
-                <div className="flex gap-0.5">
-                  {player.isHero
-                    ? player.holeCards.map((c, ci) => <CardFace key={ci} card={c} small />)
-                    : player.holeCards.map((_, ci) => <CardBack key={ci} small />)
-                  }
+            <div className={`flex flex-col items-center gap-0.5 ${player.hasFolded ? "opacity-35" : ""}`}>
+              {/* Hole cards (above name for non-hero, below for hero) */}
+              {!player.isHero && player.holeCards && player.holeCards.length > 0 && !player.hasFolded && (
+                <div className="flex gap-0.5 mb-0.5">
+                  {player.holeCards.map((_, ci) => <CardBack key={ci} small />)}
                 </div>
               )}
-              {player.hasFolded && (
-                <div className="text-xs text-gray-400 italic">folded</div>
+
+              {/* Action bubble */}
+              {isCurrentActor && currentAction && (
+                <div className={`text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap shadow-lg mb-0.5 ${actionColorClass}`}>
+                  {currentAction.action.toUpperCase()}
+                  {currentAction.amount ? ` ${formatAmount(currentAction.amount)}` : ""}
+                </div>
               )}
 
-              {/* Player chip / name */}
+              {/* Player chip */}
               <div
                 className={`
-                  relative flex flex-col items-center px-2 py-1 rounded-lg text-center min-w-[52px]
+                  flex flex-col items-center px-2 py-1 rounded-lg text-center
                   ${player.isHero
-                    ? "bg-amber-500 text-black font-bold shadow-lg shadow-amber-500/30"
-                    : "bg-gray-800/90 text-white border border-gray-600"
+                    ? "bg-amber-400 text-gray-900 font-bold shadow-lg shadow-amber-400/40 ring-2 ring-amber-300"
+                    : "bg-white/90 text-gray-800 border border-gray-200 shadow-md"
                   }
-                  ${isCurrentActor ? "ring-2 ring-white animate-pulse" : ""}
+                  ${isCurrentActor && !currentAction ? "ring-2 ring-white animate-pulse" : ""}
                 `}
+                style={{ minWidth: 52 }}
               >
-                <span className="text-xs font-semibold leading-tight">{player.position}</span>
+                <span className="text-[11px] font-bold leading-tight">{player.position}</span>
                 {player.betAmount && player.betAmount > 0 && (
-                  <span className="text-xs text-amber-300 font-mono leading-tight">
+                  <span className={`text-[10px] font-mono leading-tight ${player.isHero ? "text-gray-700" : "text-emerald-600 font-semibold"}`}>
                     {formatAmount(player.betAmount)}
                   </span>
                 )}
                 {player.isAllIn && (
-                  <span className="text-xs text-red-400 font-bold leading-tight">ALL IN</span>
+                  <span className="text-[9px] text-red-600 font-black leading-tight">ALL IN</span>
                 )}
               </div>
 
-              {/* Current action bubble */}
-              {isCurrentActor && currentAction && (
-                <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-white text-black text-xs font-bold px-2 py-0.5 rounded-full whitespace-nowrap shadow-lg">
-                  {currentAction.action.toUpperCase()}
-                  {currentAction.amount ? ` ${formatAmount(currentAction.amount)}` : ""}
+              {/* Hero hole cards below */}
+              {player.isHero && player.holeCards && player.holeCards.length > 0 && !player.hasFolded && (
+                <div className="flex gap-0.5 mt-0.5">
+                  {player.holeCards.map((c, ci) => <CardFace key={ci} card={c} small />)}
                 </div>
+              )}
+
+              {player.hasFolded && (
+                <span className="text-[9px] text-white/50 italic mt-0.5">folded</span>
               )}
             </div>
           </div>

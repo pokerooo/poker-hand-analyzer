@@ -89,3 +89,18 @@ Optional paid AI coach scores the hand and explains what to do differently.
 - [x] Updated parser system prompt with CRITICAL BOARD CARD RULE to fix at source
 - [x] Added heroFirst() to sort players array so hero is always index 0 = bottom-center seat
 - [x] Hero (we/I/hero) now always appears at the bottom-center seat on the table
+
+## Current Task: Input Validation + Replayer Enhancements + Bright Theme ✓
+- [x] Enforce blinds (e.g. 500/1000) as required input field with validation
+- [x] Enforce effective stack (e.g. 2000eff) as required input field with validation
+- [x] Show clear validation errors if either is missing before allowing visualise
+- [x] Updated example hands to always include both required fields
+- [x] Add card deal animation when community cards are revealed (flop/turn/river) via CSS keyframe
+- [x] Show full board on final "Hand complete" step (allBoardCards accumulated across streets)
+- [x] Add optional hand title field before visualising
+- [x] Display hand title on replayer page header
+- [x] Redesigned to bright engaging light theme (white bg, green primary, amber accents)
+- [x] Updated PokerTable with bright green felt, warm amber rim, white player chips
+- [x] Updated HandReplayer header with sticky backdrop, title display
+- [x] Updated MyHands header with sticky backdrop
+- [x] 91 unit tests passing across 7 test files

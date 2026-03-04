@@ -4,35 +4,59 @@ import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { Loader2, Sparkles, Share2, Users, ChevronRight, Play } from "lucide-react";
+import { Loader2, Play, ChevronRight, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 
 const EXAMPLE_HANDS = [
   {
     label: "Flopped top pair",
-    text: "500/1000 utg open 2500, we co ATo flat, btn flat, bb fold\nFlop A84r hero bet 3500 btn call utg fold\nTurn 2s hero bet 9000 btn raise 22000 hero fold",
+    text: "500/1000 2000eff utg open 2500, we co ATo flat, btn flat, bb fold\nFlop A84r hero bet 3500 btn call utg fold\nTurn 2s hero bet 9000 btn raise 22000 hero fold",
   },
   {
     label: "River bluff spot",
-    text: "200/400 we btn KQs open 900, bb call\nFlop J72r bb check hero bet 600 bb call\nTurn 5h both check\nRiver 4s bb bet 2500 hero raise 7000 bb fold hero wins",
+    text: "200/400 1200eff we btn KQs open 900, bb call\nFlop J72r bb check hero bet 600 bb call\nTurn 5h both check\nRiver 4s bb bet 2500 hero raise 7000 bb fold hero wins",
   },
   {
     label: "Big pot 3bet",
-    text: "1000/2000 utg open 4500, we btn 3bet AKo 13500, utg call\nFlop K82r utg check hero bet 9000 utg call\nTurn 3h utg check hero bet 22000 utg allin 60000 hero call\nRiver Jd hero wins",
+    text: "1000/2000 8000eff utg open 4500, we btn 3bet AKo 13500, utg call\nFlop K82r utg check hero bet 9000 utg call\nTurn 3h utg check hero bet 22000 utg allin hero call\nRiver Jd hero wins",
   },
 ];
 
+// Detect if blinds (e.g. 500/1000) are present in the text
+function hasBlinds(text: string): boolean {
+  return /\d+\s*\/\s*\d+/.test(text);
+}
+
+// Detect if effective stack (e.g. 2000eff or 2keff) is present
+function hasEffStack(text: string): boolean {
+  return /\d+(\.\d+)?\s*k?\s*eff/i.test(text);
+}
+
 export default function Home() {
   const [, navigate] = useLocation();
-  const { user, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [handText, setHandText] = useState("");
+  const [handTitle, setHandTitle] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const parseMutation = trpc.hands.parseText.useMutation();
   const createMutation = trpc.hands.create.useMutation();
+
+  const validate = (text: string): string[] => {
+    const errors: string[] = [];
+    if (!hasBlinds(text)) {
+      errors.push("Include blinds — e.g. 500/1000 at the start");
+    }
+    if (!hasEffStack(text)) {
+      errors.push("Include effective stack — e.g. 2000eff");
+    }
+    return errors;
+  };
 
   const handleVisualize = async () => {
     const text = handText.trim();
@@ -41,21 +65,26 @@ export default function Home() {
       return;
     }
 
+    const errors = validate(text);
+    if (errors.length > 0) {
+      setValidationErrors(errors);
+      return;
+    }
+    setValidationErrors([]);
+
     setIsProcessing(true);
     try {
-      // Step 1: Parse the text
       const { parsed } = await parseMutation.mutateAsync({ text });
-
-      // Step 2: Save and get share slug
       const { shareSlug } = await createMutation.mutateAsync({
         rawText: text,
         parsedData: parsed,
+        title: handTitle.trim() || undefined,
       });
-
-      // Step 3: Navigate to the replayer
       navigate(`/hand/${shareSlug}`);
-    } catch (err: any) {
-      toast.error("Couldn't read your hand", { description: "Try describing it a bit more clearly — e.g. 'we have AK on the BTN'" });
+    } catch {
+      toast.error("Couldn't read your hand", {
+        description: "Try including blinds (500/1000), effective stack (2000eff), and your position",
+      });
     } finally {
       setIsProcessing(false);
     }
@@ -63,25 +92,39 @@ export default function Home() {
 
   const loadExample = (text: string) => {
     setHandText(text);
+    setValidationErrors([]);
     textareaRef.current?.focus();
   };
 
+  const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setHandText(e.target.value);
+    if (validationErrors.length > 0) {
+      setValidationErrors(validate(e.target.value));
+    }
+  };
+
+  const missingBlinds = handText.trim().length > 5 && !hasBlinds(handText);
+  const missingStack = handText.trim().length > 5 && !hasEffStack(handText);
+
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
+
       {/* Header */}
-      <header className="flex items-center justify-between px-4 py-3 border-b border-border">
+      <header className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="flex items-center gap-2">
-          <span className="text-2xl">♠</span>
+          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+            <span className="text-primary-foreground text-sm font-bold">♠</span>
+          </div>
           <span className="font-bold text-lg tracking-tight">PokerReplay</span>
         </div>
         <div className="flex items-center gap-2">
           <ThemeToggle />
           {isAuthenticated ? (
-            <Button variant="ghost" size="sm" onClick={() => navigate("/my-hands")}>
+            <Button variant="outline" size="sm" onClick={() => navigate("/my-hands")} className="font-medium">
               My Hands
             </Button>
           ) : (
-            <Button variant="ghost" size="sm" onClick={() => navigate("/login")}>
+            <Button variant="outline" size="sm" onClick={() => navigate("/login")} className="font-medium">
               Sign In
             </Button>
           )}
@@ -89,27 +132,64 @@ export default function Home() {
       </header>
 
       {/* Hero */}
-      <main className="flex-1 flex flex-col items-center justify-center px-4 py-10 max-w-2xl mx-auto w-full gap-8">
-        <div className="text-center space-y-3">
-          <h1 className="text-4xl sm:text-5xl font-bold tracking-tight">
-            Share your poker hands
+      <main className="flex-1 flex flex-col items-center px-4 py-10 sm:py-16 max-w-2xl mx-auto w-full gap-8">
+
+        {/* Headline */}
+        <div className="text-center space-y-4">
+          <div className="inline-flex items-center gap-2 bg-primary/10 text-primary rounded-full px-4 py-1.5 text-sm font-semibold mb-2">
+            <span>♠</span> Free · No signup required
+          </div>
+          <h1 className="text-4xl sm:text-5xl font-bold tracking-tight leading-tight">
+            Turn your poker hands
             <br />
-            <span className="text-primary">in seconds</span>
+            <span className="text-primary">into instant replays</span>
           </h1>
-          <p className="text-muted-foreground text-lg">
+          <p className="text-muted-foreground text-lg leading-relaxed max-w-lg mx-auto">
             Type your hand the way you'd describe it on WhatsApp. We'll turn it into a visual replay you can share anywhere.
           </p>
         </div>
 
-        {/* Input Box */}
+        {/* Input Section */}
         <div className="w-full space-y-3">
+
+          {/* Optional title */}
+          <Input
+            value={handTitle}
+            onChange={(e) => setHandTitle(e.target.value)}
+            placeholder="Hand title (optional) — e.g. Sick river spot vs reg"
+            className="text-sm font-medium"
+          />
+
+          {/* Required field hints */}
+          <div className="flex gap-3 text-xs">
+            <span className={`flex items-center gap-1 font-medium px-2 py-1 rounded-md transition-colors ${
+              missingBlinds
+                ? "bg-amber-50 text-amber-700 border border-amber-200"
+                : hasBlinds(handText)
+                ? "bg-green-50 text-green-700 border border-green-200"
+                : "bg-muted text-muted-foreground border border-transparent"
+            }`}>
+              {hasBlinds(handText) ? "✓" : "!"} Blinds e.g. 500/1000
+            </span>
+            <span className={`flex items-center gap-1 font-medium px-2 py-1 rounded-md transition-colors ${
+              missingStack
+                ? "bg-amber-50 text-amber-700 border border-amber-200"
+                : hasEffStack(handText)
+                ? "bg-green-50 text-green-700 border border-green-200"
+                : "bg-muted text-muted-foreground border border-transparent"
+            }`}>
+              {hasEffStack(handText) ? "✓" : "!"} Eff. stack e.g. 2000eff
+            </span>
+          </div>
+
+          {/* Main textarea */}
           <div className="relative">
             <Textarea
               ref={textareaRef}
               value={handText}
-              onChange={(e) => setHandText(e.target.value)}
-              placeholder={`Type your hand here...\n\nExample:\n500/1000 utg open 2500, we co ATo flat, btn flat\nFlop A84r hero bet 3500 btn call\nTurn 2s hero bet 9000 btn raise 22000 hero fold`}
-              className="min-h-[180px] sm:min-h-[200px] text-base resize-none font-mono leading-relaxed pr-4 pb-14"
+              onChange={handleTextChange}
+              placeholder={`500/1000 2000eff utg open 2500, we co ATo flat, btn flat\nFlop A84r hero bet 3500 btn call\nTurn 2s hero bet 9000 btn raise 22000 hero fold`}
+              className="min-h-[160px] sm:min-h-[180px] text-sm resize-none font-mono leading-relaxed pb-14 bg-card"
               onKeyDown={(e) => {
                 if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
                   handleVisualize();
@@ -120,31 +200,43 @@ export default function Home() {
               <Button
                 onClick={handleVisualize}
                 disabled={isProcessing || !handText.trim()}
-                size="sm"
-                className="gap-2 font-semibold"
+                className="gap-2 font-semibold shadow-sm"
               >
                 {isProcessing ? (
                   <><Loader2 className="h-4 w-4 animate-spin" /> Reading hand...</>
                 ) : (
-                  <><Play className="h-4 w-4" /> Visualise</>
+                  <><Play className="h-4 w-4 fill-current" /> Visualise</>
                 )}
               </Button>
             </div>
           </div>
+
+          {/* Validation errors */}
+          {validationErrors.length > 0 && (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 space-y-1">
+              {validationErrors.map((err, i) => (
+                <div key={i} className="flex items-start gap-2 text-sm text-amber-800">
+                  <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+                  <span>{err}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
           <p className="text-xs text-muted-foreground text-center">
-            Press <kbd className="px-1 py-0.5 rounded bg-muted text-xs">⌘ Enter</kbd> to visualise · No signup required
+            Press <kbd className="px-1.5 py-0.5 rounded bg-muted border border-border text-xs font-mono">⌘ Enter</kbd> to visualise
           </p>
         </div>
 
         {/* Example Hands */}
         <div className="w-full space-y-2">
-          <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Try an example</p>
+          <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Try an example</p>
           <div className="flex flex-wrap gap-2">
             {EXAMPLE_HANDS.map((ex) => (
               <button
                 key={ex.label}
                 onClick={() => loadExample(ex.text)}
-                className="text-sm px-3 py-1.5 rounded-full border border-border bg-card hover:bg-muted transition-colors text-foreground"
+                className="text-sm px-3 py-1.5 rounded-full border border-border bg-card hover:bg-secondary hover:border-primary/30 hover:text-primary transition-all font-medium text-foreground"
               >
                 {ex.label}
               </button>
@@ -153,13 +245,13 @@ export default function Home() {
         </div>
 
         {/* How it works */}
-        <div className="w-full grid grid-cols-3 gap-4 pt-4 border-t border-border">
+        <div className="w-full grid grid-cols-3 gap-3 pt-6 border-t border-border">
           {[
             { icon: "✍️", title: "Type it", desc: "Describe your hand like you would on WhatsApp" },
             { icon: "🎬", title: "Replay it", desc: "See it come to life on an animated poker table" },
-            { icon: "📤", title: "Share it", desc: "One tap to share on TikTok, IG, WhatsApp & more" },
+            { icon: "📤", title: "Share it", desc: "One tap to WhatsApp, TikTok, IG & more" },
           ].map((step) => (
-            <div key={step.title} className="text-center space-y-1">
+            <div key={step.title} className="text-center space-y-1.5 p-3 rounded-xl bg-card border border-border">
               <div className="text-2xl">{step.icon}</div>
               <div className="font-semibold text-sm">{step.title}</div>
               <div className="text-xs text-muted-foreground leading-snug">{step.desc}</div>
@@ -168,12 +260,14 @@ export default function Home() {
         </div>
 
         {/* AI Coach CTA */}
-        <div className="w-full rounded-xl border border-primary/30 bg-primary/5 p-4 flex items-center gap-4">
-          <div className="text-3xl">🧠</div>
+        <div className="w-full rounded-xl border border-primary/20 bg-gradient-to-r from-primary/5 to-accent/5 p-4 flex items-center gap-4 hover:border-primary/40 transition-colors cursor-pointer">
+          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-xl shrink-0">
+            🧠
+          </div>
           <div className="flex-1 min-w-0">
             <div className="font-semibold text-sm flex items-center gap-2">
               AI Coach Analysis
-              <Badge variant="secondary" className="text-xs">Premium</Badge>
+              <Badge className="text-xs bg-accent text-accent-foreground border-0">Premium</Badge>
             </div>
             <p className="text-xs text-muted-foreground mt-0.5">
               Get your hand scored and learn exactly what you should have done differently.

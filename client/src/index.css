@@ -40,73 +40,116 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
-  
-  /* Casino Noir custom font families */
-  --font-display: 'Playfair Display', serif;
-  --font-body: 'Inter', sans-serif;
+
+  /* Bright theme fonts */
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-body: 'Plus Jakarta Sans', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 }
 
-/* Casino Noir Theme - High-Stakes Sophistication */
+/* ─── Light Theme (default) ─────────────────────────────────────────────── */
 :root {
-  /* Primary gold accent */
-  --primary: oklch(0.7 0.15 85);
-  --primary-foreground: oklch(0.15 0.01 85);
-  
-  /* Sidebar styling */
-  --sidebar-primary: oklch(0.65 0.14 85);
-  --sidebar-primary-foreground: oklch(0.15 0.01 85);
-  
-  /* Chart colors - gold to champagne gradient */
-  --chart-1: oklch(0.75 0.12 85);
-  --chart-2: oklch(0.7 0.15 85);
-  --chart-3: oklch(0.65 0.14 85);
-  --chart-4: oklch(0.6 0.13 85);
-  --chart-5: oklch(0.55 0.12 85);
-  
-  /* Border radius */
-  --radius: 0.5rem;
-  
-  /* Deep charcoal and midnight navy backgrounds */
-  --background: oklch(0.15 0.01 240);
-  --foreground: oklch(0.95 0.005 85);
-  
-  /* Card styling - slightly lighter than background */
-  --card: oklch(0.18 0.015 240);
-  --card-foreground: oklch(0.95 0.005 85);
-  
-  /* Popover styling */
-  --popover: oklch(0.18 0.015 240);
-  --popover-foreground: oklch(0.95 0.005 85);
-  
-  /* Secondary - muted sage green */
-  --secondary: oklch(0.35 0.05 140);
-  --secondary-foreground: oklch(0.95 0.005 85);
-  
-  /* Muted elements */
-  --muted: oklch(0.25 0.02 240);
-  --muted-foreground: oklch(0.65 0.01 240);
-  
-  /* Accent - metallic gold */
-  --accent: oklch(0.7 0.15 85);
-  --accent-foreground: oklch(0.15 0.01 85);
-  
-  /* Destructive - strategic red */
-  --destructive: oklch(0.5 0.2 25);
-  --destructive-foreground: oklch(0.95 0.005 85);
-  
-  /* Borders and inputs */
-  --border: oklch(0.3 0.02 240);
-  --input: oklch(0.25 0.02 240);
-  --ring: oklch(0.7 0.15 85);
-  
-  /* Sidebar colors */
-  --sidebar: oklch(0.16 0.012 240);
-  --sidebar-foreground: oklch(0.95 0.005 85);
-  --sidebar-accent: oklch(0.25 0.02 240);
-  --sidebar-accent-foreground: oklch(0.95 0.005 85);
-  --sidebar-border: oklch(0.3 0.02 240);
-  --sidebar-ring: oklch(0.7 0.15 85);
+  --radius: 0.625rem;
+
+  /* Crisp white background */
+  --background: oklch(0.99 0.002 240);
+  --foreground: oklch(0.15 0.02 240);
+
+  /* Card — very light grey */
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.15 0.02 240);
+
+  /* Popover */
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.15 0.02 240);
+
+  /* Primary — vibrant poker green */
+  --primary: oklch(0.52 0.18 155);
+  --primary-foreground: oklch(1 0 0);
+
+  /* Secondary — soft green tint */
+  --secondary: oklch(0.94 0.04 155);
+  --secondary-foreground: oklch(0.35 0.12 155);
+
+  /* Muted — light warm grey */
+  --muted: oklch(0.96 0.005 240);
+  --muted-foreground: oklch(0.52 0.02 240);
+
+  /* Accent — warm amber/gold */
+  --accent: oklch(0.78 0.16 75);
+  --accent-foreground: oklch(0.2 0.05 75);
+
+  /* Destructive */
+  --destructive: oklch(0.55 0.22 25);
+  --destructive-foreground: oklch(1 0 0);
+
+  /* Borders */
+  --border: oklch(0.9 0.01 240);
+  --input: oklch(0.93 0.008 240);
+  --ring: oklch(0.52 0.18 155);
+
+  /* Charts — green to amber gradient */
+  --chart-1: oklch(0.52 0.18 155);
+  --chart-2: oklch(0.65 0.16 155);
+  --chart-3: oklch(0.78 0.16 75);
+  --chart-4: oklch(0.7 0.18 50);
+  --chart-5: oklch(0.6 0.2 25);
+
+  /* Sidebar */
+  --sidebar: oklch(0.97 0.005 240);
+  --sidebar-foreground: oklch(0.15 0.02 240);
+  --sidebar-primary: oklch(0.52 0.18 155);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.94 0.04 155);
+  --sidebar-accent-foreground: oklch(0.35 0.12 155);
+  --sidebar-border: oklch(0.9 0.01 240);
+  --sidebar-ring: oklch(0.52 0.18 155);
+}
+
+/* ─── Dark Theme ─────────────────────────────────────────────────────────── */
+.dark {
+  --background: oklch(0.14 0.02 240);
+  --foreground: oklch(0.96 0.005 240);
+
+  --card: oklch(0.18 0.02 240);
+  --card-foreground: oklch(0.96 0.005 240);
+
+  --popover: oklch(0.18 0.02 240);
+  --popover-foreground: oklch(0.96 0.005 240);
+
+  --primary: oklch(0.62 0.18 155);
+  --primary-foreground: oklch(0.1 0.02 155);
+
+  --secondary: oklch(0.25 0.05 155);
+  --secondary-foreground: oklch(0.85 0.08 155);
+
+  --muted: oklch(0.22 0.02 240);
+  --muted-foreground: oklch(0.6 0.02 240);
+
+  --accent: oklch(0.75 0.16 75);
+  --accent-foreground: oklch(0.15 0.05 75);
+
+  --destructive: oklch(0.55 0.22 25);
+  --destructive-foreground: oklch(1 0 0);
+
+  --border: oklch(0.28 0.02 240);
+  --input: oklch(0.24 0.02 240);
+  --ring: oklch(0.62 0.18 155);
+
+  --chart-1: oklch(0.62 0.18 155);
+  --chart-2: oklch(0.72 0.16 155);
+  --chart-3: oklch(0.75 0.16 75);
+  --chart-4: oklch(0.68 0.18 50);
+  --chart-5: oklch(0.58 0.2 25);
+
+  --sidebar: oklch(0.16 0.02 240);
+  --sidebar-foreground: oklch(0.96 0.005 240);
+  --sidebar-primary: oklch(0.62 0.18 155);
+  --sidebar-primary-foreground: oklch(0.1 0.02 155);
+  --sidebar-accent: oklch(0.25 0.05 155);
+  --sidebar-accent-foreground: oklch(0.85 0.08 155);
+  --sidebar-border: oklch(0.28 0.02 240);
+  --sidebar-ring: oklch(0.62 0.18 155);
 }
 
 @layer base {
@@ -116,10 +159,13 @@
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-display);
     font-weight: 700;
+    letter-spacing: -0.02em;
   }
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),
@@ -162,81 +208,47 @@
       max-width: 1280px;
     }
   }
-  
-  /* Felt texture overlay */
-  .felt-texture {
-    position: relative;
-  }
-  
-  .felt-texture::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='2.5' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
-    pointer-events: none;
-    z-index: 1;
-  }
-  
-  /* Card suit icons */
-  .suit-spade::before { content: '♠'; }
-  .suit-heart::before { content: '♥'; }
-  .suit-diamond::before { content: '♦'; }
-  .suit-club::before { content: '♣'; }
-  
-  /* Monospace for data */
+
   .font-mono {
     font-family: var(--font-mono);
   }
+
+  /* Card deal animation */
+  @keyframes card-deal {
+    0% { transform: scale(0.5) translateY(-20px); opacity: 0; }
+    60% { transform: scale(1.08) translateY(2px); opacity: 1; }
+    100% { transform: scale(1) translateY(0); opacity: 1; }
+  }
+
+  .card-deal {
+    animation: card-deal 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
 }
 
-  /* Mobile optimizations */
-  @media (max-width: 768px) {
-    .container {
-      padding-left: 0.75rem;
-      padding-right: 0.75rem;
-    }
-    
-    /* Minimum touch target size */
-    button, [role="button"], a[href] {
-      min-height: 44px;
-      min-width: 44px;
-    }
-    
-    /* Readable text without zooming */
-    body {
-      font-size: 16px;
-    }
-    
-    /* Prevent horizontal scroll */
-    body {
-      overflow-x: hidden;
-    }
-    
-    /* Make cards stack vertically */
-    .grid {
-      grid-template-columns: 1fr !important;
-    }
-    
-    /* Optimize spacing for mobile */
-    .space-y-8 > * + * {
-      margin-top: 1rem;
-    }
-    
-    .space-y-6 > * + * {
-      margin-top: 0.75rem;
-    }
-    
-    /* Make tabs scrollable */
-    [role="tablist"] {
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: none;
-    }
-    
-    [role="tablist"]::-webkit-scrollbar {
-      display: none;
-    }
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .container {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
   }
+
+  button, [role="button"], a[href] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  body {
+    font-size: 16px;
+    overflow-x: hidden;
+  }
+
+  [role="tablist"] {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  [role="tablist"]::-webkit-scrollbar {
+    display: none;
+  }
+}
