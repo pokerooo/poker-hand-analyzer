@@ -40,6 +40,9 @@ export const hands = mysqlTable("hands", {
   shareSlug: varchar("shareSlug", { length: 16 }).unique().notNull(), // short public URL slug e.g. "a3f9x2"
   isPublic: boolean("isPublic").default(true).notNull(),
 
+  // Villain annotation — user-tagged opponent type for exploitative analysis
+  villainType: varchar("villainType", { length: 100 }), // e.g. "tight reg", "fish", "LAG", "nit", "calling station"
+
   // AI Coach (paid feature)
   coachUnlocked: boolean("coachUnlocked").default(false).notNull(),
   coachAnalysis: json("coachAnalysis"), // stored after payment

@@ -306,16 +306,49 @@ function ShareSheet({ slug, rawText }: { slug: string; rawText: string }) {
   );
 }
 
+// ─── Villain type presets ─────────────────────────────────────────────────────
+
+const VILLAIN_PRESETS = [
+  { id: "fish", label: "Fish", emoji: "🐟", description: "Calls too wide, chases draws" },
+  { id: "nit", label: "Nit", emoji: "🪨", description: "Extremely tight, folds too much" },
+  { id: "tight reg", label: "Tight Reg", emoji: "📊", description: "Solid but predictable" },
+  { id: "lag", label: "LAG", emoji: "🔥", description: "Loose-aggressive, barrels often" },
+  { id: "calling station", label: "Calling Station", emoji: "📞", description: "Never folds, no bluffs" },
+  { id: "maniac", label: "Maniac", emoji: "💥", description: "Bets/raises with anything" },
+];
+
 // ─── AI Coach Panel ───────────────────────────────────────────────────────────
 
-function CoachPanel({ handId, isUnlocked, cachedAnalysis }: { handId: number; isUnlocked: boolean; cachedAnalysis: any }) {
+function CoachPanel({ handId, isUnlocked, cachedAnalysis, storedVillainType }: {
+  handId: number;
+  isUnlocked: boolean;
+  cachedAnalysis: any;
+  storedVillainType?: string | null;
+}) {
   const { isAuthenticated } = useAuth();
   const [analysis, setAnalysis] = useState<any>(cachedAnalysis);
+  const [selectedVillain, setSelectedVillain] = useState<string>(storedVillainType || "");
+  const [customVillain, setCustomVillain] = useState("");
+  const [activeVillainType, setActiveVillainType] = useState<string>(storedVillainType || "");
+  const [showReanalyze, setShowReanalyze] = useState(false);
 
   const analyzeMutation = trpc.coach.analyze.useMutation({
-    onSuccess: (data) => setAnalysis(data.analysis),
+    onSuccess: (data) => {
+      setAnalysis(data.analysis);
+      setActiveVillainType(data.villainType || "");
+      setShowReanalyze(false);
+    },
     onError: (err) => toast.error("Analysis failed", { description: err.message }),
   });
+
+  const effectiveVillainType = customVillain.trim() || selectedVillain;
+
+  const handleAnalyze = () => {
+    analyzeMutation.mutate({
+      handId,
+      villainType: effectiveVillainType || undefined,
+    });
+  };
 
   if (!isAuthenticated) {
     return (
@@ -326,94 +359,204 @@ function CoachPanel({ handId, isUnlocked, cachedAnalysis }: { handId: number; is
     );
   }
 
-  if (analysis) {
-    const gradeColors: Record<string, string> = { A: "text-green-500", B: "text-emerald-500", C: "text-yellow-500", D: "text-orange-500", F: "text-red-500" };
-    const streets = ["preflop", "flop", "turn", "river"] as const;
-
-    return (
-      <div className="space-y-4">
-        {/* Grade */}
-        <div className="flex items-center gap-4">
-          <div className={`text-5xl font-black ${gradeColors[analysis.grade] || "text-foreground"}`}>
-            {analysis.grade}
-          </div>
-          <div>
-            <div className="font-semibold">{analysis.gradeLabel}</div>
-            <div className="text-sm text-muted-foreground">{analysis.summary}</div>
-          </div>
-        </div>
-
-        {/* Street scores */}
-        <div className="grid grid-cols-2 gap-2">
-          {streets.map((s) => {
-            const st = analysis.streets?.[s];
-            if (!st) return null;
-            return (
-              <div key={s} className="bg-muted rounded-lg p-2">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-medium capitalize">{s}</span>
-                  <span className="text-sm font-bold">{st.score}/10</span>
-                </div>
-                <p className="text-xs text-muted-foreground leading-snug">{st.comment}</p>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Did well / Mistakes */}
-        {analysis.didWell?.length > 0 && (
-          <div>
-            <p className="text-xs font-semibold text-green-500 mb-1">✓ What you did well</p>
-            <ul className="space-y-1">
-              {analysis.didWell.map((item: string, i: number) => (
-                <li key={i} className="text-xs text-muted-foreground">• {item}</li>
-              ))}
-            </ul>
-          </div>
-        )}
-        {analysis.mistakes?.length > 0 && (
-          <div>
-            <p className="text-xs font-semibold text-red-400 mb-1">✗ Where you went wrong</p>
-            <ul className="space-y-1">
-              {analysis.mistakes.map((item: string, i: number) => (
-                <li key={i} className="text-xs text-muted-foreground">• {item}</li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {/* Key lesson */}
-        {analysis.keyLesson && (
-          <div className="bg-primary/10 border border-primary/20 rounded-lg p-3">
-            <p className="text-xs font-semibold text-primary mb-1">💡 Key lesson</p>
-            <p className="text-xs text-foreground">{analysis.keyLesson}</p>
-          </div>
-        )}
-      </div>
-    );
-  }
+  const gradeColors: Record<string, string> = { A: "text-green-500", B: "text-emerald-500", C: "text-yellow-500", D: "text-orange-500", F: "text-red-500" };
+  const streets = ["preflop", "flop", "turn", "river"] as const;
 
   return (
-    <div className="text-center py-6 space-y-4">
-      <div className="text-4xl">🧠</div>
+    <div className="space-y-4">
+      {/* Villain type selector — always visible */}
       <div>
-        <p className="font-semibold">Get AI Coach Analysis</p>
-        <p className="text-sm text-muted-foreground mt-1">
-          Your hand scored street-by-street with plain English feedback on what you did well and what to improve.
-        </p>
+        <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: "#4ade80" }}>Villain Type</p>
+        <p className="text-xs mb-3" style={{ color: "#64748b" }}>Tag the opponent to get exploitative adjustments tailored to their tendencies.</p>
+
+        {/* Preset tags */}
+        <div className="flex flex-wrap gap-1.5 mb-2">
+          {VILLAIN_PRESETS.map((v) => (
+            <button
+              key={v.id}
+              onClick={() => { setSelectedVillain(selectedVillain === v.id ? "" : v.id); setCustomVillain(""); }}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold transition-all"
+              style={{
+                background: selectedVillain === v.id
+                  ? "linear-gradient(135deg, #065f46, #047857)"
+                  : "rgba(255,255,255,0.05)",
+                color: selectedVillain === v.id ? "#6ee7b7" : "#94a3b8",
+                border: selectedVillain === v.id
+                  ? "1px solid rgba(16,185,129,0.4)"
+                  : "1px solid rgba(255,255,255,0.08)",
+                boxShadow: selectedVillain === v.id ? "0 0 10px rgba(16,185,129,0.2)" : "none",
+              }}
+              title={v.description}
+            >
+              <span>{v.emoji}</span> {v.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Custom villain free-text */}
+        <input
+          type="text"
+          placeholder="Or describe: e.g. aggro whale / unknown reg..."
+          value={customVillain}
+          onChange={(e) => { setCustomVillain(e.target.value); setSelectedVillain(""); }}
+          className="w-full text-xs px-3 py-2 rounded-lg outline-none transition-all"
+          style={{
+            background: "rgba(15,23,42,0.6)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            color: "#e2e8f0",
+          }}
+          onFocus={(e) => { e.target.style.borderColor = "rgba(16,185,129,0.4)"; }}
+          onBlur={(e) => { e.target.style.borderColor = "rgba(255,255,255,0.08)"; }}
+        />
       </div>
-      <Button
-        onClick={() => analyzeMutation.mutate({ handId })}
-        disabled={analyzeMutation.isPending}
-        className="gap-2"
-      >
-        {analyzeMutation.isPending ? (
-          <><Loader2 className="h-4 w-4 animate-spin" /> Analysing...</>
-        ) : (
-          <><Sparkles className="h-4 w-4" /> Analyse My Hand</>
-        )}
-      </Button>
-      <p className="text-xs text-muted-foreground">Free during beta</p>
+
+      {/* Analysis results */}
+      {analysis ? (
+        <div className="space-y-4">
+          {/* Active villain type badge */}
+          {activeVillainType && activeVillainType !== "unknown" && (
+            <div
+              className="flex items-center justify-between px-3 py-2 rounded-lg"
+              style={{ background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.2)" }}
+            >
+              <span className="text-xs" style={{ color: "#6ee7b7" }}>
+                Analysis vs <strong className="capitalize">{activeVillainType}</strong>
+              </span>
+              <button
+                className="text-[10px] px-2 py-0.5 rounded-full transition-all"
+                style={{ color: "#94a3b8", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}
+                onClick={() => setShowReanalyze(true)}
+              >
+                Re-analyse
+              </button>
+            </div>
+          )}
+
+          {/* Re-analyze prompt */}
+          {showReanalyze && (
+            <div
+              className="p-3 rounded-lg space-y-2"
+              style={{ background: "rgba(15,23,42,0.6)", border: "1px solid rgba(16,185,129,0.15)" }}
+            >
+              <p className="text-xs" style={{ color: "#94a3b8" }}>Re-analyse with updated villain type:</p>
+              <Button
+                size="sm"
+                className="w-full gap-2 text-xs"
+                onClick={handleAnalyze}
+                disabled={analyzeMutation.isPending}
+              >
+                {analyzeMutation.isPending ? (
+                  <><Loader2 className="h-3 w-3 animate-spin" /> Analysing...</>
+                ) : (
+                  <><Sparkles className="h-3 w-3" /> Analyse vs {effectiveVillainType || "Unknown"}</>
+                )}
+              </Button>
+            </div>
+          )}
+
+          {/* Grade */}
+          <div className="flex items-center gap-4">
+            <div className={`text-5xl font-black ${gradeColors[analysis.grade] || "text-foreground"}`}>
+              {analysis.grade}
+            </div>
+            <div>
+              <div className="font-semibold text-sm">{analysis.gradeLabel}</div>
+              <div className="text-xs mt-0.5" style={{ color: "#94a3b8" }}>{analysis.summary}</div>
+            </div>
+          </div>
+
+          {/* Exploitative adjustments — new section */}
+          {analysis.exploitativeAdjustments?.length > 0 && (
+            <div
+              className="rounded-lg p-3 space-y-1.5"
+              style={{ background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.2)" }}
+            >
+              <p className="text-xs font-bold uppercase tracking-widest" style={{ color: "#fbbf24" }}>⚡ Exploitative Adjustments</p>
+              {analysis.exploitativeAdjustments.map((item: string, i: number) => (
+                <p key={i} className="text-xs" style={{ color: "#e2e8f0" }}>→ {item}</p>
+              ))}
+            </div>
+          )}
+
+          {/* Street scores */}
+          <div className="grid grid-cols-2 gap-2">
+            {streets.map((s) => {
+              const st = analysis.streets?.[s];
+              if (!st) return null;
+              return (
+                <div key={s} className="rounded-lg p-2" style={{ background: "rgba(15,23,42,0.5)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs font-medium capitalize" style={{ color: "#94a3b8" }}>{s}</span>
+                    <span className="text-sm font-bold" style={{ color: st.score >= 7 ? "#4ade80" : st.score >= 5 ? "#fbbf24" : "#f87171" }}>{st.score}/10</span>
+                  </div>
+                  <p className="text-xs leading-snug" style={{ color: "#64748b" }}>{st.comment}</p>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Did well / Mistakes */}
+          {analysis.didWell?.length > 0 && (
+            <div>
+              <p className="text-xs font-semibold mb-1.5" style={{ color: "#4ade80" }}>✓ What you did well</p>
+              <div className="space-y-1">
+                {analysis.didWell.map((item: string, i: number) => (
+                  <p key={i} className="text-xs" style={{ color: "#94a3b8" }}>• {item}</p>
+                ))}
+              </div>
+            </div>
+          )}
+          {analysis.mistakes?.length > 0 && (
+            <div>
+              <p className="text-xs font-semibold mb-1.5" style={{ color: "#f87171" }}>✗ Where you went wrong</p>
+              <div className="space-y-1">
+                {analysis.mistakes.map((item: string, i: number) => (
+                  <p key={i} className="text-xs" style={{ color: "#94a3b8" }}>• {item}</p>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Key lesson */}
+          {analysis.keyLesson && (
+            <div
+              className="rounded-lg p-3"
+              style={{ background: "rgba(16,185,129,0.06)", border: "1px solid rgba(16,185,129,0.2)" }}
+            >
+              <p className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: "#4ade80" }}>💡 Key Lesson</p>
+              <p className="text-xs" style={{ color: "#e2e8f0" }}>{analysis.keyLesson}</p>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <Button
+            onClick={handleAnalyze}
+            disabled={analyzeMutation.isPending}
+            className="w-full gap-2"
+            style={{
+              background: effectiveVillainType
+                ? "linear-gradient(135deg, #065f46, #047857)"
+                : "linear-gradient(135deg, #1e293b, #0f172a)",
+              color: effectiveVillainType ? "#6ee7b7" : "#64748b",
+              border: effectiveVillainType ? "1px solid rgba(16,185,129,0.3)" : "1px solid rgba(255,255,255,0.08)",
+              boxShadow: effectiveVillainType ? "0 0 16px rgba(16,185,129,0.2)" : "none",
+            }}
+          >
+            {analyzeMutation.isPending ? (
+              <><Loader2 className="h-4 w-4 animate-spin" /> Analysing...</>
+            ) : (
+              <><Sparkles className="h-4 w-4" /> {effectiveVillainType ? `Analyse vs ${effectiveVillainType}` : "Analyse My Hand"}</>
+            )}
+          </Button>
+          {effectiveVillainType && (
+            <p className="text-[11px] text-center" style={{ color: "#475569" }}>
+              Analysis will be tailored to exploit a <strong className="capitalize" style={{ color: "#94a3b8" }}>{effectiveVillainType}</strong>
+            </p>
+          )}
+          <p className="text-xs text-center" style={{ color: "#334155" }}>Free during beta</p>
+        </div>
+      )}
     </div>
   );
 }
@@ -736,6 +879,7 @@ export default function HandReplayer() {
               handId={hand.id}
               isUnlocked={hand.coachUnlocked}
               cachedAnalysis={hand.coachAnalysis}
+              storedVillainType={(hand as any).villainType}
             />
           )}
         </div>

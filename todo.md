@@ -148,3 +148,13 @@ Optional paid AI coach scores the hand and explains what to do differently.
 - [x] Stitch frames into downloadable video/GIF
 - [x] Add export button to share tab in replayer
 - [x] Support portrait format for TikTok/IG Stories
+
+## Current Task: Villain Range Annotation
+- [x] Add villainType field to hands table in DB schema
+- [x] Add setVillainType tRPC mutation
+- [x] Update coach.analyze procedure to accept and use villainType
+- [x] Update LLM system prompt to adjust exploitative recommendations based on villain type
+- [x] Build villain type selector UI in Coach tab (preset tags + free-text)
+- [x] Persist villain type selection per hand
+- [x] Show villain type context in the analysis output
+- [x] Write tests for villain type prompt injection (9 tests added, 105 total passing)

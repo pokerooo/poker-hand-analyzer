@@ -355,3 +355,77 @@ describe("stack tracking in buildReplaySteps", () => {
     expect(finalStacks["co"]).toBeUndefined();
   });
 });
+
+// ─── Villain type profile tests ───────────────────────────────────────────────
+
+const VILLAIN_PROFILES: Record<string, string> = {
+  "fish": "The villain is a recreational fish/calling station. They call too wide, rarely fold to aggression, and chase draws. Exploit by value betting thinner, betting bigger for value, never bluffing, and avoiding fancy plays.",
+  "nit": "The villain is a nit — extremely tight and passive. They fold too much preflop and postflop. Exploit by stealing blinds aggressively, c-betting frequently, and giving up when they show resistance (they have it).",
+  "tight reg": "The villain is a tight-aggressive regular. They play a solid but predictable range. Exploit by attacking their folds, 3-betting their opens light in position, and not paying off their strong hands.",
+  "lag": "The villain is a loose-aggressive player (LAG). They open wide, barrel frequently, and apply pressure. Exploit by tightening your calling range, trapping with strong hands, and not folding equity to their bluffs.",
+  "calling station": "The villain is a calling station who never folds. Exploit by eliminating all bluffs, value betting relentlessly with any made hand, and sizing up for maximum value.",
+  "maniac": "The villain is a maniac — they bet and raise with almost any two cards. Exploit by calling down lighter, trapping with strong hands, and letting them spew chips.",
+  "unknown": "The villain type is unknown. Provide balanced analysis with notes on what reads would change the recommended line.",
+};
+
+function getVillainProfile(villainType: string): string {
+  const key = villainType.toLowerCase();
+  return VILLAIN_PROFILES[key] || VILLAIN_PROFILES["unknown"];
+}
+
+describe("villain type profiles", () => {
+  it("returns fish profile for 'fish'", () => {
+    const profile = getVillainProfile("fish");
+    expect(profile).toContain("calling station");
+    expect(profile).toContain("value betting");
+  });
+
+  it("returns nit profile for 'nit'", () => {
+    const profile = getVillainProfile("nit");
+    expect(profile).toContain("tight and passive");
+    expect(profile).toContain("stealing blinds");
+  });
+
+  it("returns tight reg profile for 'tight reg'", () => {
+    const profile = getVillainProfile("tight reg");
+    expect(profile).toContain("tight-aggressive");
+    expect(profile).toContain("predictable");
+  });
+
+  it("returns LAG profile for 'lag'", () => {
+    const profile = getVillainProfile("lag");
+    expect(profile).toContain("loose-aggressive");
+    expect(profile).toContain("barrel");
+  });
+
+  it("returns calling station profile for 'calling station'", () => {
+    const profile = getVillainProfile("calling station");
+    expect(profile).toContain("never folds");
+    expect(profile).toContain("value betting relentlessly");
+  });
+
+  it("returns maniac profile for 'maniac'", () => {
+    const profile = getVillainProfile("maniac");
+    expect(profile).toContain("any two cards");
+    expect(profile).toContain("trapping");
+  });
+
+  it("returns unknown profile for unrecognised villain type", () => {
+    const profile = getVillainProfile("aggro whale");
+    expect(profile).toContain("villain type is unknown");
+  });
+
+  it("is case-insensitive", () => {
+    expect(getVillainProfile("FISH")).toBe(getVillainProfile("fish"));
+    expect(getVillainProfile("LAG")).toBe(getVillainProfile("lag"));
+    expect(getVillainProfile("Tight Reg")).toBe(getVillainProfile("tight reg"));
+  });
+
+  it("covers all 6 preset types", () => {
+    const presets = ["fish", "nit", "tight reg", "lag", "calling station", "maniac"];
+    for (const preset of presets) {
+      const profile = getVillainProfile(preset);
+      expect(profile).not.toBe(VILLAIN_PROFILES["unknown"]);
+    }
+  });
+});

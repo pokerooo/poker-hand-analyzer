@@ -12,6 +12,7 @@ import {
   getHandById,
   getUserHands,
   updateHandCoachAnalysis,
+  updateVillainType,
   deleteHand,
   getDiscordWebhooks,
   createDiscordWebhook,
@@ -100,25 +101,50 @@ const handsRouter = router({
 
 // ─── AI Coach Router ──────────────────────────────────────────────────────────
 
+// Villain type profiles for exploitative coaching
+const VILLAIN_PROFILES: Record<string, string> = {
+  "fish": "The villain is a recreational fish/calling station. They call too wide, rarely fold to aggression, and chase draws. Exploit by value betting thinner, betting bigger for value, never bluffing, and avoiding fancy plays.",
+  "nit": "The villain is a nit — extremely tight and passive. They fold too much preflop and postflop. Exploit by stealing blinds aggressively, c-betting frequently, and giving up when they show resistance (they have it).",
+  "tight reg": "The villain is a tight-aggressive regular. They play a solid but predictable range. Exploit by attacking their folds, 3-betting their opens light in position, and not paying off their strong hands.",
+  "lag": "The villain is a loose-aggressive player (LAG). They open wide, barrel frequently, and apply pressure. Exploit by tightening your calling range, trapping with strong hands, and not folding equity to their bluffs.",
+  "calling station": "The villain is a calling station who never folds. Exploit by eliminating all bluffs, value betting relentlessly with any made hand, and sizing up for maximum value.",
+  "maniac": "The villain is a maniac — they bet and raise with almost any two cards. Exploit by calling down lighter, trapping with strong hands, and letting them spew chips.",
+  "unknown": "The villain type is unknown. Provide balanced analysis with notes on what reads would change the recommended line.",
+};
+
 const coachRouter = router({
-  // Analyze a hand with AI coach (protected — requires auth + payment check)
+  // Set villain type for a hand
+  setVillainType: protectedProcedure
+    .input(z.object({ handId: z.number(), villainType: z.string().max(100).nullable() }))
+    .mutation(async ({ input, ctx }) => {
+      const hand = await getHandById(input.handId);
+      if (!hand) throw new TRPCError({ code: "NOT_FOUND", message: "Hand not found" });
+      if (hand.userId !== ctx.user.id) throw new TRPCError({ code: "FORBIDDEN" });
+      await updateVillainType(input.handId, ctx.user.id, input.villainType);
+      return { success: true };
+    }),
+
+  // Analyze a hand with AI coach (protected — requires auth)
   analyze: protectedProcedure
-    .input(z.object({ handId: z.number() }))
+    .input(z.object({ handId: z.number(), villainType: z.string().max(100).optional() }))
     .mutation(async ({ input, ctx }) => {
       const hand = await getHandById(input.handId);
       if (!hand) throw new TRPCError({ code: "NOT_FOUND", message: "Hand not found" });
       if (hand.userId !== ctx.user.id) throw new TRPCError({ code: "FORBIDDEN" });
 
-      // If already unlocked, return cached analysis
-      if (hand.coachUnlocked && hand.coachAnalysis) {
-        return { analysis: hand.coachAnalysis, cached: true };
+      // Determine villain type — prefer input override, fall back to stored value
+      const villainTypeKey = (input.villainType || (hand as any).villainType || "unknown").toLowerCase();
+      const villainProfile = VILLAIN_PROFILES[villainTypeKey] || VILLAIN_PROFILES["unknown"];
+
+      // If cached analysis exists AND villain type hasn't changed, return cache
+      const storedVillainType = (hand as any).villainType || "unknown";
+      if (hand.coachUnlocked && hand.coachAnalysis && !input.villainType) {
+        return { analysis: hand.coachAnalysis, cached: true, villainType: storedVillainType };
       }
 
-      // TODO: In production, gate this behind Stripe payment check
-      // For now, allow analysis for authenticated users
       const parsedData = hand.parsedData as any;
 
-      const prompt = `You are a professional poker coach. Analyze this hand played by a recreational player and give clear, jargon-free feedback.
+      const prompt = `You are a world-class professional poker coach specialising in exploitative play at mid-to-high stakes ($500-$1000 buy-ins). Your analysis is direct, professional, and focused on maximising EV against this specific villain type.
 
 Hand Description:
 ${hand.rawText}
@@ -126,27 +152,38 @@ ${hand.rawText}
 Parsed Hand Data:
 ${JSON.stringify(parsedData, null, 2)}
 
+VILLAIN PROFILE:
+${villainProfile}
+
+Analysis requirements:
+1. Grade and score each street based on how well the hero exploited (or failed to exploit) the villain type.
+2. Identify specific exploitative adjustments — e.g. "against a fish, you should have bet 3x pot on the river instead of checking"
+3. Flag any GTO-correct plays that are actually suboptimal against this villain type
+4. The keyLesson must be a specific, actionable exploitative adjustment for this villain type
+5. In exploitativeAdjustments, list 2-3 concrete changes to make against this villain type specifically
+
 Provide your analysis in this exact JSON format:
 {
   "grade": "A" | "B" | "C" | "D" | "F",
   "gradeLabel": "Excellent" | "Good" | "Average" | "Below Average" | "Poor",
-  "summary": "2-3 sentence plain English summary of how the hand was played",
-  "didWell": ["list of 1-3 things the player did well"],
-  "mistakes": ["list of 1-3 clear mistakes in plain English"],
-  "keyLesson": "The single most important thing to take away from this hand",
+  "summary": "2-3 sentence direct summary focused on exploitative play vs this villain type",
+  "didWell": ["1-3 things the player did well, specifically vs this villain type"],
+  "mistakes": ["1-3 exploitative mistakes — what should have been done differently vs this villain"],
+  "keyLesson": "The single most important exploitative adjustment for this villain type",
+  "exploitativeAdjustments": ["2-3 specific line changes to maximise EV vs this villain type"],
   "streets": {
-    "preflop": { "score": 1-10, "comment": "brief plain English comment" },
-    "flop": { "score": 1-10, "comment": "brief plain English comment" } | null,
-    "turn": { "score": 1-10, "comment": "brief plain English comment" } | null,
-    "river": { "score": 1-10, "comment": "brief plain English comment" } | null
+    "preflop": { "score": 1-10, "comment": "brief comment on exploitative correctness" },
+    "flop": { "score": 1-10, "comment": "brief comment" } | null,
+    "turn": { "score": 1-10, "comment": "brief comment" } | null,
+    "river": { "score": 1-10, "comment": "brief comment" } | null
   }
 }
 
-Keep language simple and encouraging. Avoid solver jargon. Speak like a friendly coach, not a textbook.`;
+Be direct and professional. No hand-holding. Focus on EV maximisation.`;
 
       const response = await invokeLLM({
         messages: [
-          { role: "system", content: "You are a friendly, encouraging poker coach for recreational players. Always respond with valid JSON only." },
+          { role: "system", content: "You are a professional poker coach specialising in exploitative play. Always respond with valid JSON only. No markdown, no explanation outside the JSON." },
           { role: "user", content: prompt },
         ],
       });
@@ -155,15 +192,18 @@ Keep language simple and encouraging. Avoid solver jargon. Speak like a friendly
       try {
         const content = response.choices[0].message.content;
         const text = typeof content === "string" ? content : JSON.stringify(content);
-        // Extract JSON from response (handle markdown code blocks)
         const jsonMatch = text.match(/\{[\s\S]*\}/);
         analysis = jsonMatch ? JSON.parse(jsonMatch[0]) : JSON.parse(text);
       } catch {
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to parse coach analysis" });
       }
 
+      // Save villain type and analysis
+      if (input.villainType) {
+        await updateVillainType(input.handId, ctx.user.id, input.villainType);
+      }
       await updateHandCoachAnalysis(input.handId, analysis);
-      return { analysis, cached: false };
+      return { analysis, cached: false, villainType: villainTypeKey };
     }),
 });
 

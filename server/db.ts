@@ -113,6 +113,12 @@ export async function deleteHand(id: number, userId: number) {
   await db.delete(hands).where(and(eq(hands.id, id), eq(hands.userId, userId)));
 }
 
+export async function updateVillainType(id: number, userId: number, villainType: string | null) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(hands).set({ villainType }).where(and(eq(hands.id, id), eq(hands.userId, userId)));
+}
+
 // ─── Discord Webhooks ─────────────────────────────────────────────────────────
 
 export async function getDiscordWebhooks(userId: number) {
