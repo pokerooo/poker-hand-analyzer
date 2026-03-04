@@ -70,14 +70,53 @@ interface ReplayStep {
   description: string;
 }
 
+// Enforce correct board card counts: flop=3 new, turn=1 new, river=1 new
+function sanitiseBoardCards(streets: ParsedStreet[]): ParsedStreet[] {
+  let totalSoFar = 0;
+  return streets.map((street) => {
+    if (!street.board || street.board.length === 0) return street;
+    let allowed = 0;
+    if (street.name === 'flop') allowed = 3;
+    else if (street.name === 'turn') allowed = 1;
+    else if (street.name === 'river') allowed = 1;
+    else return street;
+    const cards = street.board;
+    let newCards: string[];
+    // If LLM returned cumulative cards (e.g. all 5 on river), extract only the new ones
+    if (cards.length === totalSoFar + allowed) {
+      // Incremental — already correct
+      newCards = cards;
+    } else if (cards.length > allowed) {
+      // Cumulative — take the last `allowed` cards
+      newCards = cards.slice(cards.length - allowed);
+    } else {
+      // Fewer than expected — take what we have
+      newCards = cards;
+    }
+    totalSoFar += newCards.length;
+    return { ...street, board: newCards };
+  });
+}
+
+// Sort players so hero is always index 0 (bottom-center seat on the table)
+function heroFirst(players: ParsedPlayer[]): ParsedPlayer[] {
+  const hero = players.find((p) => p.isHero);
+  const rest = players.filter((p) => !p.isHero);
+  return hero ? [hero, ...rest] : players;
+}
+
 function buildReplaySteps(parsed: ParsedHand): ReplayStep[] {
   const steps: ReplayStep[] = [];
   const foldedPlayers = new Set<string>();
   let communityCards: string[] = [];
   let pot = (parsed.smallBlind || 0) + (parsed.bigBlind || 0) + (parsed.ante || 0) * (parsed.players?.length || 0);
 
+  // Sanitise board cards and sort hero to front
+  const sanitisedStreets = sanitiseBoardCards(parsed.streets || []);
+  const sortedPlayers = heroFirst(parsed.players || []);
+
   const makePlayerState = (currentAction: ParsedAction | null) =>
-    (parsed.players || []).map((p) => ({
+    sortedPlayers.map((p) => ({
       position: p.position,
       isHero: p.isHero,
       holeCards: p.holeCards,
@@ -87,7 +126,7 @@ function buildReplaySteps(parsed: ParsedHand): ReplayStep[] {
       isAllIn: currentAction?.player === p.position && currentAction.action === "allin",
     }));
 
-  for (const street of (parsed.streets || [])) {
+  for (const street of sanitisedStreets) {
     // Reveal board cards for this street
     if (street.board && street.board.length > 0) {
       communityCards = [...communityCards, ...street.board];

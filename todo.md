@@ -82,3 +82,10 @@ Optional paid AI coach scores the hand and explains what to do differently.
 - [ ] Video/GIF export for TikTok/IG Stories
 - [ ] Hand edit after creation
 - [ ] User profile page
+
+## Current Task: Replayer Fixes ✓
+- [x] Fix community card reveal: Flop = 3 cards, Turn = +1 (4 total), River = +1 (5 total)
+- [x] Added sanitiseBoardCards() to enforce correct incremental card counts client-side
+- [x] Updated parser system prompt with CRITICAL BOARD CARD RULE to fix at source
+- [x] Added heroFirst() to sort players array so hero is always index 0 = bottom-center seat
+- [x] Hero (we/I/hero) now always appears at the bottom-center seat on the table

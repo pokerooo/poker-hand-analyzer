@@ -107,7 +107,15 @@ Return ONLY valid JSON matching this exact schema (no markdown, no explanation):
 For cards, use standard notation: rank + suit lowercase. Ranks: A K Q J T 9 8 7 6 5 4 3 2. Suits: s h d c.
 Example: "ATo" hero hand → ["As", "Tc"] or ["Ah", "Ts"] (pick the most common suit combo, note it in parseNotes).
 Board "A99r" → ["Ah", "9s", "9c"] (rainbow = different suits).
-Board "Th bdfd" → ["Th"] with boardTexture "bdfd".`;
+Board "Th bdfd" → ["Th"] with boardTexture "bdfd".
+
+CRITICAL BOARD CARD RULE: The "board" field for each street must contain ONLY the NEW cards revealed on that street:
+- Flop "board" = exactly 3 cards (the 3 flop cards only)
+- Turn "board" = exactly 1 card (the single turn card only, NOT all 4 board cards)
+- River "board" = exactly 1 card (the single river card only, NOT all 5 board cards)
+NEVER include cumulative board cards. Each street's board array is independent and incremental.
+
+Hero identification: "we", "I", "hero" always refer to the hero player. Set isHero=true for that player and mark their actions with isHero=true.`;
 
 export async function parseHandText(rawText: string): Promise<ParsedHand> {
   const response = await invokeLLM({
