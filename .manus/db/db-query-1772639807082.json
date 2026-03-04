@@ -1,0 +1,22 @@
+{
+  "query": "SELECT shareSlug, title FROM hands LIMIT 3;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3S5EK7kkwn3cfqa.root --database g6HPzuQNwUJzsGs4mHVNkx --execute SELECT shareSlug, title FROM hands LIMIT 3;",
+  "rows": [
+    {
+      "shareSlug": "k3d314zx",
+      "title": "NULL"
+    },
+    {
+      "shareSlug": "nn4gpm5m",
+      "title": "NULL"
+    },
+    {
+      "shareSlug": "r848utzi",
+      "title": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "shareSlug\ttitle\nk3d314zx\tNULL\nnn4gpm5m\tNULL\nr848utzi\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 1520
+}

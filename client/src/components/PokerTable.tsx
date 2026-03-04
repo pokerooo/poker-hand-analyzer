@@ -143,23 +143,49 @@ function CommunityCards({ cards, prevCount }: { cards: string[]; prevCount: numb
 
 // ─── Seat Layout ──────────────────────────────────────────────────────────────
 
-// Fixed 8-max seat positions — hero always at bottom-center (index 0)
-const EIGHT_MAX_SEATS: Array<{ top: string; left: string; transform: string }> = [
-  { top: "88%", left: "50%", transform: "translate(-50%, -50%)" },   // 0 hero bottom-center
-  { top: "12%", left: "50%", transform: "translate(-50%, -50%)" },   // 1 top-center
-  { top: "50%", left: "5%",  transform: "translate(-50%, -50%)" },   // 2 left
-  { top: "50%", left: "95%", transform: "translate(-50%, -50%)" },   // 3 right
-  { top: "20%", left: "18%", transform: "translate(-50%, -50%)" },   // 4 top-left
-  { top: "20%", left: "82%", transform: "translate(-50%, -50%)" },   // 5 top-right
-  { top: "75%", left: "15%", transform: "translate(-50%, -50%)" },   // 6 bottom-left
-  { top: "75%", left: "85%", transform: "translate(-50%, -50%)" },   // 7 bottom-right
-];
+// Standard 8-max clockwise seat layout:
+// Positions are fixed to visual slots regardless of who is hero.
+// Clockwise from bottom-center:
+//   Slot 0 = BTN (bottom-right)  — dealer
+//   Slot 1 = SB  (bottom-left)
+//   Slot 2 = BB  (left)
+//   Slot 3 = UTG (top-left)
+//   Slot 4 = UTG+1 (top-center-left)
+//   Slot 5 = LJ  (top-center-right)
+//   Slot 6 = HJ  (top-right)
+//   Slot 7 = CO  (right)
 
-// Canonical 8-max position order (hero-relative rotation is handled by buildReplaySteps)
-const CANONICAL_POSITIONS = ["BTN", "SB", "BB", "UTG", "UTG+1", "MP", "HJ", "CO"];
+// Visual positions for each of the 8 fixed slots
+const SEAT_POSITIONS: Record<string, { top: string; left: string; transform: string }> = {
+  BTN:    { top: "82%", left: "72%", transform: "translate(-50%, -50%)" },
+  SB:     { top: "82%", left: "28%", transform: "translate(-50%, -50%)" },
+  BB:     { top: "55%", left: "5%",  transform: "translate(-50%, -50%)" },
+  UTG:    { top: "18%", left: "18%", transform: "translate(-50%, -50%)" },
+  "UTG+1":{ top: "10%", left: "38%", transform: "translate(-50%, -50%)" },
+  LJ:     { top: "10%", left: "62%", transform: "translate(-50%, -50%)" },
+  HJ:     { top: "18%", left: "82%", transform: "translate(-50%, -50%)" },
+  CO:     { top: "55%", left: "95%", transform: "translate(-50%, -50%)" },
+};
 
-function getSeatPositions(count: number): Array<{ top: string; left: string; transform: string }> {
-  return EIGHT_MAX_SEATS.slice(0, Math.max(count, 0));
+// Canonical position order for 8-max (clockwise from BTN)
+const CANONICAL_POSITIONS = ["BTN", "SB", "BB", "UTG", "UTG+1", "LJ", "HJ", "CO"];
+
+// Normalise position strings to canonical labels
+function normalisePosition(pos: string): string {
+  const p = pos.toUpperCase().trim();
+  // Common aliases
+  if (p === "MP" || p === "MP1" || p === "MP2") return "LJ";
+  if (p === "EP" || p === "EP1") return "UTG";
+  if (p === "EP2" || p === "UTG1") return "UTG+1";
+  if (p === "BTN" || p === "BU" || p === "BUTTON") return "BTN";
+  if (p === "SB" || p === "SMALL BLIND") return "SB";
+  if (p === "BB" || p === "BIG BLIND") return "BB";
+  if (p === "CO" || p === "CUTOFF") return "CO";
+  if (p === "HJ" || p === "HIJACK") return "HJ";
+  if (p === "LJ" || p === "LOJACK") return "LJ";
+  if (p === "UTG+1" || p === "UTG1") return "UTG+1";
+  if (p === "UTG" || p === "UNDER THE GUN") return "UTG";
+  return pos; // keep as-is if unknown
 }
 
 // ─── Action colour ────────────────────────────────────────────────────────────
@@ -203,30 +229,27 @@ function GhostSeat({ position }: { position: string }) {
 }
 
 export function PokerTable({ players, communityCards, potSize, currentAction, street }: PokerTableProps) {
-  // Build 8-seat layout: hero at index 0, fill remaining seats with active players then ghost seats
+  // Build 8-seat layout: each canonical position maps to a fixed visual slot.
+  // Active players are placed at their canonical position slot.
+  // Empty positions get ghost seats.
   const fullSeats = useMemo(() => {
-    const hero = players.find((p) => p.isHero);
-    const villains = players.filter((p) => !p.isHero);
+    // Normalise all player positions
+    const normalisedPlayers = players.map((p) => ({
+      ...p,
+      position: normalisePosition(p.position),
+    }));
 
-    // Determine which canonical positions are NOT in the hand
-    const activePosSet = new Set(players.map((p) => p.position.toUpperCase()));
-    const emptyPositions = CANONICAL_POSITIONS.filter((pos) => !activePosSet.has(pos));
+    // Build a map from canonical position -> player (or null)
+    const playerByPos = new Map<string, Player>();
+    normalisedPlayers.forEach((p) => playerByPos.set(p.position, p));
 
-    // Seat 0 = hero, seats 1..N = villains, remaining = ghost seats up to 8 total
-    const seats: Array<{ player: Player | null; ghostPos?: string }> = [];
-    if (hero) seats.push({ player: hero });
-    villains.forEach((v) => seats.push({ player: v }));
-
-    // Fill up to 8 seats with ghost positions
-    let ghostIdx = 0;
-    while (seats.length < 8 && ghostIdx < emptyPositions.length) {
-      seats.push({ player: null, ghostPos: emptyPositions[ghostIdx++] });
-    }
-
-    return seats;
+    // Return one entry per canonical position in fixed order
+    return CANONICAL_POSITIONS.map((pos) => ({
+      player: playerByPos.get(pos) ?? null,
+      ghostPos: pos,
+      seatPos: SEAT_POSITIONS[pos],
+    }));
   }, [players]);
-
-  const seatPositions = EIGHT_MAX_SEATS; // always 8 fixed positions
   const [prevCardCount, setPrevCardCount] = useState(0);
 
   useEffect(() => {
@@ -343,7 +366,7 @@ export function PokerTable({ players, communityCards, potSize, currentAction, st
 
         {/* ── Player seats (always 8) ── */}
         {fullSeats.map((seat, idx) => {
-          const pos = seatPositions[idx];
+          const pos = seat.seatPos;
           if (!pos) return null;
 
           // Ghost seat for empty positions

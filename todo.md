@@ -209,3 +209,21 @@ Optional paid AI coach scores the hand and explains what to do differently.
 - [x] Empty seats show greyed-out chip/avatar with position label
 - [x] Active players (in hand) show normally with cards and stacks
 - [x] Folded players show face-down cards and dimmed styling
+
+## Current Task: Position Fix + OG Preview Card
+
+### Fix: 8-Max Position Order
+- [x] Update CANONICAL_POSITIONS to UTG, UTG+1, LJ, HJ, CO, BTN, SB, BB
+- [x] Fix seat assignment: fixed position-to-slot mapping (BTN bottom-right, SB bottom-left, etc.)
+- [x] Ensure ghost seats use the correct position labels in the correct visual slots
+- [x] Update handParser system prompt to use LJ label
+- [x] Update HandReplayer SEAT_ORDER_8MAX to include LJ
+
+### Feature: OG Preview Card
+- [x] Add server-side /api/og/:slug route that returns a PNG image
+- [x] Generate card image: dark background, board cards, hero cards, position, grade badge
+- [x] Used SVG-to-PNG via sharp for image generation
+- [x] Add og:image meta tag to HandReplayer page via react-helmet-async
+- [x] Add twitter:card, twitter:image meta tags
+- [x] OG image endpoint tested and returning 200 PNG at 65KB
+- [x] Fix stale Vite parse error (JSX > character in exploitative adjustments)

@@ -59,7 +59,7 @@ Players share hands in shorthand like:
 Key parsing rules:
 1. Blinds: "1000/2500" = sb/bb. "1000/2500/2500" = ante/sb/bb or sb/bb/ante (ante is usually the first or last number if three are given — use context).
 2. "we", "I", "hero", "villain" — "we" and "I" always refer to the hero player.
-3. Positions: utg, utg+1, mp, co, btn/button, sb, bb, hj (hijack), lj (lojack)
+3. Positions: Use ONLY these canonical labels in the JSON output: UTG, UTG+1, LJ, HJ, CO, BTN, SB, BB. Map all aliases: mp/mp1/mp2/lojack -> LJ, hijack -> HJ, cutoff -> CO, button/bu -> BTN, small blind -> SB, big blind -> BB. Never output "MP" -- always use "LJ".
 4. Cards: ATo = Ace Ten offsuit, ATs = Ace Ten suited, A9s, KQo, etc. Board cards: A99r = Ace Nine Nine rainbow, Th = Ten of hearts, bdfd = backdoor flush draw
 5. Actions: open/raise/bet/3bet/4bet/jam/shove/allin/push = aggressive. flat/call/complete/limp = call. fold/muck = fold. check/x = check.
 6. Amounts: "5k" = 5000, "10bb" = 10 big blinds, "pot" = pot-sized bet

@@ -9,6 +9,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { PokerTable } from "@/components/PokerTable";
 import { toast } from "sonner";
 import { useSwipe } from "@/hooks/useSwipe";
+import { Helmet } from "react-helmet-async";
 import {
   ArrowLeft, Play, Pause, SkipBack, SkipForward,
   Share2, Copy, Loader2, Sparkles, Lock, ChevronDown, ChevronUp,
@@ -107,36 +108,34 @@ function heroFirst(players: ParsedPlayer[]): ParsedPlayer[] {
   return hero ? [hero, ...rest] : players;
 }
 
-// 8-max canonical seat order (hero always placed at BTN or their actual position)
-const SEAT_ORDER_8MAX = ["BTN", "SB", "BB", "UTG", "UTG+1", "MP", "HJ", "CO"];
+// 8-max canonical seat order -- fixed, no rotation
+// Positions are always displayed at the same visual slot on the table.
+const SEAT_ORDER_8MAX = ["BTN", "SB", "BB", "UTG", "UTG+1", "LJ", "HJ", "CO"];
 
-function build8MaxSeats(parsedPlayers: ParsedPlayer[], smallBlind: number, bigBlind: number): Array<ParsedPlayer & { isEmpty?: boolean }> {
-  // Build a map of position -> player for quick lookup
-  const playerMap = new Map<string, ParsedPlayer>();
-  for (const p of parsedPlayers) playerMap.set(p.position.toUpperCase(), p);
+// Normalise position aliases to canonical labels
+function normPos(pos: string): string {
+  const p = pos.toUpperCase().trim();
+  if (p === "MP" || p === "MP1" || p === "MP2" || p === "UTG2" || p === "UTG 2") return "LJ";
+  if (p === "EP" || p === "EP1" || p === "UTG") return "UTG";
+  if (p === "EP2" || p === "UTG1" || p === "UTG 1" || p === "UTG+1") return "UTG+1";
+  if (p === "BTN" || p === "BU" || p === "BUTTON") return "BTN";
+  if (p === "SB" || p === "SMALL BLIND") return "SB";
+  if (p === "BB" || p === "BIG BLIND") return "BB";
+  if (p === "CO" || p === "CUTOFF") return "CO";
+  if (p === "HJ" || p === "HIJACK") return "HJ";
+  if (p === "LJ" || p === "LOJACK") return "LJ";
+  return pos;
+}
 
-  // Normalise common position aliases
-  const aliases: Record<string, string> = {
-    "UTG1": "UTG+1", "UTG 1": "UTG+1", "UTG2": "MP", "UTG 2": "MP",
-    "HIJACK": "HJ", "CUTOFF": "CO", "BUTTON": "BTN",
-    "SMALL BLIND": "SB", "BIG BLIND": "BB",
-  };
+function build8MaxSeats(parsedPlayers: ParsedPlayer[], _smallBlind: number, _bigBlind: number): Array<ParsedPlayer & { isEmpty?: boolean }> {
+  // Normalise all player positions
   const normMap = new Map<string, ParsedPlayer>();
-  Array.from(playerMap.entries()).forEach(([pos, player]) => {
-    const norm = aliases[pos] || pos;
-    normMap.set(norm, player);
-  });
+  for (const p of parsedPlayers) {
+    normMap.set(normPos(p.position), { ...p, position: normPos(p.position) });
+  }
 
-  // Find hero seat index in canonical order to rotate hero to bottom (index 0)
-  const heroPlayer = parsedPlayers.find((p) => p.isHero);
-  const heroPos = heroPlayer ? (aliases[heroPlayer.position.toUpperCase()] || heroPlayer.position.toUpperCase()) : "BTN";
-  const heroIdx = SEAT_ORDER_8MAX.indexOf(heroPos);
-  const offset = heroIdx >= 0 ? heroIdx : 0;
-
-  // Rotate seat order so hero is first
-  const rotated = [...SEAT_ORDER_8MAX.slice(offset), ...SEAT_ORDER_8MAX.slice(0, offset)];
-
-  return rotated.map((seatPos) => {
+  // Return one entry per canonical position in fixed order
+  return SEAT_ORDER_8MAX.map((seatPos) => {
     const player = normMap.get(seatPos);
     if (player) return { ...player, isEmpty: false };
     // Empty seat -- ghost player
@@ -568,7 +567,7 @@ function CoachPanel({ handId, isUnlocked, cachedAnalysis, storedVillainType }: {
             >
               <p className="text-xs font-bold uppercase tracking-widest" style={{ color: "#fbbf24" }}>⚡ Exploitative Adjustments</p>
               {analysis.exploitativeAdjustments.map((item: string, i: number) => (
-                <p key={i} className="text-xs" style={{ color: "#e2e8f0" }}><span style={{ color: "#fbbf24", marginRight: 4 }}>{"->"}</span>{item}</p>
+                <p key={i} className="text-xs" style={{ color: "#e2e8f0" }}><span style={{ color: "#fbbf24", marginRight: 4 }}>-&gt;</span>{item}</p>
               ))}
             </div>
           )}
@@ -957,8 +956,26 @@ export default function HandReplayer() {
   const heroCards = parsed.heroCards?.join(" ") || "?";
   const blinds = `${parsed.smallBlind}/${parsed.bigBlind}`;
   const handTitle = (hand as any).title as string | undefined;
+  const ogImageUrl = `${window.location.origin}/api/og/${slug}`;
+  const ogTitle = handTitle || `${heroCards} from ${parsed.heroPosition} - ${blinds} Poker Hand`;
+  const ogDescription = `Replay and analyse this ${(parsed as any).gameType === "mtt" ? "MTT" : "cash"} hand. ${parsed.heroPosition} with ${heroCards} at ${blinds}. AI coaching included.`;
 
   return (
+    <>
+    <Helmet>
+      <title>{ogTitle} | PokerReplay</title>
+      <meta property="og:title" content={ogTitle} />
+      <meta property="og:description" content={ogDescription} />
+      <meta property="og:image" content={ogImageUrl} />
+      <meta property="og:image:width" content="1200" />
+      <meta property="og:image:height" content="630" />
+      <meta property="og:type" content="website" />
+      <meta property="og:url" content={`${window.location.origin}/hand/${slug}`} />
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content={ogTitle} />
+      <meta name="twitter:description" content={ogDescription} />
+      <meta name="twitter:image" content={ogImageUrl} />
+    </Helmet>
     <div
       className="min-h-screen flex flex-col"
       style={{ background: "linear-gradient(160deg, #0a0f0d 0%, #0d1a12 50%, #0a0f0d 100%)" }}
@@ -1203,5 +1220,6 @@ export default function HandReplayer() {
         </div>
       </div>
     </div>
+    </>
   );
 }
