@@ -1,0 +1,9 @@
+{
+  "query": "DROP TABLE IF EXISTS hands; CREATE TABLE hands (id INT AUTO_INCREMENT PRIMARY KEY, userId INT NULL, rawText TEXT NOT NULL, parsedData JSON NOT NULL, title VARCHAR(255) NULL, notes TEXT NULL, shareSlug VARCHAR(16) NOT NULL UNIQUE, isPublic BOOLEAN NOT NULL DEFAULT TRUE, coachUnlocked BOOLEAN NOT NULL DEFAULT FALSE, coachAnalysis JSON NULL, createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3S5EK7kkwn3cfqa.root --database g6HPzuQNwUJzsGs4mHVNkx --execute DROP TABLE IF EXISTS hands; CREATE TABLE hands (id INT AUTO_INCREMENT PRIMARY KEY, userId INT NULL, rawText TEXT NOT NULL, parsedData JSON NOT NULL, title VARCHAR(255) NULL, notes TEXT NULL, shareSlug VARCHAR(16) NOT NULL UNIQUE, isPublic BOOLEAN NOT NULL DEFAULT TRUE, coachUnlocked BOOLEAN NOT NULL DEFAULT FALSE, coachAnalysis JSON NULL, createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 2549
+}

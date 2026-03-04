@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useRef, useCallback } from 'react';
 
 interface SwipeHandlers {
   onSwipeLeft?: () => void;
@@ -8,76 +8,40 @@ interface SwipeHandlers {
 }
 
 interface SwipeOptions {
-  threshold?: number; // Minimum distance for swipe (default: 50px)
-  timeout?: number; // Maximum time for swipe (default: 300ms)
+  threshold?: number;
 }
 
-export function useSwipe(
-  handlers: SwipeHandlers,
-  options: SwipeOptions = {}
-) {
-  const { threshold = 50, timeout = 300 } = options;
-  const touchStart = useRef<{ x: number; y: number; time: number } | null>(null);
+export function useSwipe(handlers: SwipeHandlers, options: SwipeOptions = {}) {
+  const { threshold = 50 } = options;
+  const touchStart = useRef<{ x: number; y: number } | null>(null);
 
-  useEffect(() => {
-    const handleTouchStart = (e: TouchEvent) => {
-      const touch = e.touches[0];
-      touchStart.current = {
-        x: touch.clientX,
-        y: touch.clientY,
-        time: Date.now(),
-      };
-    };
+  const onTouchStart = useCallback((e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    touchStart.current = { x: touch.clientX, y: touch.clientY };
+  }, []);
 
-    const handleTouchEnd = (e: TouchEvent) => {
-      if (!touchStart.current) return;
+  const onTouchEnd = useCallback((e: React.TouchEvent) => {
+    if (!touchStart.current) return;
+    const touch = e.changedTouches[0];
+    const deltaX = touch.clientX - touchStart.current.x;
+    const deltaY = touch.clientY - touchStart.current.y;
+    const absDeltaX = Math.abs(deltaX);
+    const absDeltaY = Math.abs(deltaY);
 
-      const touch = e.changedTouches[0];
-      const deltaX = touch.clientX - touchStart.current.x;
-      const deltaY = touch.clientY - touchStart.current.y;
-      const deltaTime = Date.now() - touchStart.current.time;
+    if (absDeltaX > threshold && absDeltaX > absDeltaY) {
+      if (deltaX > 0) handlers.onSwipeRight?.();
+      else handlers.onSwipeLeft?.();
+    } else if (absDeltaY > threshold && absDeltaY > absDeltaX) {
+      if (deltaY > 0) handlers.onSwipeDown?.();
+      else handlers.onSwipeUp?.();
+    }
 
-      // Check if swipe was fast enough
-      if (deltaTime > timeout) {
-        touchStart.current = null;
-        return;
-      }
+    touchStart.current = null;
+  }, [handlers, threshold]);
 
-      const absDeltaX = Math.abs(deltaX);
-      const absDeltaY = Math.abs(deltaY);
+  const onTouchCancel = useCallback(() => {
+    touchStart.current = null;
+  }, []);
 
-      // Determine swipe direction
-      if (absDeltaX > threshold && absDeltaX > absDeltaY) {
-        // Horizontal swipe
-        if (deltaX > 0) {
-          handlers.onSwipeRight?.();
-        } else {
-          handlers.onSwipeLeft?.();
-        }
-      } else if (absDeltaY > threshold && absDeltaY > absDeltaX) {
-        // Vertical swipe
-        if (deltaY > 0) {
-          handlers.onSwipeDown?.();
-        } else {
-          handlers.onSwipeUp?.();
-        }
-      }
-
-      touchStart.current = null;
-    };
-
-    const handleTouchCancel = () => {
-      touchStart.current = null;
-    };
-
-    document.addEventListener('touchstart', handleTouchStart, { passive: true });
-    document.addEventListener('touchend', handleTouchEnd, { passive: true });
-    document.addEventListener('touchcancel', handleTouchCancel, { passive: true });
-
-    return () => {
-      document.removeEventListener('touchstart', handleTouchStart);
-      document.removeEventListener('touchend', handleTouchEnd);
-      document.removeEventListener('touchcancel', handleTouchCancel);
-    };
-  }, [handlers, threshold, timeout]);
+  return { onTouchStart, onTouchEnd, onTouchCancel };
 }

@@ -1,355 +1,191 @@
-/**
- * Casino Noir Design Philosophy:
- * - Deep charcoal/navy backgrounds with metallic gold accents
- * - Playfair Display for elegant headings, Inter for body text
- * - Card-like modules with subtle felt texture
- * - Asymmetric layout with strategic information hierarchy
- */
-
+import { useState, useRef } from "react";
+import { useLocation } from "wouter";
+import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { getLoginUrl } from "@/const";
-import { Link } from "wouter";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { Loader2, Sparkles, Share2, Users, ChevronRight, Play } from "lucide-react";
+import { toast } from "sonner";
+
+const EXAMPLE_HANDS = [
+  {
+    label: "Flopped top pair",
+    text: "500/1000 utg open 2500, we co ATo flat, btn flat, bb fold\nFlop A84r hero bet 3500 btn call utg fold\nTurn 2s hero bet 9000 btn raise 22000 hero fold",
+  },
+  {
+    label: "River bluff spot",
+    text: "200/400 we btn KQs open 900, bb call\nFlop J72r bb check hero bet 600 bb call\nTurn 5h both check\nRiver 4s bb bet 2500 hero raise 7000 bb fold hero wins",
+  },
+  {
+    label: "Big pot 3bet",
+    text: "1000/2000 utg open 4500, we btn 3bet AKo 13500, utg call\nFlop K82r utg check hero bet 9000 utg call\nTurn 3h utg check hero bet 22000 utg allin 60000 hero call\nRiver Jd hero wins",
+  },
+];
 
 export default function Home() {
+  const [, navigate] = useLocation();
   const { user, isAuthenticated } = useAuth();
+  const [handText, setHandText] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const parseMutation = trpc.hands.parseText.useMutation();
+  const createMutation = trpc.hands.create.useMutation();
+
+  const handleVisualize = async () => {
+    const text = handText.trim();
+    if (!text || text.length < 10) {
+      toast.error("Please describe your hand first");
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      // Step 1: Parse the text
+      const { parsed } = await parseMutation.mutateAsync({ text });
+
+      // Step 2: Save and get share slug
+      const { shareSlug } = await createMutation.mutateAsync({
+        rawText: text,
+        parsedData: parsed,
+      });
+
+      // Step 3: Navigate to the replayer
+      navigate(`/hand/${shareSlug}`);
+    } catch (err: any) {
+      toast.error("Couldn't read your hand", { description: "Try describing it a bit more clearly — e.g. 'we have AK on the BTN'" });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const loadExample = (text: string) => {
+    setHandText(text);
+    textareaRef.current?.focus();
+  };
 
   return (
-    <div className="min-h-screen bg-background felt-texture">
-      {/* Hero Section */}
-      <div 
-        className="relative bg-cover bg-center py-12 sm:py-20 border-b border-border"
-        style={{
-          backgroundImage: `url('https://private-us-east-1.manuscdn.com/sessionFile/X1F9AFyeGpOrfmKOxPNlIi/sandbox/DzCqIvhu85aHghSC3lC6lM-img-1_1770192263000_na1fn_aGVyby1iYWNrZ3JvdW5k.png?x-oss-process=image/resize,w_1920,h_1920/format,webp/quality,q_80&Expires=1798761600&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly9wcml2YXRlLXVzLWVhc3QtMS5tYW51c2Nkbi5jb20vc2Vzc2lvbkZpbGUvWDFGOUFGeWVHcE9yZm1LT3hQTmxJaS9zYW5kYm94L0R6Q3FJdmh1ODVhSGdoU0MzbEM2bE0taW1nLTFfMTc3MDE5MjI2MzAwMF9uYTFmbl9hR1Z5YnkxaVlXTnJaM0p2ZFc1ay5wbmc~eC1vc3MtcHJvY2Vzcz1pbWFnZS9yZXNpemUsd18xOTIwLGhfMTkyMC9mb3JtYXQsd2VicC9xdWFsaXR5LHFfODAiLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE3OTg3NjE2MDB9fX1dfQ__&Key-Pair-Id=K2HSFNDJXOU9YS&Signature=OUFcfuewFQUVbPrfFWRvUIVqAxiS34w3lVqGsJMCTxw8ERz2nttcwQtDnhZ682gQPIDyjrda67ILWjuYiJ4iD2TetU4neeX9sevr4F1f80lR3cjZaE820epYoRx8uspR-qYebDeim2a1PIwSB5-9DG95003HXsf9SBOiXYCyDWGfESckzx9AMjjZiu1Ae~n9DEOhR2aTLjE19fSxw9zKOwXmZT8GZzsPXdBonRKT5MWlmyPspdosua2sBdGABPZ4oAMw3kagikmHae-npiylGbyj6K0fgvrhe8ty2NmGuVBaC~R9UBIAf-ay7vNTcY2e1oXULOUY7ldB8UVmJCa2sw__')`
-        }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/60 to-background"></div>
-        <div className="container relative z-10">
-          <div className="max-w-3xl">
-            <div className="flex items-center gap-3 mb-4">
-              <span className="text-5xl text-accent">♠</span>
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground tracking-tight">
-                Poker Hand Analyzer
-              </h1>
-            </div>
-            <p className="text-base sm:text-lg lg:text-xl text-muted-foreground leading-relaxed mb-6">
-              Professional hand analysis for serious players. Dissect every street, understand every decision, and elevate your game with data-driven insights.
-            </p>
-            
-            <div className="flex items-center gap-3 mb-4">
-              <ThemeToggle />
-            </div>
-            
-            <div className="flex flex-wrap gap-3">
-              <Link href="/input">
-                <Button size="lg" className="gap-2 bg-accent text-accent-foreground hover:bg-accent/90">
-                  <span className="text-lg">+</span>
-                  {isAuthenticated ? 'Input New Hand' : 'Try It Free - No Signup'}
-                </Button>
-              </Link>
-              
-              {!isAuthenticated ? (
-                <Button 
-                  size="lg" 
-                  variant="outline"
-                  onClick={() => window.location.href = getLoginUrl()}
-                >
-                  Sign In to Save Hands
-                </Button>
-              ) : (
-                <>
-                  <Link href="/archive">
-                    <Button size="lg" variant="outline" className="gap-2">
-                      View Archive
-                    </Button>
-                  </Link>
-                  <Link href="/stats">
-                    <Button size="lg" variant="outline" className="gap-2">
-                      Your Statistics
-                    </Button>
-                  </Link>
-                  <Link href="/discord">
-                    <Button size="lg" variant="outline" className="gap-2">
-                      Discord Settings
-                    </Button>
-                  </Link>
-                </>
-              )}
-            </div>
-            
-            {isAuthenticated && user && (
-              <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                <span className="text-accent">♦</span>
-                <span>Welcome back, {user.name || 'Player'}</span>
-              </div>
-            )}
-          </div>
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
+      {/* Header */}
+      <header className="flex items-center justify-between px-4 py-3 border-b border-border">
+        <div className="flex items-center gap-2">
+          <span className="text-2xl">♠</span>
+          <span className="font-bold text-lg tracking-tight">PokerReplay</span>
         </div>
-      </div>
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          {isAuthenticated ? (
+            <Button variant="ghost" size="sm" onClick={() => navigate("/my-hands")}>
+              My Hands
+            </Button>
+          ) : (
+            <Button variant="ghost" size="sm" onClick={() => navigate("/login")}>
+              Sign In
+            </Button>
+          )}
+        </div>
+      </header>
 
-      {/* Main Content */}
-      <div className="container py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* Left Column - Hand Setup */}
-          <div className="lg:col-span-4">
-            <Card className="bg-card border-border lg:sticky lg:top-8">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <span className="text-accent">♦</span>
-                  Hand Setup
-                </CardTitle>
-                <CardDescription>ATo from UTG+1</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Hero Info */}
-                <div>
-                  <h3 className="font-semibold text-sm text-muted-foreground mb-3">Hero</h3>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-sm">Position</span>
-                      <span className="font-mono font-semibold text-accent">UTG+1</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm">Cards</span>
-                      <span className="font-mono font-semibold">A♠ T♣</span>
-                    </div>
-                  </div>
-                </div>
+      {/* Hero */}
+      <main className="flex-1 flex flex-col items-center justify-center px-4 py-10 max-w-2xl mx-auto w-full gap-8">
+        <div className="text-center space-y-3">
+          <h1 className="text-4xl sm:text-5xl font-bold tracking-tight">
+            Share your poker hands
+            <br />
+            <span className="text-primary">in seconds</span>
+          </h1>
+          <p className="text-muted-foreground text-lg">
+            Type your hand the way you'd describe it on WhatsApp. We'll turn it into a visual replay you can share anywhere.
+          </p>
+        </div>
 
-                <Separator />
-
-                {/* Blinds */}
-                <div>
-                  <h3 className="font-semibold text-sm text-muted-foreground mb-3">Blinds</h3>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-sm">SB / BB</span>
-                      <span className="font-mono font-semibold">200 / 400</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm">Ante</span>
-                      <span className="font-mono font-semibold">400</span>
-                    </div>
-                  </div>
-                </div>
-
-                <Separator />
-
-                {/* Board */}
-                <div>
-                  <h3 className="font-semibold text-sm text-muted-foreground mb-3">Final Board</h3>
-                  <div className="flex gap-2 justify-center py-4">
-                    <div className="w-12 h-16 bg-card-foreground rounded flex items-center justify-center font-mono font-bold text-background">
-                      A♦
-                    </div>
-                    <div className="w-12 h-16 bg-card-foreground rounded flex items-center justify-center font-mono font-bold text-background">
-                      8♦
-                    </div>
-                    <div className="w-12 h-16 bg-card-foreground rounded flex items-center justify-center font-mono font-bold text-background">
-                      4♠
-                    </div>
-                    <div className="w-12 h-16 bg-card-foreground rounded flex items-center justify-center font-mono font-bold text-background">
-                      2x
-                    </div>
-                    <div className="w-12 h-16 bg-card-foreground rounded flex items-center justify-center font-mono font-bold text-background">
-                      9x
-                    </div>
-                  </div>
-                </div>
-
-                <Separator />
-
-                {/* Overall Rating */}
-                <div>
-                  <h3 className="font-semibold text-sm text-muted-foreground mb-3">Overall Rating</h3>
-                  <div className="text-center py-4">
-                    <div className="text-6xl font-bold text-accent mb-2">5/10</div>
-                    <Badge variant="outline" className="text-xs">Passive Play</Badge>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Right Column - Analysis */}
-          <div className="lg:col-span-8 space-y-6">
-            {/* Street-by-Street Analysis */}
-            <Tabs defaultValue="preflop" className="w-full">
-              <TabsList className="grid w-full grid-cols-5 bg-card">
-                <TabsTrigger value="preflop">Preflop</TabsTrigger>
-                <TabsTrigger value="flop">Flop</TabsTrigger>
-                <TabsTrigger value="turn">Turn</TabsTrigger>
-                <TabsTrigger value="river">River</TabsTrigger>
-                <TabsTrigger value="summary">Summary</TabsTrigger>
-              </TabsList>
-
-              {/* Preflop */}
-              <TabsContent value="preflop" className="space-y-4">
-                <Card className="bg-card border-border">
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle>Preflop Analysis</CardTitle>
-                      <Badge className="bg-accent text-accent-foreground">7/10</Badge>
-                    </div>
-                    <CardDescription>Open raise to 800 from UTG+1</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <h4 className="font-semibold mb-2">Action</h4>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between p-2 bg-muted/50 rounded">
-                          <span>Hero (UTG+1)</span>
-                          <span className="font-mono text-accent">Raise to 800</span>
-                        </div>
-                        <div className="flex justify-between p-2 bg-muted/50 rounded">
-                          <span>MP</span>
-                          <span className="font-mono">Call 800</span>
-                        </div>
-                        <div className="flex justify-between p-2 bg-muted/50 rounded">
-                          <span>All others</span>
-                          <span className="font-mono text-muted-foreground">Fold</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <Separator />
-
-                    <div>
-                      <h4 className="font-semibold mb-2">Evaluation</h4>
-                      <p className="text-sm leading-relaxed text-muted-foreground">
-                        ATo is a marginal hand from early position. The standard play depends on table dynamics and stack sizes, but opening from UTG+1 is acceptable in most games, though some tight players would fold. Against a single MP caller, Hero is likely ahead or flipping.
-                      </p>
-                    </div>
-
-                    <div className="bg-muted/30 p-4 rounded-lg">
-                      <h4 className="font-semibold mb-2 text-sm">Key Takeaway</h4>
-                      <p className="text-sm text-muted-foreground">
-                        Standard open from UTG+1. ATo is at the bottom of most opening ranges from this position, but the play is defensible.
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              {/* Other tabs content remains the same as before - keeping the full analysis */}
-              {/* For brevity, I'll include just the structure - the full content is identical to the previous version */}
-              
-              <TabsContent value="flop" className="space-y-4">
-                <Card className="bg-card border-border">
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle>Flop Analysis</CardTitle>
-                      <Badge variant="outline" className="border-yellow-600 text-yellow-500">5/10</Badge>
-                    </div>
-                    <CardDescription>A♦ 8♦ 4♠ - Top pair, weak kicker</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground">Full flop analysis content...</p>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="turn" className="space-y-4">
-                <Card className="bg-card border-border">
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle>Turn Analysis</CardTitle>
-                      <Badge variant="destructive">4/10</Badge>
-                    </div>
-                    <CardDescription>A♦ 8♦ 4♠ 2x - Brick card</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground">Full turn analysis content...</p>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="river" className="space-y-4">
-                <Card className="bg-card border-border">
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle>River Analysis</CardTitle>
-                      <Badge className="bg-accent text-accent-foreground">6/10</Badge>
-                    </div>
-                    <CardDescription>A♦ 8♦ 4♠ 2x 9x - Decision point</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground">Full river analysis with decision matrix...</p>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="summary" className="space-y-4">
-                <Card className="bg-card border-border">
-                  <CardHeader>
-                    <CardTitle>Hand Summary</CardTitle>
-                    <CardDescription>Overall performance: 5/10 - Passive play</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground">Full summary with street ratings...</p>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
-
-            {/* Pot Odds Calculator Card */}
-            <Card 
-              className="bg-card border-border"
-              style={{
-                backgroundImage: `url('https://private-us-east-1.manuscdn.com/sessionFile/X1F9AFyeGpOrfmKOxPNlIi/sandbox/DzCqIvhu85aHghSC3lC6lM-img-4_1770192261000_na1fn_ZGVjaXNpb24tbWF0cml4LWJn.png?x-oss-process=image/resize,w_1920,h_1920/format,webp/quality,q_80&Expires=1798761600&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly9wcml2YXRlLXVzLWVhc3QtMS5tYW51c2Nkbi5jb20vc2Vzc2lvbkZpbGUvWDFGOUFGeWVHcE9yZm1LT3hQTmxJaS9zYW5kYm94L0R6Q3FJdmh1ODVhSGdoU0MzbEM2bE0taW1nLTRfMTc3MDE5MjI2MTAwMF9uYTFmbl9aR1ZqYVhOcGIyNHRiV0YwY21sNExXSm4ucG5nP3gtb3NzLXByb2Nlc3M9aW1hZ2UvcmVzaXplLHdfMTkyMCxoXzE5MjAvZm9ybWF0LHdlYnAvcXVhbGl0eSxxXzgwIiwiQ29uZGl0aW9uIjp7IkRhdGVMZXNzVGhhbiI6eyJBV1M6RXBvY2hUaW1lIjoxNzk4NzYxNjAwfX19XX0_&Key-Pair-Id=K2HSFNDJXOU9YS&Signature=MHJyZkVEwJbsgeNVgTQXAnUscuypaVebZbheEEu~vpt5U~tEswxA0QFjesBhn~of7awDaHIZpR3WUwGtsOlh-IG9~iiLsu0zojjDDFy0IEBlC9ukw2mYEPyFFJTD61TsY0Ev9UTJ-SthdcAJkMS0uIT3oJpYdFLoFmHvAKrOZi3aiTDZhQRyzv2G2pkZdsWzEoqmMjW1Zyt8rtgbcs2IXCRCGLfx8AH6OBGXwidd9pzzh3kac0T0mAnueLkbziArgmtH1zCiZVoZZ-Io7AyDiwA-yLs1uEn3a3u2ybXdQzPIILEESHfv4PU-eNv6qz0sBagZJVyHIEKske44uK2CAQ__')`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center'
+        {/* Input Box */}
+        <div className="w-full space-y-3">
+          <div className="relative">
+            <Textarea
+              ref={textareaRef}
+              value={handText}
+              onChange={(e) => setHandText(e.target.value)}
+              placeholder={`Type your hand here...\n\nExample:\n500/1000 utg open 2500, we co ATo flat, btn flat\nFlop A84r hero bet 3500 btn call\nTurn 2s hero bet 9000 btn raise 22000 hero fold`}
+              className="min-h-[180px] sm:min-h-[200px] text-base resize-none font-mono leading-relaxed pr-4 pb-14"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                  handleVisualize();
+                }
               }}
-            >
-              <div className="bg-background/90 backdrop-blur-sm">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <span className="text-accent">♣</span>
-                    Quick Reference: Pot Odds
-                  </CardTitle>
-                  <CardDescription>Understanding the mathematics of poker decisions</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="text-center p-4 bg-muted/50 rounded-lg">
-                      <div className="text-3xl font-bold font-mono text-accent mb-1">2:1</div>
-                      <div className="text-xs text-muted-foreground">Need 33% equity</div>
-                    </div>
-                    <div className="text-center p-4 bg-muted/50 rounded-lg">
-                      <div className="text-3xl font-bold font-mono text-accent mb-1">3:1</div>
-                      <div className="text-xs text-muted-foreground">Need 25% equity</div>
-                    </div>
-                    <div className="text-center p-4 bg-muted/50 rounded-lg">
-                      <div className="text-3xl font-bold font-mono text-accent mb-1">4:1</div>
-                      <div className="text-xs text-muted-foreground">Need 20% equity</div>
-                    </div>
-                  </div>
-                </CardContent>
-              </div>
-            </Card>
+            />
+            <div className="absolute bottom-3 right-3">
+              <Button
+                onClick={handleVisualize}
+                disabled={isProcessing || !handText.trim()}
+                size="sm"
+                className="gap-2 font-semibold"
+              >
+                {isProcessing ? (
+                  <><Loader2 className="h-4 w-4 animate-spin" /> Reading hand...</>
+                ) : (
+                  <><Play className="h-4 w-4" /> Visualise</>
+                )}
+              </Button>
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground text-center">
+            Press <kbd className="px-1 py-0.5 rounded bg-muted text-xs">⌘ Enter</kbd> to visualise · No signup required
+          </p>
+        </div>
+
+        {/* Example Hands */}
+        <div className="w-full space-y-2">
+          <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Try an example</p>
+          <div className="flex flex-wrap gap-2">
+            {EXAMPLE_HANDS.map((ex) => (
+              <button
+                key={ex.label}
+                onClick={() => loadExample(ex.text)}
+                className="text-sm px-3 py-1.5 rounded-full border border-border bg-card hover:bg-muted transition-colors text-foreground"
+              >
+                {ex.label}
+              </button>
+            ))}
           </div>
         </div>
-      </div>
+
+        {/* How it works */}
+        <div className="w-full grid grid-cols-3 gap-4 pt-4 border-t border-border">
+          {[
+            { icon: "✍️", title: "Type it", desc: "Describe your hand like you would on WhatsApp" },
+            { icon: "🎬", title: "Replay it", desc: "See it come to life on an animated poker table" },
+            { icon: "📤", title: "Share it", desc: "One tap to share on TikTok, IG, WhatsApp & more" },
+          ].map((step) => (
+            <div key={step.title} className="text-center space-y-1">
+              <div className="text-2xl">{step.icon}</div>
+              <div className="font-semibold text-sm">{step.title}</div>
+              <div className="text-xs text-muted-foreground leading-snug">{step.desc}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* AI Coach CTA */}
+        <div className="w-full rounded-xl border border-primary/30 bg-primary/5 p-4 flex items-center gap-4">
+          <div className="text-3xl">🧠</div>
+          <div className="flex-1 min-w-0">
+            <div className="font-semibold text-sm flex items-center gap-2">
+              AI Coach Analysis
+              <Badge variant="secondary" className="text-xs">Premium</Badge>
+            </div>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Get your hand scored and learn exactly what you should have done differently.
+            </p>
+          </div>
+          <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+        </div>
+      </main>
 
       {/* Footer */}
-      <footer className="border-t border-border mt-20 py-8">
-        <div className="container">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <span className="text-2xl text-accent">♠</span>
-              <span className="text-sm">Poker Hand Analyzer</span>
-            </div>
-            <div className="text-xs text-muted-foreground">
-              Professional analysis for serious players
-            </div>
-          </div>
-        </div>
+      <footer className="text-center text-xs text-muted-foreground py-4 border-t border-border">
+        PokerReplay · Share your story from the felt
       </footer>
     </div>
   );

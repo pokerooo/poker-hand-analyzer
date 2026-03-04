@@ -1,312 +1,241 @@
-import { COOKIE_NAME } from "@shared/const";
-import { getSessionCookieOptions } from "./_core/cookies";
-import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
-import * as db from "./db";
-import { analyzeHand } from "./analysisEngine";
+import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
+import { TRPCError } from "@trpc/server";
+import { systemRouter } from "./_core/systemRouter";
+import { COOKIE_NAME } from "../shared/const";
+import { getSessionCookieOptions } from "./_core/cookies";
+import {
+  upsertUser,
+  getUserByOpenId,
+  createHand,
+  getHandBySlug,
+  getHandById,
+  getUserHands,
+  updateHandCoachAnalysis,
+  deleteHand,
+  getDiscordWebhooks,
+  createDiscordWebhook,
+  deleteDiscordWebhook,
+  setDefaultDiscordWebhook,
+} from "./db";
+import { parseHandText } from "./handParser";
+import { invokeLLM } from "./_core/llm";
+
+// ─── Auth Router ──────────────────────────────────────────────────────────────
+
+const authRouter = router({
+  me: publicProcedure.query(async ({ ctx }) => {
+    if (!ctx.user) return null;
+    return ctx.user;
+  }),
+  logout: protectedProcedure.mutation(async ({ ctx }) => {
+    ctx.res.clearCookie(COOKIE_NAME, { ...getSessionCookieOptions(ctx.req), maxAge: -1 });
+    return { success: true };
+  }),
+});
+
+// ─── Hands Router ─────────────────────────────────────────────────────────────
+
+const handsRouter = router({
+  // Parse free-text hand description (no auth required)
+  parseText: publicProcedure
+    .input(z.object({ text: z.string().min(10).max(2000) }))
+    .mutation(async ({ input }) => {
+      try {
+        const parsed = await parseHandText(input.text);
+        return { success: true, parsed };
+      } catch (err: any) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `Could not parse hand: ${err.message}`,
+        });
+      }
+    }),
+
+  // Create a hand from parsed data (no auth required — guest hands are public)
+  create: publicProcedure
+    .input(
+      z.object({
+        rawText: z.string().min(10).max(2000),
+        parsedData: z.any(),
+        title: z.string().max(255).optional(),
+        notes: z.string().max(2000).optional(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const userId = ctx.user?.id ?? null;
+      const { shareSlug } = await createHand({
+        userId,
+        rawText: input.rawText,
+        parsedData: input.parsedData,
+        title: input.title,
+        notes: input.notes,
+        isPublic: true,
+      });
+      return { shareSlug };
+    }),
+
+  // Get a hand by public share slug (no auth required)
+  getBySlug: publicProcedure
+    .input(z.object({ slug: z.string() }))
+    .query(async ({ input }) => {
+      const hand = await getHandBySlug(input.slug);
+      if (!hand) throw new TRPCError({ code: "NOT_FOUND", message: "Hand not found" });
+      return hand;
+    }),
+
+  // Get all hands for the logged-in user
+  myHands: protectedProcedure.query(async ({ ctx }) => {
+    return getUserHands(ctx.user.id);
+  }),
+
+  // Delete a hand (must own it)
+  delete: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input, ctx }) => {
+      await deleteHand(input.id, ctx.user.id);
+      return { success: true };
+    }),
+});
+
+// ─── AI Coach Router ──────────────────────────────────────────────────────────
+
+const coachRouter = router({
+  // Analyze a hand with AI coach (protected — requires auth + payment check)
+  analyze: protectedProcedure
+    .input(z.object({ handId: z.number() }))
+    .mutation(async ({ input, ctx }) => {
+      const hand = await getHandById(input.handId);
+      if (!hand) throw new TRPCError({ code: "NOT_FOUND", message: "Hand not found" });
+      if (hand.userId !== ctx.user.id) throw new TRPCError({ code: "FORBIDDEN" });
+
+      // If already unlocked, return cached analysis
+      if (hand.coachUnlocked && hand.coachAnalysis) {
+        return { analysis: hand.coachAnalysis, cached: true };
+      }
+
+      // TODO: In production, gate this behind Stripe payment check
+      // For now, allow analysis for authenticated users
+      const parsedData = hand.parsedData as any;
+
+      const prompt = `You are a professional poker coach. Analyze this hand played by a recreational player and give clear, jargon-free feedback.
+
+Hand Description:
+${hand.rawText}
+
+Parsed Hand Data:
+${JSON.stringify(parsedData, null, 2)}
+
+Provide your analysis in this exact JSON format:
+{
+  "grade": "A" | "B" | "C" | "D" | "F",
+  "gradeLabel": "Excellent" | "Good" | "Average" | "Below Average" | "Poor",
+  "summary": "2-3 sentence plain English summary of how the hand was played",
+  "didWell": ["list of 1-3 things the player did well"],
+  "mistakes": ["list of 1-3 clear mistakes in plain English"],
+  "keyLesson": "The single most important thing to take away from this hand",
+  "streets": {
+    "preflop": { "score": 1-10, "comment": "brief plain English comment" },
+    "flop": { "score": 1-10, "comment": "brief plain English comment" } | null,
+    "turn": { "score": 1-10, "comment": "brief plain English comment" } | null,
+    "river": { "score": 1-10, "comment": "brief plain English comment" } | null
+  }
+}
+
+Keep language simple and encouraging. Avoid solver jargon. Speak like a friendly coach, not a textbook.`;
+
+      const response = await invokeLLM({
+        messages: [
+          { role: "system", content: "You are a friendly, encouraging poker coach for recreational players. Always respond with valid JSON only." },
+          { role: "user", content: prompt },
+        ],
+      });
+
+      let analysis: unknown;
+      try {
+        const content = response.choices[0].message.content;
+        const text = typeof content === "string" ? content : JSON.stringify(content);
+        // Extract JSON from response (handle markdown code blocks)
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        analysis = jsonMatch ? JSON.parse(jsonMatch[0]) : JSON.parse(text);
+      } catch {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to parse coach analysis" });
+      }
+
+      await updateHandCoachAnalysis(input.handId, analysis);
+      return { analysis, cached: false };
+    }),
+});
+
+// ─── Discord Router ───────────────────────────────────────────────────────────
+
+const discordRouter = router({
+  list: protectedProcedure.query(async ({ ctx }) => {
+    return getDiscordWebhooks(ctx.user.id);
+  }),
+  add: protectedProcedure
+    .input(z.object({ name: z.string().min(1).max(100), webhookUrl: z.string().url() }))
+    .mutation(async ({ input, ctx }) => {
+      const id = await createDiscordWebhook(ctx.user.id, input.name, input.webhookUrl);
+      return { id };
+    }),
+  remove: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input, ctx }) => {
+      await deleteDiscordWebhook(input.id, ctx.user.id);
+      return { success: true };
+    }),
+  setDefault: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input, ctx }) => {
+      await setDefaultDiscordWebhook(input.id, ctx.user.id);
+      return { success: true };
+    }),
+  share: protectedProcedure
+    .input(z.object({ handSlug: z.string(), webhookId: z.number(), origin: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      const webhooks = await getDiscordWebhooks(ctx.user.id);
+      const webhook = webhooks.find((w) => w.id === input.webhookId);
+      if (!webhook) throw new TRPCError({ code: "NOT_FOUND", message: "Webhook not found" });
+
+      const hand = await getHandBySlug(input.handSlug);
+      if (!hand) throw new TRPCError({ code: "NOT_FOUND", message: "Hand not found" });
+
+      const parsedData = hand.parsedData as any;
+      const shareUrl = `${input.origin}/hand/${input.handSlug}`;
+
+      const embed = {
+        title: hand.title || `Poker Hand — ${parsedData?.heroCards?.join(" ") || ""}`,
+        description: hand.rawText.slice(0, 300),
+        url: shareUrl,
+        color: 0xd4a017,
+        fields: [
+          { name: "Blinds", value: `${parsedData?.smallBlind ?? "?"}/${parsedData?.bigBlind ?? "?"}`, inline: true },
+          { name: "Position", value: parsedData?.heroPosition || "?", inline: true },
+          { name: "Cards", value: parsedData?.heroCards?.join(" ") || "?", inline: true },
+        ],
+        footer: { text: "Poker Hand Visualiser" },
+      };
+
+      const res = await fetch(webhook.webhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ embeds: [embed] }),
+      });
+
+      if (!res.ok) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to send to Discord" });
+      return { success: true };
+    }),
+});
+
+// ─── Root Router ──────────────────────────────────────────────────────────────
 
 export const appRouter = router({
-    // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
+  auth: authRouter,
+  hands: handsRouter,
+  coach: coachRouter,
+  discord: discordRouter,
   system: systemRouter,
-  auth: router({
-    me: publicProcedure.query(opts => opts.ctx.user),
-    logout: publicProcedure.mutation(({ ctx }) => {
-      const cookieOptions = getSessionCookieOptions(ctx.req);
-      ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
-      return {
-        success: true,
-      } as const;
-    }),
-  }),
-
-  stats: router({
-    overview: protectedProcedure.query(async ({ ctx }) => {
-      return await db.getUserStatistics(ctx.user.id);
-    }),
-    
-    mistakes: protectedProcedure.query(async ({ ctx }) => {
-      return await db.getMistakePatterns(ctx.user.id);
-    }),
-  }),
-
-  hands: router({
-    list: protectedProcedure.query(async ({ ctx }) => {
-      return await db.getUserHands(ctx.user.id);
-    }),
-    
-    get: protectedProcedure
-      .input(z.object({ id: z.number() }))
-      .query(async ({ ctx, input }) => {
-        return await db.getHandById(input.id, ctx.user.id);
-      }),
-    
-    create: protectedProcedure
-      .input(z.object({
-        title: z.string().optional(),
-        description: z.string().optional(),
-        smallBlind: z.number(),
-        bigBlind: z.number(),
-        ante: z.number().default(0),
-        heroPosition: z.enum(["UTG", "UTG+1", "UTG+2", "MP", "MP+1", "CO", "BTN", "SB", "BB"]),
-        heroCard1: z.string(),
-        heroCard2: z.string(),
-        flopCard1: z.string().optional(),
-        flopCard2: z.string().optional(),
-        flopCard3: z.string().optional(),
-        turnCard: z.string().optional(),
-        riverCard: z.string().optional(),
-        actions: z.array(z.object({
-          street: z.enum(["preflop", "flop", "turn", "river"]),
-          player: z.string(),
-          action: z.enum(["fold", "check", "call", "bet", "raise", "allin"]),
-          amount: z.number().optional(),
-        })),
-      }))
-      .mutation(async ({ ctx, input }) => {
-        // Run analysis engine
-        const analysis = analyzeHand({
-          smallBlind: input.smallBlind,
-          bigBlind: input.bigBlind,
-          ante: input.ante,
-          heroPosition: input.heroPosition,
-          heroCard1: input.heroCard1,
-          heroCard2: input.heroCard2,
-          flopCard1: input.flopCard1,
-          flopCard2: input.flopCard2,
-          flopCard3: input.flopCard3,
-          turnCard: input.turnCard,
-          riverCard: input.riverCard,
-          actions: input.actions,
-        });
-        
-        // Create hand with analysis results
-        const result = await db.createHand({
-          ...input,
-          userId: ctx.user.id,
-          actions: input.actions as any, // JSON type
-          mistakeTags: analysis.mistakeTags as any, // JSON type
-          overallRating: analysis.overallRating.toString(),
-          preflopRating: analysis.preflopRating.toString(),
-          flopRating: analysis.flopRating?.toString() || null,
-          turnRating: analysis.turnRating?.toString() || null,
-          riverRating: analysis.riverRating?.toString() || null,
-          analysis: analysis.analysis,
-        });
-        
-        return { 
-          success: true, 
-          handId: result[0]?.insertId,
-          analysis: analysis,
-        };
-      }),
-    
-    delete: protectedProcedure
-      .input(z.object({ id: z.number() }))
-      .mutation(async ({ ctx, input }) => {
-        await db.deleteHand(input.id, ctx.user.id);
-        return { success: true };
-      }),
-    
-    generateShareToken: protectedProcedure
-      .input(z.object({ id: z.number() }))
-      .mutation(async ({ ctx, input }) => {
-        const shareToken = await db.generateHandShareToken(input.id, ctx.user.id);
-        if (!shareToken) {
-          throw new Error("Failed to generate share token");
-        }
-        return { shareToken };
-      }),
-    
-    getByShareToken: publicProcedure
-      .input(z.object({ token: z.string() }))
-      .query(async ({ input }) => {
-        return await db.getHandByShareToken(input.token);
-      }),
-    
-    revokeSharing: protectedProcedure
-      .input(z.object({ id: z.number() }))
-      .mutation(async ({ ctx, input }) => {
-        const success = await db.revokeHandSharing(input.id, ctx.user.id);
-        return { success };
-      }),
-    
-    analyzeWithAI: protectedProcedure
-      .input(z.object({ id: z.number() }))
-      .mutation(async ({ ctx, input }) => {
-        const hand = await db.getHandById(input.id, ctx.user.id);
-        if (!hand) {
-          throw new Error("Hand not found");
-        }
-        
-        // Generate AI analysis using LLM
-        const aiAnalysis = await db.generateAIAnalysis(hand);
-        
-        // Update hand with AI analysis
-        await db.updateHandAIAnalysis(input.id, ctx.user.id, aiAnalysis);
-        
-        return { success: true, aiAnalysis };
-      }),
-    
-    // Guest users can analyze hands without saving
-    analyzeGuest: publicProcedure
-      .input(z.object({
-        smallBlind: z.number(),
-        bigBlind: z.number(),
-        ante: z.number().default(0),
-        heroPosition: z.enum(["UTG", "UTG+1", "UTG+2", "MP", "MP+1", "CO", "BTN", "SB", "BB"]),
-        heroCard1: z.string(),
-        heroCard2: z.string(),
-        flopCard1: z.string().optional(),
-        flopCard2: z.string().optional(),
-        flopCard3: z.string().optional(),
-        turnCard: z.string().optional(),
-        riverCard: z.string().optional(),
-        actions: z.array(z.object({
-          street: z.enum(["preflop", "flop", "turn", "river"]),
-          player: z.string(),
-          action: z.enum(["fold", "check", "call", "bet", "raise", "allin"]),
-          amount: z.number().optional(),
-        })),
-      }))
-      .mutation(async ({ input }) => {
-        // Run analysis engine without saving to database
-        const analysis = analyzeHand({
-          smallBlind: input.smallBlind,
-          bigBlind: input.bigBlind,
-          ante: input.ante,
-          heroPosition: input.heroPosition,
-          heroCard1: input.heroCard1,
-          heroCard2: input.heroCard2,
-          flopCard1: input.flopCard1,
-          flopCard2: input.flopCard2,
-          flopCard3: input.flopCard3,
-          turnCard: input.turnCard,
-          riverCard: input.riverCard,
-          actions: input.actions,
-        });
-        
-        return { 
-          success: true, 
-          analysis: analysis,
-          isGuest: true,
-        };
-      }),
-    
-    togglePublic: protectedProcedure
-      .input(z.object({ id: z.number(), isPublic: z.boolean() }))
-      .mutation(async ({ ctx, input }) => {
-        return await db.toggleHandPublic(input.id, ctx.user.id, input.isPublic);
-      }),
-    
-    upvote: protectedProcedure
-      .input(z.object({ id: z.number() }))
-      .mutation(async ({ ctx, input }) => {
-        return await db.upvoteHand(input.id, ctx.user.id);
-      }),
-    
-    hasUpvoted: protectedProcedure
-      .input(z.object({ id: z.number() }))
-      .query(async ({ ctx, input }) => {
-        return await db.hasUserUpvoted(input.id, ctx.user.id);
-      }),
-    
-    addComment: protectedProcedure
-      .input(z.object({ id: z.number(), content: z.string() }))
-      .mutation(async ({ ctx, input }) => {
-        return await db.addComment(input.id, ctx.user.id, ctx.user.name || "Anonymous", input.content);
-      }),
-    
-    getComments: publicProcedure
-      .input(z.object({ id: z.number() }))
-      .query(async ({ input }) => {
-        return await db.getHandComments(input.id);
-      }),
-    
-    getPublic: publicProcedure
-      .input(z.object({ limit: z.number().default(50), sortBy: z.enum(["recent", "top", "rating"]).default("recent") }))
-      .query(async ({ input }) => {
-        return await db.getPublicHands(input.limit, input.sortBy);
-      }),
-    
-    // Tag management procedures
-    addTag: protectedProcedure
-      .input(z.object({ handId: z.number(), tag: z.string(), color: z.string().default("#3b82f6") }))
-      .mutation(async ({ ctx, input }) => {
-        return await db.addHandTag(input.handId, ctx.user.id, input.tag, input.color);
-      }),
-    
-    removeTag: protectedProcedure
-      .input(z.object({ handId: z.number(), tag: z.string() }))
-      .mutation(async ({ ctx, input }) => {
-        return await db.removeHandTag(input.handId, ctx.user.id, input.tag);
-      }),
-    
-    getTags: protectedProcedure
-      .input(z.object({ handId: z.number() }))
-      .query(async ({ ctx, input }) => {
-        return await db.getHandTags(input.handId, ctx.user.id);
-      }),
-    
-    getAllTags: protectedProcedure
-      .query(async ({ ctx }) => {
-        return await db.getAllUserTags(ctx.user.id);
-      }),
-    
-    filterByTags: protectedProcedure
-      .input(z.object({ tags: z.array(z.string()) }))
-      .query(async ({ ctx, input }) => {
-        return await db.filterHandsByTags(ctx.user.id, input.tags);
-      }),
-  }),
-
-  discord: router({
-    // Get all webhooks for the current user
-    listWebhooks: protectedProcedure
-      .query(async ({ ctx }) => {
-        return await db.getDiscordWebhooks(ctx.user.id);
-      }),
-    
-    // Add a new webhook
-    addWebhook: protectedProcedure
-      .input(z.object({
-        name: z.string().min(1).max(100),
-        webhookUrl: z.string().url(),
-        isDefault: z.boolean().default(false),
-      }))
-      .mutation(async ({ ctx, input }) => {
-        return await db.addDiscordWebhook(ctx.user.id, input.name, input.webhookUrl, input.isDefault);
-      }),
-    
-    // Update a webhook
-    updateWebhook: protectedProcedure
-      .input(z.object({
-        id: z.number(),
-        name: z.string().min(1).max(100).optional(),
-        webhookUrl: z.string().url().optional(),
-        isDefault: z.boolean().optional(),
-      }))
-      .mutation(async ({ ctx, input }) => {
-        return await db.updateDiscordWebhook(input.id, ctx.user.id, input.name, input.webhookUrl, input.isDefault);
-      }),
-    
-    // Delete a webhook
-    deleteWebhook: protectedProcedure
-      .input(z.object({ id: z.number() }))
-      .mutation(async ({ ctx, input }) => {
-        return await db.deleteDiscordWebhook(input.id, ctx.user.id);
-      }),
-    
-    // Share a hand to Discord
-    shareHand: protectedProcedure
-      .input(z.object({
-        handId: z.number(),
-        webhookId: z.number().optional(), // If not provided, use default webhook
-      }))
-      .mutation(async ({ ctx, input }) => {
-        return await db.shareHandToDiscord(input.handId, ctx.user.id, input.webhookId);
-      }),
-  }),
 });
 
 export type AppRouter = typeof appRouter;

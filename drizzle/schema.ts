@@ -1,17 +1,10 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, json, decimal, boolean } from "drizzle-orm/mysql-core";
+import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, json, boolean } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
- * Extend this file with additional tables as your product grows.
- * Columns use camelCase to match both database fields and generated types.
  */
 export const users = mysqlTable("users", {
-  /**
-   * Surrogate primary key. Auto-incremented numeric value managed by the database.
-   * Use this for relations between tables.
-   */
   id: int("id").autoincrement().primaryKey(),
-  /** Manus OAuth identifier (openId) returned from the OAuth callback. Unique per user. */
   openId: varchar("openId", { length: 64 }).notNull().unique(),
   name: text("name"),
   email: varchar("email", { length: 320 }),
@@ -26,60 +19,31 @@ export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 
 /**
- * Poker hands table - stores complete hand history
+ * Poker hands table — simplified for the new casual visualiser product.
+ * Stores the raw text input and the parsed structured data.
  */
 export const hands = mysqlTable("hands", {
   id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull(), // Owner of this hand
-  
-  // Hand metadata
-  title: varchar("title", { length: 255 }), // Optional user-provided title
-  description: text("description"), // Optional notes
-  
-  // Game info
-  smallBlind: int("smallBlind").notNull(),
-  bigBlind: int("bigBlind").notNull(),
-  ante: int("ante").default(0).notNull(),
-  
-  // Hero info
-  heroPosition: mysqlEnum("heroPosition", ["UTG", "UTG+1", "UTG+2", "MP", "MP+1", "CO", "BTN", "SB", "BB"]).notNull(),
-  heroCard1: varchar("heroCard1", { length: 3 }).notNull(), // e.g., "As", "Kh"
-  heroCard2: varchar("heroCard2", { length: 3 }).notNull(),
-  
-  // Board cards (null if not reached)
-  flopCard1: varchar("flopCard1", { length: 3 }),
-  flopCard2: varchar("flopCard2", { length: 3 }),
-  flopCard3: varchar("flopCard3", { length: 3 }),
-  turnCard: varchar("turnCard", { length: 3 }),
-  riverCard: varchar("riverCard", { length: 3 }),
-  
-  // Action history - stored as JSON array
-  // Each action: { street: 'preflop'|'flop'|'turn'|'river', player: string, action: 'fold'|'check'|'call'|'bet'|'raise'|'allin', amount?: number }
-  actions: json("actions").notNull(),
-  
-  // Analysis results
-  overallRating: decimal("overallRating", { precision: 3, scale: 1 }), // e.g., 5.5
-  preflopRating: decimal("preflopRating", { precision: 3, scale: 1 }),
-  flopRating: decimal("flopRating", { precision: 3, scale: 1 }),
-  turnRating: decimal("turnRating", { precision: 3, scale: 1 }),
-  riverRating: decimal("riverRating", { precision: 3, scale: 1 }),
-  
-  // Mistake tags - stored as JSON array of strings
-  // e.g., ["overcalling_river", "missing_turn_probe", "passive_flop"]
-  mistakeTags: json("mistakeTags"),
-  
-  // Analysis text
-  analysis: text("analysis"), // Full analysis markdown
-  aiAnalysis: text("aiAnalysis"), // AI-generated strategic analysis
-  
+  userId: int("userId"), // nullable — guests can create hands too (stored in session)
+
+  // Raw input from user (WhatsApp-style text)
+  rawText: text("rawText").notNull(),
+
+  // Parsed structured data (JSON from LLM parser)
+  parsedData: json("parsedData").notNull(),
+
+  // Optional user-added title/note
+  title: varchar("title", { length: 255 }),
+  notes: text("notes"),
+
   // Sharing
-  shareToken: varchar("shareToken", { length: 32 }).unique(), // Unique token for public sharing
-  isPublic: int("isPublic").default(0).notNull(), // 0 = private, 1 = public
-  
-  // Community engagement
-  upvoteCount: int("upvoteCount").default(0).notNull(),
-  commentCount: int("commentCount").default(0).notNull(),
-  
+  shareSlug: varchar("shareSlug", { length: 16 }).unique().notNull(), // short public URL slug e.g. "a3f9x2"
+  isPublic: boolean("isPublic").default(true).notNull(),
+
+  // AI Coach (paid feature)
+  coachUnlocked: boolean("coachUnlocked").default(false).notNull(),
+  coachAnalysis: json("coachAnalysis"), // stored after payment
+
   // Timestamps
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -89,110 +53,14 @@ export type Hand = typeof hands.$inferSelect;
 export type InsertHand = typeof hands.$inferInsert;
 
 /**
- * Mistake patterns - for tracking common errors
- */
-export const mistakePatterns = mysqlTable("mistakePatterns", {
-  id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull(),
-  
-  // Pattern identification
-  mistakeType: varchar("mistakeType", { length: 100 }).notNull(), // e.g., "overcalling_river"
-  mistakeLabel: varchar("mistakeLabel", { length: 255 }).notNull(), // e.g., "Overcalling Rivers"
-  
-  // Occurrence tracking
-  occurrenceCount: int("occurrenceCount").default(1).notNull(),
-  
-  // Related hands (JSON array of hand IDs)
-  handIds: json("handIds"),
-  
-  // Timestamps
-  firstOccurrence: timestamp("firstOccurrence").defaultNow().notNull(),
-  lastOccurrence: timestamp("lastOccurrence").defaultNow().notNull(),
-});
-
-export type MistakePattern = typeof mistakePatterns.$inferSelect;
-export type InsertMistakePattern = typeof mistakePatterns.$inferInsert;
-
-/**
- * User statistics - aggregated performance metrics
- */
-export const userStats = mysqlTable("userStats", {
-  id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull().unique(),
-  
-  // Overall metrics
-  totalHands: int("totalHands").default(0).notNull(),
-  averageRating: decimal("averageRating", { precision: 3, scale: 1 }),
-  
-  // Street-specific averages
-  avgPreflopRating: decimal("avgPreflopRating", { precision: 3, scale: 1 }),
-  avgFlopRating: decimal("avgFlopRating", { precision: 3, scale: 1 }),
-  avgTurnRating: decimal("avgTurnRating", { precision: 3, scale: 1 }),
-  avgRiverRating: decimal("avgRiverRating", { precision: 3, scale: 1 }),
-  
-  // Most common mistakes (JSON array of {type, count} objects)
-  topMistakes: json("topMistakes"),
-  
-  // Timestamps
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
-
-export type UserStats = typeof userStats.$inferSelect;
-export type InsertUserStats = typeof userStats.$inferInsert;
-
-/**
- * Hand upvotes - tracks user upvotes on public hands
- */
-export const handUpvotes = mysqlTable("handUpvotes", {
-  id: int("id").autoincrement().primaryKey(),
-  handId: int("handId").notNull(),
-  userId: int("userId").notNull(),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
-
-export type HandUpvote = typeof handUpvotes.$inferSelect;
-export type InsertHandUpvote = typeof handUpvotes.$inferInsert;
-
-/**
- * Hand comments - community discussion on public hands
- */
-export const handComments = mysqlTable("handComments", {
-  id: int("id").autoincrement().primaryKey(),
-  handId: int("handId").notNull(),
-  userId: int("userId").notNull(),
-  userName: varchar("userName", { length: 255 }).notNull(), // Denormalized for performance
-  content: text("content").notNull(),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
-
-export type HandComment = typeof handComments.$inferSelect;
-export type InsertHandComment = typeof handComments.$inferInsert;
-
-/**
- * Hand tags - custom labels for organizing and filtering hands
- */
-export const handTags = mysqlTable("handTags", {
-  id: int("id").autoincrement().primaryKey(),
-  handId: int("handId").notNull(),
-  userId: int("userId").notNull(), // Owner of the tag
-  tag: varchar("tag", { length: 50 }).notNull(), // Tag name (e.g., "bluff", "hero call")
-  color: varchar("color", { length: 7 }).default("#3b82f6").notNull(), // Hex color code
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
-
-export type HandTag = typeof handTags.$inferSelect;
-export type InsertHandTag = typeof handTags.$inferInsert;
-
-/**
- * Discord webhooks - stores user's Discord webhook URLs for sharing hands
+ * Discord webhooks — for sharing hands to study groups
  */
 export const discordWebhooks = mysqlTable("discordWebhooks", {
   id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull(), // Owner of this webhook
-  name: varchar("name", { length: 100 }).notNull(), // User-friendly name (e.g., "Study Group", "Main Server")
-  webhookUrl: text("webhookUrl").notNull(), // Discord webhook URL
-  isDefault: boolean("isDefault").default(false).notNull(), // Whether this is the default webhook for sharing
+  userId: int("userId").notNull(),
+  name: varchar("name", { length: 100 }).notNull(),
+  webhookUrl: text("webhookUrl").notNull(),
+  isDefault: boolean("isDefault").default(false).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
