@@ -115,7 +115,15 @@ CRITICAL BOARD CARD RULE: The "board" field for each street must contain ONLY th
 - River "board" = exactly 1 card (the single river card only, NOT all 5 board cards)
 NEVER include cumulative board cards. Each street's board array is independent and incremental.
 
-Hero identification: "we", "I", "hero" always refer to the hero player. Set isHero=true for that player and mark their actions with isHero=true.`;
+Hero identification: "we", "I", "hero" always refer to the hero player. Set isHero=true for that player and mark their actions with isHero=true.
+
+CRITICAL STACK RULE: Always populate startingStack for every player:
+- If the hand says "80keff", "80k eff", "80000eff", "80bb eff" — this is the EFFECTIVE STACK. Assign this value as startingStack for ALL active players in the hand (effective stack = the smaller of the two stacks, so all players start at this value).
+- If individual stacks are mentioned (e.g. "UTG has 120bb", "hero covers") — use those specific values.
+- If no stack info is given, estimate from the action sizes (e.g. if someone jams 45,500 and has been calling, infer their starting stack).
+- NEVER leave startingStack as null if any stack information can be inferred from the hand text.
+- "with X behind" after a bet means the player has X chips left AFTER that bet — so their startingStack = bet amount + X.
+- "covering" means that player has MORE chips than the effective stack — set their startingStack to 1.5x the effective stack as an estimate.`;
 
 export async function parseHandText(rawText: string): Promise<ParsedHand> {
   const response = await invokeLLM({

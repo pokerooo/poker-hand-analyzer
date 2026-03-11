@@ -766,8 +766,17 @@ function SpotTheMistake({ slug, parsed, steps, currentStepIndex }: {
 // --- Hand Edit Mode ───────────────────────────────────────────────────────────
 
 function HandEditPanel({ hand, onSaved }: { hand: any; onSaved: (newParsed: any, newRawText: string) => void }) {
-  const [rawText, setRawText] = useState<string>(hand.rawText || "");
+  const [rawText, setRawText] = useState<string>("");
   const [isEditing, setIsEditing] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const openEdit = () => {
+    // Sync latest rawText from hand prop each time edit is opened
+    setRawText(hand.rawText || "");
+    setIsEditing(true);
+    // Focus textarea after modal renders
+    setTimeout(() => textareaRef.current?.focus(), 80);
+  };
 
   const updateMutation = trpc.hands.update.useMutation({
     onError: (err: any) => toast.error("Save failed", { description: err.message }),
@@ -799,7 +808,7 @@ function HandEditPanel({ hand, onSaved }: { hand: any; onSaved: (newParsed: any,
   if (!isEditing) {
     return (
       <button
-        onClick={() => setIsEditing(true)}
+        onClick={openEdit}
         className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-all"
         style={{ background: "rgba(255,255,255,0.05)", color: "#94a3b8", border: "1px solid rgba(255,255,255,0.08)" }}
       >
@@ -824,6 +833,7 @@ function HandEditPanel({ hand, onSaved }: { hand: any; onSaved: (newParsed: any,
         </div>
         <p className="text-xs" style={{ color: "#475569" }}>Edit the hand text below. Saving will re-parse and re-simulate the hand from scratch. Coach analysis will be reset.</p>
         <textarea
+          ref={textareaRef}
           value={rawText}
           onChange={(e) => setRawText(e.target.value)}
           className="flex-1 w-full text-xs rounded-lg p-3 font-mono resize-none outline-none"

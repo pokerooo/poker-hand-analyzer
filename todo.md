@@ -332,3 +332,9 @@ Optional paid AI coach scores the hand and explains what to do differently.
 - [x] Add "Study this concept" button on each coach response (saves to DB, toggles to checkmark)
 - [x] Auto-prefill Coach Chat input with hand summary when arriving from replayer
 - [x] Add session question counter in Coach Chat header ("N questions this session")
+
+## Session: HandReplayer Bug Fixes (Mar 2026)
+- [x] Fix stack tracking — decrement player stacks after each bet/call/raise at each replay step
+- [x] Fix font visibility — player name and stack text should be white/bright on the table
+- [x] Fix edit hand glitch — textarea should be directly editable when edit mode is triggered
+- [x] Improved hand parser system prompt to extract startingStack from "eff" notation

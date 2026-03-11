@@ -436,8 +436,8 @@ export function PokerTable({ players, communityCards, potSize, currentAction, st
                 <span
                   className="text-[11px] font-bold leading-tight"
                   style={{
-                    color: player.isHero ? "#6ee7b7" : "#cbd5e1",
-                    textShadow: player.isHero ? "0 0 8px rgba(16,185,129,0.5)" : "none",
+                    color: player.isHero ? "#6ee7b7" : "#ffffff",
+                    textShadow: player.isHero ? "0 0 8px rgba(16,185,129,0.5)" : "0 1px 3px rgba(0,0,0,0.9)",
                   }}
                 >
                   {player.position}
@@ -446,7 +446,7 @@ export function PokerTable({ players, communityCards, potSize, currentAction, st
                 {/* Stack size (when no active bet) */}
                 {player.stackSize != null && player.stackSize > 0 &&
                   !(player.betAmount && player.betAmount > 0) && !player.isAllIn && (
-                  <span className="text-[10px] font-mono leading-tight" style={{ color: "#64748b" }}>
+                  <span className="text-[10px] font-mono leading-tight" style={{ color: "#e2e8f0" }}>
                     {formatAmount(player.stackSize)}
                   </span>
                 )}
