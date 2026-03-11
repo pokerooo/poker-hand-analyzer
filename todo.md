@@ -345,3 +345,11 @@ Optional paid AI coach scores the hand and explains what to do differently.
 - [x] Stack label always visible (not hidden when bet is active)
 - [x] Compact pill format (e.g. 80k) positioned just below the player chip
 - [x] Hero stack in green, other players in slate-400 — visually distinct
+
+## Session: SPR + Effective Stack Display (Mar 2026)
+- [x] Add SPR (Stack-to-Pot Ratio) display in the centre of the poker table next to the pot
+- [x] SPR computed as min(heroStack, villainStack) / pot, colour-coded: red <=4, amber <=13, green >13
+- [x] Show effective stack (smaller of Hero vs main villain) as "Eff: 62k" badge in narration card
+- [x] Main villain identified as last non-hero, non-folded player in the hand
+- [x] Both SPR and Eff only shown when pot > 0 (hidden on preflop start)
+- [x] 0 TypeScript errors, 105 tests passing

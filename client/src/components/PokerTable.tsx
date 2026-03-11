@@ -17,6 +17,7 @@ interface PokerTableProps {
   potSize: number;
   currentAction?: { player: string; action: string; amount?: number } | null;
   street: "preflop" | "flop" | "turn" | "river";
+  spr?: number | null;
 }
 
 // ─── Suit colours & symbols ───────────────────────────────────────────────────
@@ -228,7 +229,7 @@ function GhostSeat({ position }: { position: string }) {
   );
 }
 
-export function PokerTable({ players, communityCards, potSize, currentAction, street }: PokerTableProps) {
+export function PokerTable({ players, communityCards, potSize, currentAction, street, spr }: PokerTableProps) {
   // Build 8-seat layout: each canonical position maps to a fixed visual slot.
   // Active players are placed at their canonical position slot.
   // Empty positions get ghost seats.
@@ -339,27 +340,52 @@ export function PokerTable({ players, communityCards, potSize, currentAction, st
           {/* Community cards */}
           <CommunityCards cards={communityCards} prevCount={prevCardCount} />
 
-          {/* Pot */}
+          {/* Pot + SPR row */}
           {potSize > 0 && (
-            <div
-              className="flex items-center gap-1.5 px-3 py-1 rounded-full mt-0.5"
-              style={{
-                background: "rgba(0,0,0,0.55)",
-                border: "1px solid rgba(16,185,129,0.25)",
-                backdropFilter: "blur(4px)",
-                boxShadow: "0 0 12px rgba(16,185,129,0.15)",
-              }}
-            >
+            <div className="flex items-center gap-2">
+              {/* Pot */}
               <div
-                className="w-2 h-2 rounded-full"
+                className="flex items-center gap-1.5 px-3 py-1 rounded-full"
                 style={{
-                  background: "radial-gradient(circle, #fbbf24, #d97706)",
-                  boxShadow: "0 0 6px #f59e0b80",
+                  background: "rgba(0,0,0,0.55)",
+                  border: "1px solid rgba(16,185,129,0.25)",
+                  backdropFilter: "blur(4px)",
+                  boxShadow: "0 0 12px rgba(16,185,129,0.15)",
                 }}
-              />
-              <span className="text-[11px] font-bold" style={{ color: "#fbbf24", textShadow: "0 0 8px #f59e0b60" }}>
-                {formatAmount(potSize)}
-              </span>
+              >
+                <div
+                  className="w-2 h-2 rounded-full"
+                  style={{
+                    background: "radial-gradient(circle, #fbbf24, #d97706)",
+                    boxShadow: "0 0 6px #f59e0b80",
+                  }}
+                />
+                <span className="text-[11px] font-bold" style={{ color: "#fbbf24", textShadow: "0 0 8px #f59e0b60" }}>
+                  {formatAmount(potSize)}
+                </span>
+              </div>
+
+              {/* SPR badge — shown when pot > 0 and spr is known */}
+              {spr != null && spr > 0 && (
+                <div
+                  className="flex items-center gap-1 px-2 py-1 rounded-full"
+                  style={{
+                    background: "rgba(0,0,0,0.55)",
+                    border: "1px solid rgba(148,163,184,0.18)",
+                    backdropFilter: "blur(4px)",
+                  }}
+                >
+                  <span className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: "#64748b" }}>SPR</span>
+                  <span
+                    className="text-[11px] font-bold font-mono"
+                    style={{
+                      color: spr <= 4 ? "#f87171" : spr <= 13 ? "#fbbf24" : "#4ade80",
+                    }}
+                  >
+                    {spr < 10 ? spr.toFixed(1) : Math.round(spr)}
+                  </span>
+                </div>
+              )}
             </div>
           )}
         </div>

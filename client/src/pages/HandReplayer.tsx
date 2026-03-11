@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useRoute, useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -896,6 +896,20 @@ export default function HandReplayer() {
   const steps = parsed ? buildReplaySteps(parsed) : [];
   const currentStep = steps[stepIndex];
 
+  // Compute SPR and effective stack from current step
+  const { spr, effStack } = useMemo(() => {
+    if (!currentStep || currentStep.pot <= 0) return { spr: null, effStack: null };
+    const hero = currentStep.players.find((p) => p.isHero);
+    const activePlayers = currentStep.players.filter((p) => !p.hasFolded && !p.isHero);
+    const villain = activePlayers.length > 0 ? activePlayers[activePlayers.length - 1] : null;
+    const heroStack = hero?.stackSize ?? null;
+    const villainStack = villain?.stackSize ?? null;
+    if (heroStack == null || villainStack == null) return { spr: null, effStack: null };
+    const eff = Math.min(heroStack, villainStack);
+    const sprVal = currentStep.pot > 0 ? parseFloat((eff / currentStep.pot).toFixed(1)) : null;
+    return { spr: sprVal, effStack: eff };
+  }, [currentStep]);
+
   const handleHandSaved = (newParsed: ParsedHand, newRawText: string) => {
     setLocalParsed(newParsed);
     setLocalRawText(newRawText);
@@ -1068,6 +1082,7 @@ export default function HandReplayer() {
             potSize={currentStep.pot}
             currentAction={currentStep.currentAction}
             street={currentStep.street}
+            spr={spr}
           />
         )}
       </div>
@@ -1086,13 +1101,29 @@ export default function HandReplayer() {
               boxShadow: "0 0 20px rgba(16,185,129,0.05)",
             }}
           >
-            {/* Street badge */}
-            <span
-              className="inline-block text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full mb-1.5"
-              style={{ color: "#4ade80", background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.2)" }}
-            >
-              {currentStep.street}
-            </span>
+            {/* Street badge + Eff stack row */}
+            <div className="flex items-center gap-2 mb-1.5">
+              <span
+                className="inline-block text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full"
+                style={{ color: "#4ade80", background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.2)" }}
+              >
+                {currentStep.street}
+              </span>
+              {/* Effective stack badge */}
+              {effStack != null && effStack > 0 && (
+                <span
+                  className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full"
+                  style={{
+                    color: "#93c5fd",
+                    background: "rgba(59,130,246,0.1)",
+                    border: "1px solid rgba(59,130,246,0.2)",
+                    fontFamily: "monospace",
+                  }}
+                >
+                  Eff: {effStack >= 1_000_000 ? `${(effStack / 1_000_000).toFixed(1)}M` : effStack >= 1_000 ? `${(effStack / 1_000).toFixed(1)}k` : effStack.toLocaleString()}
+                </span>
+              )}
+            </div>
             <p
               className="text-sm font-semibold leading-snug"
               style={{ color: currentStep.currentAction === null ? "#4ade80" : "#e2e8f0" }}
