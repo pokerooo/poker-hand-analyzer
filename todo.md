@@ -315,3 +315,7 @@ Optional paid AI coach scores the hand and explains what to do differently.
 - [x] Wire all three new routes into App.tsx
 - [x] TypeScript check: 0 errors
 - [x] All 105 tests passing
+
+## Session: Direct AI Coach Access
+- [x] Add AI Coach button to homepage header nav
+- [x] Add AI Coach entry point below the hero input area on homepage (CTA card now clickable)

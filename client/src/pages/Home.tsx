@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { Loader2, Play, ChevronRight, AlertCircle } from "lucide-react";
+import { Loader2, Play, ChevronRight, AlertCircle, Zap } from "lucide-react";
 import { toast } from "sonner";
 
 const EXAMPLE_HANDS = [
@@ -119,6 +119,15 @@ export default function Home() {
         </div>
         <div className="flex items-center gap-2">
           <ThemeToggle />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate("/coach")}
+            className="font-semibold gap-1.5 border-amber-400/40 text-amber-600 hover:bg-amber-50 hover:text-amber-700 dark:text-amber-400 dark:hover:bg-amber-950/30"
+          >
+            <Zap className="h-3.5 w-3.5" />
+            AI Coach
+          </Button>
           {isAuthenticated ? (
             <Button variant="outline" size="sm" onClick={() => navigate("/my-hands")} className="font-medium">
               My Hands
@@ -260,20 +269,26 @@ export default function Home() {
         </div>
 
         {/* AI Coach CTA */}
-        <div className="w-full rounded-xl border border-primary/20 bg-gradient-to-r from-primary/5 to-accent/5 p-4 flex items-center gap-4 hover:border-primary/40 transition-colors cursor-pointer">
+        <div
+          className="w-full rounded-xl border border-amber-400/30 bg-gradient-to-r from-amber-50/60 to-yellow-50/40 dark:from-amber-950/20 dark:to-yellow-950/10 p-4 flex items-center gap-4 hover:border-amber-400/60 transition-colors cursor-pointer"
+          onClick={() => navigate("/coach")}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => e.key === "Enter" && navigate("/coach")}
+        >
           <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-xl shrink-0">
             🧠
           </div>
           <div className="flex-1 min-w-0">
             <div className="font-semibold text-sm flex items-center gap-2">
               AI Coach Analysis
-              <Badge className="text-xs bg-accent text-accent-foreground border-0">Premium</Badge>
+              <Badge className="text-xs bg-amber-500 text-white border-0">Free</Badge>
             </div>
             <p className="text-xs text-muted-foreground mt-0.5">
               Get your hand scored and learn exactly what you should have done differently.
             </p>
           </div>
-          <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+          <ChevronRight className="h-4 w-4 text-amber-500 shrink-0" />
         </div>
       </main>
 
