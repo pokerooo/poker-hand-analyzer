@@ -319,3 +319,9 @@ Optional paid AI coach scores the hand and explains what to do differently.
 ## Session: Direct AI Coach Access
 - [x] Add AI Coach button to homepage header nav
 - [x] Add AI Coach entry point below the hero input area on homepage (CTA card now clickable)
+
+## Session: Coach Chat UX Improvements
+- [x] Reduce quick prompts to 3 on Coach Chat page
+- [x] Add shuffle/refresh button to cycle through prompt pool
+- [x] Add AI Coach button to HandReplayer header (with hand context pre-fill)
+- [x] Add "Back to my hand" link in Coach Chat when arriving from replayer

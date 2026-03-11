@@ -13,7 +13,7 @@ import { Helmet } from "react-helmet-async";
 import {
   ArrowLeft, Play, Pause, SkipBack, SkipForward,
   Share2, Copy, Loader2, Sparkles, Lock, ChevronDown, ChevronUp,
-  MessageCircle
+  MessageCircle, Zap
 } from "lucide-react";
 import { VideoExport } from "@/components/VideoExport";
 import ProPaywall from "@/components/ProPaywall";
@@ -1012,6 +1012,23 @@ export default function HandReplayer() {
         <div className="flex items-center gap-1.5 shrink-0">
           <ThemeToggle />
           <HandEditPanel hand={{ ...hand, rawText: localRawText || hand.rawText }} onSaved={handleHandSaved} />
+          <button
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+            style={{
+              background: "rgba(234,179,8,0.08)",
+              color: "#fbbf24",
+              border: "1px solid rgba(234,179,8,0.25)",
+            }}
+            onClick={() => {
+              const title = handTitle || "";
+              const params = new URLSearchParams({ from: slug });
+              if (title) params.set("title", title);
+              navigate(`/coach?${params.toString()}`);
+            }}
+            title="Ask AI Coach about this hand"
+          >
+            <Zap className="h-3.5 w-3.5" /> Coach
+          </button>
           <button
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
             style={{

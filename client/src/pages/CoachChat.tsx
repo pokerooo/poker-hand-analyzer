@@ -1,17 +1,18 @@
 /**
  * AI Coach Chat — Free-form poker Q&A with mascot and quick-question prompts
- * Inspired by the reference image: dark bg, grid pattern, quick-prompt pills
+ * Features: 3 visible prompts with shuffle, back-to-hand link, hand context pre-fill
  */
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { trpc } from "@/lib/trpc";
-import { Link } from "wouter";
-import { Send, ChevronRight, RotateCcw, Zap } from "lucide-react";
+import { Link, useLocation } from "wouter";
+import { Send, RotateCcw, Zap, RefreshCw, ArrowLeft } from "lucide-react";
 import { Streamdown } from "streamdown";
 
 const MASCOT_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663320611071/g6HPzuQNwUJzsGs4mHVNkx/coach_mascot_cfaa3837.png";
 
-const QUICK_PROMPTS = [
+// Full pool — 3 shown at a time, shuffle cycles through
+const PROMPT_POOL = [
   "How often should I defend my BB vs BTN steal in late-stage MTTs?",
   "I have AKs on the BTN — should I 3-bet or flat vs a CO open?",
   "What's the right c-bet frequency on a K72 rainbow board?",
@@ -20,7 +21,17 @@ const QUICK_PROMPTS = [
   "I've been running bad — how do I know if it's variance or a leak?",
   "What is a c-bet and when should I continuation bet?",
   "I'm a recreational player — what's the single biggest leak to fix first?",
+  "How wide should I be 3-betting from the SB vs a CO open?",
+  "When is it correct to slow-play a flopped set?",
+  "How do I size my river bluffs to make villain indifferent?",
+  "What hands should I be check-raising the flop with as the BB?",
 ];
+
+function getRandomPrompts(exclude: string[] = []): string[] {
+  const pool = PROMPT_POOL.filter((p) => !exclude.includes(p));
+  const shuffled = [...pool].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, 3);
+}
 
 interface Message {
   role: "user" | "assistant";
@@ -28,11 +39,20 @@ interface Message {
 }
 
 export default function CoachChat() {
+  const [location] = useLocation();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [visiblePrompts, setVisiblePrompts] = useState<string[]>(() => getRandomPrompts());
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  // Parse query params for hand context (slug + title from HandReplayer)
+  const searchParams = new URLSearchParams(
+    typeof window !== "undefined" ? window.location.search : ""
+  );
+  const fromSlug = searchParams.get("from");
+  const fromTitle = searchParams.get("title");
 
   const chatMutation = trpc.chat.ask.useMutation({
     onMutate: () => setIsTyping(true),
@@ -48,23 +68,30 @@ export default function CoachChat() {
     },
   });
 
-  const sendMessage = (text: string) => {
-    if (!text.trim() || isTyping) return;
-    const userMsg: Message = { role: "user", content: text.trim() };
-    const newMessages = [...messages, userMsg];
-    setMessages(newMessages);
-    setInput("");
-    chatMutation.mutate({
-      question: text.trim(),
-      history: messages.slice(-10),
-    });
-  };
+  const sendMessage = useCallback(
+    (text: string) => {
+      if (!text.trim() || isTyping) return;
+      const userMsg: Message = { role: "user", content: text.trim() };
+      const newMessages = [...messages, userMsg];
+      setMessages(newMessages);
+      setInput("");
+      chatMutation.mutate({
+        question: text.trim(),
+        history: messages.slice(-10),
+      });
+    },
+    [messages, isTyping, chatMutation]
+  );
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       sendMessage(input);
     }
+  };
+
+  const shufflePrompts = () => {
+    setVisiblePrompts(getRandomPrompts(visiblePrompts));
   };
 
   useEffect(() => {
@@ -81,9 +108,28 @@ export default function CoachChat() {
         style={{ background: "rgba(10,14,26,0.95)", borderColor: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)" }}
       >
         <div className="flex items-center gap-3">
-          <Link href="/my-hands">
-            <button className="text-sm font-medium" style={{ color: "#64748b" }}>← My Hands</button>
-          </Link>
+          {/* Back to hand link if arrived from replayer */}
+          {fromSlug ? (
+            <Link href={`/hand/${fromSlug}`}>
+              <button
+                className="flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg transition-all"
+                style={{
+                  color: "#4ade80",
+                  border: "1px solid rgba(74,222,128,0.2)",
+                  background: "rgba(74,222,128,0.06)",
+                }}
+              >
+                <ArrowLeft className="h-3.5 w-3.5" />
+                {fromTitle ? `Back to "${fromTitle}"` : "Back to hand"}
+              </button>
+            </Link>
+          ) : (
+            <Link href="/my-hands">
+              <button className="text-sm font-medium" style={{ color: "#64748b" }}>
+                ← My Hands
+              </button>
+            </Link>
+          )}
           <span style={{ color: "#334155" }}>/</span>
           <div className="flex items-center gap-2">
             <Zap className="h-5 w-5" style={{ color: "#4ade80" }} />
@@ -132,13 +178,44 @@ export default function CoachChat() {
             <h1 className="text-3xl font-bold text-white text-center mb-2">
               Instant review, evolve your poker mind.
             </h1>
-            <p className="text-center max-w-md mb-10" style={{ color: "#64748b" }}>
+            <p className="text-center max-w-md mb-8" style={{ color: "#64748b" }}>
               Ask anything — hand lines, theoretical concepts, tournament adjustments, or exploitative reads. Direct answers, no fluff.
             </p>
 
-            {/* Quick prompts */}
+            {/* Hand context banner — shown when arriving from replayer */}
+            {fromSlug && (
+              <div
+                className="w-full max-w-lg mb-6 rounded-xl px-4 py-3 flex items-center gap-3"
+                style={{ background: "rgba(74,222,128,0.08)", border: "1px solid rgba(74,222,128,0.2)" }}
+              >
+                <Zap className="h-4 w-4 shrink-0" style={{ color: "#4ade80" }} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-white">
+                    {fromTitle ? `Reviewing: "${fromTitle}"` : "Hand context loaded"}
+                  </p>
+                  <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>
+                    Ask me anything about this hand or any concept.
+                  </p>
+                </div>
+                <button
+                  className="text-xs px-2 py-1 rounded-lg shrink-0"
+                  style={{ color: "#4ade80", border: "1px solid rgba(74,222,128,0.2)" }}
+                  onClick={() =>
+                    sendMessage(
+                      fromTitle
+                        ? `I just reviewed my hand "${fromTitle}". Can you give me a quick overview of the key decision points and what I should focus on improving?`
+                        : "I just reviewed a hand. Can you help me think through the key decision points?"
+                    )
+                  }
+                >
+                  Ask about it →
+                </button>
+              </div>
+            )}
+
+            {/* Quick prompts — 3 visible with shuffle */}
             <div className="w-full max-w-lg space-y-2">
-              {QUICK_PROMPTS.map((prompt) => (
+              {visiblePrompts.map((prompt) => (
                 <button
                   key={prompt}
                   onClick={() => sendMessage(prompt)}
@@ -160,6 +237,28 @@ export default function CoachChat() {
                   {prompt}
                 </button>
               ))}
+
+              {/* Shuffle button */}
+              <button
+                onClick={shufflePrompts}
+                className="w-full flex items-center justify-center gap-2 px-5 py-2.5 rounded-full text-xs font-medium transition-all hover:scale-[1.01]"
+                style={{
+                  background: "transparent",
+                  border: "1px dashed rgba(255,255,255,0.12)",
+                  color: "#475569",
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.color = "#94a3b8";
+                  (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.2)";
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.color = "#475569";
+                  (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.12)";
+                }}
+              >
+                <RefreshCw className="h-3 w-3" />
+                Show different questions
+              </button>
             </div>
           </div>
         ) : (
