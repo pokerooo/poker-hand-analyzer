@@ -443,14 +443,6 @@ export function PokerTable({ players, communityCards, potSize, currentAction, st
                   {player.position}
                 </span>
 
-                {/* Stack size (when no active bet) */}
-                {player.stackSize != null && player.stackSize > 0 &&
-                  !(player.betAmount && player.betAmount > 0) && !player.isAllIn && (
-                  <span className="text-[10px] font-mono leading-tight" style={{ color: "#e2e8f0" }}>
-                    {formatAmount(player.stackSize)}
-                  </span>
-                )}
-
                 {/* Active bet */}
                 {player.betAmount != null && player.betAmount > 0 && (
                   <span
@@ -471,6 +463,24 @@ export function PokerTable({ players, communityCards, potSize, currentAction, st
                   </span>
                 )}
               </div>
+
+              {/* Stack depth label — shown below chip for Hero always, non-folded participants */}
+              {(player.isHero || !player.hasFolded) && player.stackSize != null && player.stackSize >= 0 && (
+                <div
+                  className="text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded-full"
+                  style={{
+                    color: player.isHero ? "#6ee7b7" : "#94a3b8",
+                    background: "rgba(0,0,0,0.55)",
+                    border: player.isHero
+                      ? "1px solid rgba(16,185,129,0.25)"
+                      : "1px solid rgba(148,163,184,0.12)",
+                    letterSpacing: "0.02em",
+                    marginTop: 1,
+                  }}
+                >
+                  {formatAmount(player.stackSize)}
+                </div>
+              )}
 
               {/* Hero hole cards */}
               {player.isHero && player.holeCards && player.holeCards.length > 0 && !player.hasFolded && (

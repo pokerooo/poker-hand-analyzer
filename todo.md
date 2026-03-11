@@ -338,3 +338,10 @@ Optional paid AI coach scores the hand and explains what to do differently.
 - [x] Fix font visibility — player name and stack text should be white/bright on the table
 - [x] Fix edit hand glitch — textarea should be directly editable when edit mode is triggered
 - [x] Improved hand parser system prompt to extract startingStack from "eff" notation
+
+## Session: Stack Display Refinement (Mar 2026)
+- [x] Show stack depth only for Hero and active participating players (not ghost/empty seats)
+- [x] Display stack as a separate label near the player chip, not inside it
+- [x] Stack label always visible (not hidden when bet is active)
+- [x] Compact pill format (e.g. 80k) positioned just below the player chip
+- [x] Hero stack in green, other players in slate-400 — visually distinct
