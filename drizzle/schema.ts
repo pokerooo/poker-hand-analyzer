@@ -77,3 +77,19 @@ export const discordWebhooks = mysqlTable("discordWebhooks", {
 
 export type DiscordWebhook = typeof discordWebhooks.$inferSelect;
 export type InsertDiscordWebhook = typeof discordWebhooks.$inferInsert;
+
+/**
+ * Study list — concepts saved by users from AI Coach responses
+ */
+export const studyTopics = mysqlTable("studyTopics", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  topic: varchar("topic", { length: 500 }).notNull(),       // the concept/question text
+  context: text("context"),                                  // the coach's answer snippet
+  handSlug: varchar("handSlug", { length: 16 }),             // optional — linked hand
+  isReviewed: boolean("isReviewed").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type StudyTopic = typeof studyTopics.$inferSelect;
+export type InsertStudyTopic = typeof studyTopics.$inferInsert;

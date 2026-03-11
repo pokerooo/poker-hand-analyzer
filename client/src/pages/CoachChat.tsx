@@ -1,13 +1,20 @@
 /**
  * AI Coach Chat — Free-form poker Q&A with mascot and quick-question prompts
- * Features: 3 visible prompts with shuffle, back-to-hand link, hand context pre-fill
+ * Features:
+ *  - 3 visible prompts with shuffle
+ *  - Back-to-hand link when arriving from replayer
+ *  - Auto-prefill input with hand summary when arriving from replayer
+ *  - "Study this concept" save button on each coach response
+ *  - Session question counter in the header
  */
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
+import { useAuth } from "@/_core/hooks/useAuth";
 import { Link, useLocation } from "wouter";
-import { Send, RotateCcw, Zap, RefreshCw, ArrowLeft } from "lucide-react";
+import { Send, RotateCcw, Zap, RefreshCw, ArrowLeft, BookOpen, Check } from "lucide-react";
 import { Streamdown } from "streamdown";
+import { toast } from "sonner";
 
 const MASCOT_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663320611071/g6HPzuQNwUJzsGs4mHVNkx/coach_mascot_cfaa3837.png";
 
@@ -36,29 +43,48 @@ function getRandomPrompts(exclude: string[] = []): string[] {
 interface Message {
   role: "user" | "assistant";
   content: string;
+  question?: string; // the user question that prompted this assistant response (for Study button)
 }
 
 export default function CoachChat() {
-  const [location] = useLocation();
+  const { user, isAuthenticated } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [visiblePrompts, setVisiblePrompts] = useState<string[]>(() => getRandomPrompts());
+  const [savedTopics, setSavedTopics] = useState<Set<number>>(new Set()); // index of saved assistant messages
+  const [sessionCount, setSessionCount] = useState(0); // questions asked this session
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   // Parse query params for hand context (slug + title from HandReplayer)
-  const searchParams = new URLSearchParams(
-    typeof window !== "undefined" ? window.location.search : ""
+  const searchParams = useMemo(
+    () => new URLSearchParams(typeof window !== "undefined" ? window.location.search : ""),
+    []
   );
   const fromSlug = searchParams.get("from");
   const fromTitle = searchParams.get("title");
 
+  // Auto-prefill input with hand summary when arriving from replayer
+  useEffect(() => {
+    if (fromSlug && fromTitle && messages.length === 0) {
+      setInput(
+        `I just reviewed my hand "${fromTitle}". Can you walk me through the key decision points and what I should focus on improving?`
+      );
+      // Focus input so user just hits Enter
+      setTimeout(() => inputRef.current?.focus(), 300);
+    }
+  }, [fromSlug, fromTitle]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const chatMutation = trpc.chat.ask.useMutation({
     onMutate: () => setIsTyping(true),
     onSettled: () => setIsTyping(false),
-    onSuccess: (data) => {
-      setMessages((prev) => [...prev, { role: "assistant", content: data.answer }]);
+    onSuccess: (data, variables) => {
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: data.answer, question: variables.question },
+      ]);
+      setSessionCount((c) => c + 1);
     },
     onError: () => {
       setMessages((prev) => [
@@ -66,6 +92,11 @@ export default function CoachChat() {
         { role: "assistant", content: "Something went wrong. Please try again." },
       ]);
     },
+  });
+
+  const saveStudyMutation = trpc.study.save.useMutation({
+    onSuccess: () => toast.success("Saved to your Study List"),
+    onError: () => toast.error("Sign in to save study topics"),
   });
 
   const sendMessage = useCallback(
@@ -94,11 +125,31 @@ export default function CoachChat() {
     setVisiblePrompts(getRandomPrompts(visiblePrompts));
   };
 
+  const handleSaveTopic = (msgIndex: number, question: string, answer: string) => {
+    if (savedTopics.has(msgIndex)) return;
+    setSavedTopics((prev) => new Set(Array.from(prev).concat(msgIndex)));
+    // Truncate answer to 500 chars for context
+    const context = answer.length > 500 ? answer.slice(0, 497) + "..." : answer;
+    saveStudyMutation.mutate({
+      topic: question.length > 500 ? question.slice(0, 497) + "..." : question,
+      context,
+      handSlug: fromSlug ?? undefined,
+    });
+  };
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isTyping]);
 
   const showWelcome = messages.length === 0;
+
+  // Session counter label
+  const counterLabel =
+    sessionCount === 0
+      ? null
+      : sessionCount === 1
+      ? "1 question this session"
+      : `${sessionCount} questions this session`;
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "#0a0e1a" }}>
@@ -136,16 +187,29 @@ export default function CoachChat() {
             <span className="font-bold text-white">AI Coach</span>
           </div>
         </div>
-        {messages.length > 0 && (
-          <button
-            onClick={() => setMessages([])}
-            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg"
-            style={{ color: "#64748b", border: "1px solid rgba(255,255,255,0.08)" }}
-          >
-            <RotateCcw className="h-3 w-3" />
-            New chat
-          </button>
-        )}
+
+        {/* Right side: session counter + new chat */}
+        <div className="flex items-center gap-3">
+          {counterLabel && (
+            <span
+              className="hidden sm:flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full"
+              style={{ color: "#4ade80", background: "rgba(74,222,128,0.08)", border: "1px solid rgba(74,222,128,0.15)" }}
+            >
+              <Zap className="h-3 w-3" />
+              {counterLabel}
+            </span>
+          )}
+          {messages.length > 0 && (
+            <button
+              onClick={() => { setMessages([]); setSessionCount(0); setSavedTopics(new Set()); }}
+              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg"
+              style={{ color: "#64748b", border: "1px solid rgba(255,255,255,0.08)" }}
+            >
+              <RotateCcw className="h-3 w-3" />
+              New chat
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Chat area */}
@@ -194,21 +258,15 @@ export default function CoachChat() {
                     {fromTitle ? `Reviewing: "${fromTitle}"` : "Hand context loaded"}
                   </p>
                   <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>
-                    Ask me anything about this hand or any concept.
+                    Input pre-filled below — just press Enter to ask.
                   </p>
                 </div>
                 <button
                   className="text-xs px-2 py-1 rounded-lg shrink-0"
                   style={{ color: "#4ade80", border: "1px solid rgba(74,222,128,0.2)" }}
-                  onClick={() =>
-                    sendMessage(
-                      fromTitle
-                        ? `I just reviewed my hand "${fromTitle}". Can you give me a quick overview of the key decision points and what I should focus on improving?`
-                        : "I just reviewed a hand. Can you help me think through the key decision points?"
-                    )
-                  }
+                  onClick={() => sendMessage(input)}
                 >
-                  Ask about it →
+                  Ask now →
                 </button>
               </div>
             )}
@@ -264,29 +322,69 @@ export default function CoachChat() {
         ) : (
           /* Conversation */
           <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
-            {messages.map((msg, i) => (
-              <div key={i} className={`flex gap-3 ${msg.role === "user" ? "flex-row-reverse" : "flex-row"}`}>
-                {msg.role === "assistant" && (
-                  <div className="shrink-0 w-9 h-9 rounded-xl overflow-hidden" style={{ border: "1px solid rgba(74,222,128,0.2)" }}>
-                    <img src={MASCOT_URL} alt="Coach" className="w-full h-full object-cover" />
-                  </div>
-                )}
-                <div
-                  className="max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed"
-                  style={
-                    msg.role === "user"
-                      ? { background: "linear-gradient(135deg, #16a34a, #15803d)", color: "white", borderBottomRightRadius: "4px" }
-                      : { background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", color: "#e2e8f0", borderBottomLeftRadius: "4px" }
-                  }
-                >
-                  {msg.role === "assistant" ? (
-                    <Streamdown>{msg.content}</Streamdown>
-                  ) : (
-                    msg.content
+            {messages.map((msg, i) => {
+              // Find the preceding user message for this assistant response
+              const prevUserMsg = msg.role === "assistant" && i > 0 ? messages[i - 1] : null;
+              const questionForStudy = msg.question || prevUserMsg?.content || "";
+
+              return (
+                <div key={i} className={`flex gap-3 ${msg.role === "user" ? "flex-row-reverse" : "flex-row"}`}>
+                  {msg.role === "assistant" && (
+                    <div className="shrink-0 w-9 h-9 rounded-xl overflow-hidden" style={{ border: "1px solid rgba(74,222,128,0.2)" }}>
+                      <img src={MASCOT_URL} alt="Coach" className="w-full h-full object-cover" />
+                    </div>
                   )}
+                  <div className="flex flex-col gap-1.5 max-w-[80%]">
+                    <div
+                      className="rounded-2xl px-4 py-3 text-sm leading-relaxed"
+                      style={
+                        msg.role === "user"
+                          ? { background: "linear-gradient(135deg, #16a34a, #15803d)", color: "white", borderBottomRightRadius: "4px" }
+                          : { background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", color: "#e2e8f0", borderBottomLeftRadius: "4px" }
+                      }
+                    >
+                      {msg.role === "assistant" ? (
+                        <Streamdown>{msg.content}</Streamdown>
+                      ) : (
+                        msg.content
+                      )}
+                    </div>
+
+                    {/* Study this concept button — only on assistant messages */}
+                    {msg.role === "assistant" && questionForStudy && (
+                      <button
+                        onClick={() => handleSaveTopic(i, questionForStudy, msg.content)}
+                        disabled={savedTopics.has(i)}
+                        className="self-start flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg transition-all"
+                        style={
+                          savedTopics.has(i)
+                            ? { color: "#4ade80", background: "rgba(74,222,128,0.08)", border: "1px solid rgba(74,222,128,0.2)", cursor: "default" }
+                            : { color: "#64748b", background: "transparent", border: "1px solid rgba(255,255,255,0.06)" }
+                        }
+                        onMouseEnter={(e) => {
+                          if (!savedTopics.has(i)) {
+                            (e.currentTarget as HTMLButtonElement).style.color = "#94a3b8";
+                            (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.15)";
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!savedTopics.has(i)) {
+                            (e.currentTarget as HTMLButtonElement).style.color = "#64748b";
+                            (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.06)";
+                          }
+                        }}
+                      >
+                        {savedTopics.has(i) ? (
+                          <><Check className="h-3 w-3" /> Saved to Study List</>
+                        ) : (
+                          <><BookOpen className="h-3 w-3" /> Study this concept</>
+                        )}
+                      </button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
 
             {/* Typing indicator */}
             {isTyping && (
@@ -298,11 +396,11 @@ export default function CoachChat() {
                   className="rounded-2xl px-4 py-3 flex items-center gap-1"
                   style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderBottomLeftRadius: "4px" }}
                 >
-                  {[0, 1, 2].map((i) => (
+                  {[0, 1, 2].map((dot) => (
                     <div
-                      key={i}
+                      key={dot}
                       className="w-2 h-2 rounded-full animate-bounce"
-                      style={{ background: "#4ade80", animationDelay: `${i * 0.15}s` }}
+                      style={{ background: "#4ade80", animationDelay: `${dot * 0.15}s` }}
                     />
                   ))}
                 </div>

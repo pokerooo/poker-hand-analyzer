@@ -22,6 +22,10 @@ import {
   getStudyStreak,
   getUserHands as getUserHandsForLeaks,
   updateHand,
+  saveStudyTopic,
+  getStudyTopics,
+  markStudyTopicReviewed,
+  deleteStudyTopic,
 } from "./db";
 import { parseHandText } from "./handParser";
 import { invokeLLM } from "./_core/llm";
@@ -809,6 +813,40 @@ When answering conceptual questions, always ground your answer in a concrete exa
     }),
 });
 
+// ─── Study List Router ──────────────────────────────────────────────────────
+
+const studyRouter = router({
+  save: protectedProcedure
+    .input(z.object({
+      topic: z.string().min(3).max(500),
+      context: z.string().max(2000).optional(),
+      handSlug: z.string().max(16).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      await saveStudyTopic(ctx.user.id, input.topic, input.context, input.handSlug);
+      return { success: true };
+    }),
+
+  list: protectedProcedure
+    .query(async ({ ctx }) => {
+      return getStudyTopics(ctx.user.id);
+    }),
+
+  markReviewed: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      await markStudyTopicReviewed(input.id, ctx.user.id);
+      return { success: true };
+    }),
+
+  delete: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      await deleteStudyTopic(input.id, ctx.user.id);
+      return { success: true };
+    }),
+});
+
 // ─── Root Router ──────────────────────────────────────────────────────────────
 
 export const appRouter = router({
@@ -823,6 +861,7 @@ export const appRouter = router({
   memoryBank: memoryBankRouter,
   winrate: winrateRouter,
   chat: chatRouter,
+  study: studyRouter,
   system: systemRouter,
 });
 

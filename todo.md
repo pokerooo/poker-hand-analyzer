@@ -325,3 +325,10 @@ Optional paid AI coach scores the hand and explains what to do differently.
 - [x] Add shuffle/refresh button to cycle through prompt pool
 - [x] Add AI Coach button to HandReplayer header (with hand context pre-fill)
 - [x] Add "Back to my hand" link in Coach Chat when arriving from replayer
+
+## Session: Coach Chat UX Round 2
+- [x] Add studyTopics DB table (created via SQL) and saveStudyTopic / getStudyTopics / markReviewed / delete helpers in db.ts
+- [x] Add studyRouter with save/list/markReviewed/delete procedures wired into appRouter
+- [x] Add "Study this concept" button on each coach response (saves to DB, toggles to checkmark)
+- [x] Auto-prefill Coach Chat input with hand summary when arriving from replayer
+- [x] Add session question counter in Coach Chat header ("N questions this session")

@@ -1,6 +1,6 @@
 import { eq, and, desc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { users, hands, discordWebhooks, InsertUser } from "../drizzle/schema";
+import { users, hands, discordWebhooks, studyTopics, InsertUser } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -261,4 +261,30 @@ export async function isUserPro(userId: number): Promise<boolean> {
   if (!db) return false;
   const result = await db.select().from(users).where(eq(users.id, userId)).limit(1);
   return (result[0] as any)?.isPro ?? false;
+}
+
+// ─── Study Topics ──────────────────────────────────────────────────────────────
+
+export async function saveStudyTopic(userId: number, topic: string, context?: string, handSlug?: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(studyTopics).values({ userId, topic, context: context ?? null, handSlug: handSlug ?? null } as any);
+}
+
+export async function getStudyTopics(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(studyTopics).where(eq(studyTopics.userId, userId)).orderBy(desc(studyTopics.createdAt)).limit(50);
+}
+
+export async function markStudyTopicReviewed(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(studyTopics).set({ isReviewed: true } as any).where(eq(studyTopics.id, id));
+}
+
+export async function deleteStudyTopic(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(studyTopics).where(eq(studyTopics.id, id));
 }
