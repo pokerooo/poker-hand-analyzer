@@ -294,3 +294,24 @@ Optional paid AI coach scores the hand and explains what to do differently.
 - [x] Patterns nav button on My Hands page
 
 ### All tests: 105 passing (7 test files), 0 TypeScript errors
+
+## Session: AI Coach Rebuild + New Features (Mar 2026)
+
+- [ ] Remove paywall from AI Coach (open to all users)
+- [ ] Generate Phil Galfond-style caricature mascot
+- [ ] Build Memory Bank page — cross-hand leak pattern detection by category
+- [ ] Build enhanced AI Coach chat — free-form Q&A with quick-question prompts and mascot
+- [ ] Build Win Rate Visualizer — position/hand group P&L chart
+- [ ] Wire all new routes into App.tsx and navigation
+
+## Session: AI Coach Rebuild + New Features
+- [x] Remove AI Coach paywall (open to all users)
+- [x] Generate Phil Galfond-style caricature mascot (CDN hosted)
+- [x] Build Memory Bank page (/memory-bank) — cross-hand leak pattern detection with drills
+- [x] Build AI Coach chat page (/coach) — free-form Q&A, quick-prompt pills, mascot, streaming responses
+- [x] Build Win Rate Visualizer (/win-rate) — position/hand group P&L, cumulative area chart
+- [x] Add memoryBankRouter, winrateRouter, chatRouter to appRouter
+- [x] Wire Memory, Coach, Win Rate nav buttons into MyHands header
+- [x] Wire all three new routes into App.tsx
+- [x] TypeScript check: 0 errors
+- [x] All 105 tests passing

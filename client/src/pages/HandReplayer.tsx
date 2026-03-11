@@ -447,14 +447,7 @@ function CoachPanel({ handId, isUnlocked, cachedAnalysis, storedVillainType }: {
     });
   };
 
-  if (!isAuthenticated) {
-    return (
-      <div className="text-center py-6 space-y-3">
-        <Lock className="h-8 w-8 mx-auto text-muted-foreground" />
-        <p className="text-sm text-muted-foreground">Sign in to unlock AI Coach analysis</p>
-      </div>
-    );
-  }
+  // AI Coach is open to all users — no paywall
 
   const gradeColors: Record<string, string> = { A: "text-green-500", B: "text-emerald-500", C: "text-yellow-500", D: "text-orange-500", F: "text-red-500" };
   const streets = ["preflop", "flop", "turn", "river"] as const;

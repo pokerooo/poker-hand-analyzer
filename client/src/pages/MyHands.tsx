@@ -3,7 +3,7 @@ import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import { Button } from "@/components/ui/button";
-import { Loader2, ArrowLeft, Plus, Share2, Trash2, ChevronRight, Flame, TrendingDown, AlertTriangle, Upload, BarChart2 } from "lucide-react";
+import { Loader2, ArrowLeft, Plus, Share2, Trash2, ChevronRight, Flame, TrendingDown, AlertTriangle, Upload, BarChart2, Brain, Zap, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -268,6 +268,42 @@ export default function MyHands() {
             title="Pattern recognition"
           >
             <BarChart2 className="h-3.5 w-3.5" /> Patterns
+          </button>
+          <button
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+            style={{
+              background: "rgba(74,222,128,0.08)",
+              color: "#4ade80",
+              border: "1px solid rgba(74,222,128,0.2)",
+            }}
+            onClick={() => navigate("/memory-bank")}
+            title="Memory Bank — leak patterns"
+          >
+            <Brain className="h-3.5 w-3.5" /> Memory
+          </button>
+          <button
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+            style={{
+              background: "rgba(234,179,8,0.08)",
+              color: "#fbbf24",
+              border: "1px solid rgba(234,179,8,0.2)",
+            }}
+            onClick={() => navigate("/coach")}
+            title="AI Coach chat"
+          >
+            <Zap className="h-3.5 w-3.5" /> Coach
+          </button>
+          <button
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+            style={{
+              background: "rgba(59,130,246,0.08)",
+              color: "#60a5fa",
+              border: "1px solid rgba(59,130,246,0.2)",
+            }}
+            onClick={() => navigate("/win-rate")}
+            title="Win Rate Visualizer"
+          >
+            <TrendingUp className="h-3.5 w-3.5" /> Win Rate
           </button>
           <button
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all"

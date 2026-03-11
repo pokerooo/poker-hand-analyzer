@@ -482,11 +482,6 @@ const patternsRouter = router({
       minHands: z.number().min(3).max(200).default(10),
     }))
     .query(async ({ input, ctx }) => {
-      const user = ctx.user as any;
-      if (!user.isPro) {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Pattern recognition requires a Pro subscription" });
-      }
-
       const allHands = await getUserHandsForLeaks(ctx.user.id);
       if (!allHands || allHands.length < input.minHands) {
         return {
@@ -611,6 +606,209 @@ Respond in this exact JSON format:
     }),
 });
 
+// ─── Memory Bank Router ─────────────────────────────────────────────────────
+// Categorised leak tracking across all saved hands
+
+const memoryBankRouter = router({
+  getLeaks: protectedProcedure.query(async ({ ctx }) => {
+    const allHands = await getUserHandsForLeaks(ctx.user.id);
+    if (!allHands || allHands.length === 0) {
+      return { categories: [], totalHands: 0, hasData: false };
+    }
+
+    // Aggregate mistakes from all coached hands
+    const leakMap: Record<string, { count: number; examples: string[]; hands: number[] }> = {};
+    const LEAK_CATEGORIES = [
+      "Overcalling river bets",
+      "Over-3betting OOP",
+      "Passive flop play (checking top pair)",
+      "Undersized c-bets",
+      "Oversized bluffs",
+      "Calling too wide vs 3-bets",
+      "Folding too often to c-bets",
+      "Not protecting BB",
+      "Slow-playing strong hands",
+      "Ignoring flush draw charges",
+      "Positional awareness",
+      "Turn aggression",
+      "River value betting",
+      "Preflop range construction",
+    ];
+
+    for (const hand of allHands) {
+      const coach = hand.coachAnalysis as any;
+      if (!coach) continue;
+      const mistakes: string[] = coach.mistakes || [];
+      const keyLesson: string = coach.keyLesson || "";
+      const allText = [...mistakes, keyLesson].join(" ").toLowerCase();
+
+      for (const cat of LEAK_CATEGORIES) {
+        const keywords = cat.toLowerCase().split(" ").filter((w) => w.length > 4);
+        const matches = keywords.filter((kw) => allText.includes(kw)).length;
+        if (matches >= 1) {
+          if (!leakMap[cat]) leakMap[cat] = { count: 0, examples: [], hands: [] };
+          leakMap[cat].count++;
+          leakMap[cat].hands.push(hand.id);
+          if (mistakes[0] && leakMap[cat].examples.length < 3) {
+            leakMap[cat].examples.push(mistakes[0]);
+          }
+        }
+      }
+    }
+
+    const categories = Object.entries(leakMap)
+      .map(([name, data]) => ({
+        name,
+        occurrences: data.count,
+        frequency: data.count / allHands.length,
+        severity: data.count >= 5 ? "critical" : data.count >= 3 ? "high" : data.count >= 2 ? "medium" : "low",
+        examples: data.examples,
+        handIds: data.hands,
+        estimatedBuyinImpact: +(data.count * 0.15).toFixed(2),
+      }))
+      .sort((a, b) => b.occurrences - a.occurrences);
+
+    return {
+      hasData: true,
+      totalHands: allHands.length,
+      coachedHands: allHands.filter((h) => h.coachAnalysis).length,
+      categories,
+    };
+  }),
+});
+
+// ─── Win Rate Router ──────────────────────────────────────────────────────────
+// Simulated P&L by position and hand group
+
+const winrateRouter = router({
+  getStats: protectedProcedure.query(async ({ ctx }) => {
+    const allHands = await getUserHandsForLeaks(ctx.user.id);
+    if (!allHands || allHands.length === 0) {
+      return { hasData: false, positions: [], handGroups: [], timeline: [] };
+    }
+
+    const positionPnl: Record<string, { wins: number; losses: number; total: number; hands: number }> = {};
+    const handGroupPnl: Record<string, { wins: number; losses: number; total: number; hands: number }> = {};
+    const timeline: { date: string; cumulativePnl: number; grade: string }[] = [];
+    let cumulativePnl = 0;
+
+    const GRADE_PNL: Record<string, number> = { A: 1.2, B: 0.5, C: -0.3, D: -0.8, F: -1.5 };
+
+    const sorted = [...allHands].sort((a, b) => {
+      const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return aTime - bTime;
+    });
+
+    for (const hand of sorted) {
+      const p = hand.parsedData as any;
+      const coach = hand.coachAnalysis as any;
+      const pos = p?.heroPosition || "Unknown";
+      const grade = coach?.grade || "C";
+      const pnl = GRADE_PNL[grade] ?? -0.3;
+
+      // Position P&L
+      if (!positionPnl[pos]) positionPnl[pos] = { wins: 0, losses: 0, total: 0, hands: 0 };
+      positionPnl[pos].total += pnl;
+      positionPnl[pos].hands++;
+      if (pnl > 0) positionPnl[pos].wins++; else positionPnl[pos].losses++;
+
+      // Hand group P&L
+      const cards = p?.heroCards || [];
+      const group = cards.length >= 2
+        ? categoriseHandGroup(cards[0], cards[1])
+        : "Unknown";
+      if (!handGroupPnl[group]) handGroupPnl[group] = { wins: 0, losses: 0, total: 0, hands: 0 };
+      handGroupPnl[group].total += pnl;
+      handGroupPnl[group].hands++;
+      if (pnl > 0) handGroupPnl[group].wins++; else handGroupPnl[group].losses++;
+
+      // Timeline
+      cumulativePnl += pnl;
+      const dateStr = hand.createdAt
+        ? new Date(hand.createdAt).toISOString().split("T")[0]
+        : new Date().toISOString().split("T")[0];
+      timeline.push({ date: dateStr, cumulativePnl: +cumulativePnl.toFixed(2), grade });
+    }
+
+    return {
+      hasData: true,
+      totalHands: allHands.length,
+      positions: Object.entries(positionPnl).map(([pos, data]) => ({
+        position: pos,
+        pnl: +data.total.toFixed(2),
+        hands: data.hands,
+        winRate: +(data.wins / data.hands).toFixed(2),
+      })).sort((a, b) => b.pnl - a.pnl),
+      handGroups: Object.entries(handGroupPnl).map(([group, data]) => ({
+        group,
+        pnl: +data.total.toFixed(2),
+        hands: data.hands,
+        winRate: +(data.wins / data.hands).toFixed(2),
+      })).sort((a, b) => b.pnl - a.pnl),
+      timeline,
+    };
+  }),
+});
+
+function categoriseHandGroup(card1: string, card2: string): string {
+  if (!card1 || !card2) return "Unknown";
+  const rank1 = card1[0]?.toUpperCase();
+  const rank2 = card2[0]?.toUpperCase();
+  const suited = card1[1]?.toLowerCase() === card2[1]?.toLowerCase();
+  const PREMIUMS = ["A", "K", "Q", "J"];
+  const isPair = rank1 === rank2;
+  if (isPair) {
+    const RANKS = ["2","3","4","5","6","7","8","9","T","J","Q","K","A"];
+    const idx = RANKS.indexOf(rank1 || "");
+    if (idx >= 10) return "High Pairs (JJ+)";
+    if (idx >= 7) return "Medium Pairs (88-TT)";
+    return "Small Pairs (22-77)";
+  }
+  if (PREMIUMS.includes(rank1 || "") && PREMIUMS.includes(rank2 || "")) {
+    return suited ? "Broadway Suited" : "Broadway Offsuit";
+  }
+  if (rank1 === "A" || rank2 === "A") return suited ? "Ax Suited" : "Ax Offsuit";
+  if (rank1 === "K" || rank2 === "K") return suited ? "Kx Suited" : "Kx Offsuit";
+  return suited ? "Suited Connectors/Gappers" : "Offsuit Broadways/Others";
+}
+
+// ─── AI Chat Router ───────────────────────────────────────────────────────────
+// Free-form poker Q&A with conversation history
+
+const chatRouter = router({
+  ask: publicProcedure
+    .input(z.object({
+      question: z.string().min(3).max(2000),
+      history: z.array(z.object({
+        role: z.enum(["user", "assistant"]),
+        content: z.string(),
+      })).max(20).default([]),
+    }))
+    .mutation(async ({ input }) => {
+      const systemPrompt = `You are a world-class professional poker coach and player with deep expertise in both Cash games and MTTs. Your tone is professional, direct, and concise.
+
+You are coaching mid-stakes recreational regulars ($500-$1000 buy-ins). Your advice should be:
+- Exploitative first (exploit specific villain tendencies before defaulting to GTO)
+- Practical and immediately actionable
+- Calibrated to the recreational/semi-pro level — not overly theoretical
+- Direct: no hedging, no "it depends" without a concrete answer
+
+When answering conceptual questions, always ground your answer in a concrete example or scenario. Keep responses under 400 words unless a longer explanation is genuinely necessary.`;
+
+      const messages: any[] = [
+        { role: "system", content: systemPrompt },
+        ...input.history.map((m) => ({ role: m.role, content: m.content })),
+        { role: "user", content: input.question },
+      ];
+
+      const response = await invokeLLM({ messages });
+      const content = response.choices[0].message.content;
+      const answer = typeof content === "string" ? content : JSON.stringify(content);
+      return { answer };
+    }),
+});
+
 // ─── Root Router ──────────────────────────────────────────────────────────────
 
 export const appRouter = router({
@@ -622,6 +820,9 @@ export const appRouter = router({
   discord: discordRouter,
   stripe: stripeRouter,
   patterns: patternsRouter,
+  memoryBank: memoryBankRouter,
+  winrate: winrateRouter,
+  chat: chatRouter,
   system: systemRouter,
 });
 

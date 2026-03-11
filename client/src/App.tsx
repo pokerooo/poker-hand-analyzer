@@ -9,6 +9,9 @@ import MyHands from "@/pages/MyHands";
 import ImportHistory from "@/pages/ImportHistory";
 import PatternRecognition from "@/pages/PatternRecognition";
 import ProSuccess from "@/pages/ProSuccess";
+import MemoryBank from "@/pages/MemoryBank";
+import CoachChat from "@/pages/CoachChat";
+import WinRateVisualizer from "@/pages/WinRateVisualizer";
 import NotFound from "@/pages/NotFound";
 
 function Router() {
@@ -20,6 +23,9 @@ function Router() {
       <Route path="/import" component={ImportHistory} />
       <Route path="/patterns" component={PatternRecognition} />
       <Route path="/pro-success" component={ProSuccess} />
+      <Route path="/memory-bank" component={MemoryBank} />
+      <Route path="/coach" component={CoachChat} />
+      <Route path="/win-rate" component={WinRateVisualizer} />
       <Route component={NotFound} />
     </Switch>
   );
