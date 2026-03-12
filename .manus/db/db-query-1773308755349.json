@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS `aiCallLog` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `userId` int NOT NULL,\n  `callType` varchar(64) NOT NULL,\n  `calledAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (`id`),\n  KEY `idx_aiCallLog_userId_calledAt` (`userId`, `calledAt`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3S5EK7kkwn3cfqa.root --database g6HPzuQNwUJzsGs4mHVNkx --execute CREATE TABLE IF NOT EXISTS `aiCallLog` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `userId` int NOT NULL,\n  `callType` varchar(64) NOT NULL,\n  `calledAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (`id`),\n  KEY `idx_aiCallLog_userId_calledAt` (`userId`, `calledAt`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1959
+}

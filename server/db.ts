@@ -1,6 +1,6 @@
-import { eq, and, desc, sql } from "drizzle-orm";
+import { eq, and, desc, sql, gte } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { users, hands, discordWebhooks, studyTopics, siteStats, InsertUser } from "../drizzle/schema";
+import { users, hands, discordWebhooks, studyTopics, siteStats, aiCallLog, InsertUser } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -318,4 +318,66 @@ export async function getStat(key: string): Promise<number> {
   if (!db) return 0;
   const result = await db.select().from(siteStats).where(eq(siteStats.statKey, key)).limit(1);
   return result[0]?.statValue ?? 0;
+}
+
+// ─── AI Rate Limiting ───────────────────────────────────────────────────────────────────────────────────────
+
+const FREE_DAILY_AI_LIMIT = 20;
+
+/**
+ * Check if a user has remaining AI calls for today.
+ * Free users: max 20 calls per UTC calendar day.
+ * Pro users: unlimited.
+ * Returns { allowed: boolean, used: number, limit: number, remaining: number }
+ */
+export async function checkAiRateLimit(
+  userId: number,
+  isPro: boolean
+): Promise<{ allowed: boolean; used: number; limit: number; remaining: number }> {
+  if (isPro) {
+    return { allowed: true, used: 0, limit: Infinity, remaining: Infinity };
+  }
+
+  const db = await getDb();
+  if (!db) {
+    // If DB is unavailable, allow the call (fail open)
+    return { allowed: true, used: 0, limit: FREE_DAILY_AI_LIMIT, remaining: FREE_DAILY_AI_LIMIT };
+  }
+
+  // Count calls made today (UTC calendar day)
+  const startOfToday = new Date();
+  startOfToday.setUTCHours(0, 0, 0, 0);
+
+  const rows = await db
+    .select({ count: sql<number>`COUNT(*)` })
+    .from(aiCallLog)
+    .where(and(
+      eq(aiCallLog.userId, userId),
+      gte(aiCallLog.calledAt, startOfToday)
+    ));
+
+  const used = Number(rows[0]?.count ?? 0);
+  const remaining = Math.max(0, FREE_DAILY_AI_LIMIT - used);
+  return {
+    allowed: used < FREE_DAILY_AI_LIMIT,
+    used,
+    limit: FREE_DAILY_AI_LIMIT,
+    remaining,
+  };
+}
+
+/**
+ * Log an AI call for a user (call AFTER the AI call succeeds).
+ */
+export async function logAiCall(
+  userId: number,
+  callType: string
+): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  try {
+    await db.insert(aiCallLog).values({ userId, callType });
+  } catch (e) {
+    console.warn('[RateLimit] logAiCall failed:', e);
+  }
 }

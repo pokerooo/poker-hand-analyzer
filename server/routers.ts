@@ -28,6 +28,8 @@ import {
   deleteStudyTopic,
   incrementStat,
   getStat,
+  checkAiRateLimit,
+  logAiCall,
 } from "./db";
 import { parseHandText } from "./handParser";
 import { invokeLLM } from "./_core/llm";
@@ -238,10 +240,19 @@ const coachRouter = router({
       const villainTypeKey = (input.villainType || (hand as any).villainType || "unknown").toLowerCase();
       const villainProfile = VILLAIN_PROFILES[villainTypeKey] || VILLAIN_PROFILES["unknown"];
 
-      // If cached analysis exists AND villain type hasn't changed, return cache
+      // If cached analysis exists AND villain type hasn't changed, return cache (no rate limit hit)
       const storedVillainType = (hand as any).villainType || "unknown";
       if (hand.coachUnlocked && hand.coachAnalysis && !input.villainType) {
         return { analysis: hand.coachAnalysis, cached: true, villainType: storedVillainType };
+      }
+
+      // Rate limiting: max 20 AI calls/day for free users
+      const rateLimit = await checkAiRateLimit(ctx.user.id, ctx.user.isPro);
+      if (!rateLimit.allowed) {
+        throw new TRPCError({
+          code: 'TOO_MANY_REQUESTS',
+          message: `Daily AI limit reached (${rateLimit.limit} calls/day). Resets at midnight UTC. Upgrade to Pro for unlimited access.`,
+        });
       }
 
       const parsedData = hand.parsedData as any;
@@ -306,6 +317,9 @@ Be direct and professional. No hand-holding. Focus on EV maximisation.`;
         await updateVillainType(input.handId, ctx.user.id, input.villainType);
       }
       await updateHandCoachAnalysis(input.handId, analysis);
+
+      // Log AI call for rate limiting
+      await logAiCall(ctx.user.id, 'analyze');
 
       // Update study streak
       const streakResult = await updateStudyStreak(ctx.user.id);
@@ -482,12 +496,21 @@ const discordRouter = router({
 // ─── Pattern Recognition Router ────────────────────────────────────────────
 
 const patternsRouter = router({
-  // Full cross-hand pattern recognition (Pro only)
+  // Full cross-hand pattern recognition
   analyze: protectedProcedure
     .input(z.object({
       minHands: z.number().min(3).max(200).default(10),
     }))
     .query(async ({ input, ctx }) => {
+      // Rate limiting: max 20 AI calls/day for free users
+      const rateLimit = await checkAiRateLimit(ctx.user.id, ctx.user.isPro);
+      if (!rateLimit.allowed) {
+        throw new TRPCError({
+          code: 'TOO_MANY_REQUESTS',
+          message: `Daily AI limit reached (${rateLimit.limit} calls/day). Resets at midnight UTC. Upgrade to Pro for unlimited access.`,
+        });
+      }
+
       const allHands = await getUserHandsForLeaks(ctx.user.id);
       if (!allHands || allHands.length < input.minHands) {
         return {
@@ -601,6 +624,9 @@ Respond in this exact JSON format:
       } catch {
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to parse pattern analysis" });
       }
+
+      // Log AI call for rate limiting
+      await logAiCall(ctx.user.id, 'patterns');
 
       return {
         hasEnoughData: true,
@@ -791,7 +817,18 @@ const chatRouter = router({
         content: z.string(),
       })).max(20).default([]),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      // Rate limiting: authenticated users only, max 20 calls/day for free users
+      if (ctx.user) {
+        const rateLimit = await checkAiRateLimit(ctx.user.id, ctx.user.isPro);
+        if (!rateLimit.allowed) {
+          throw new TRPCError({
+            code: 'TOO_MANY_REQUESTS',
+            message: `Daily AI limit reached (${rateLimit.limit} calls/day). Resets at midnight UTC. Upgrade to Pro for unlimited access.`,
+          });
+        }
+      }
+
       const systemPrompt = `You are a world-class professional poker coach and player with deep expertise in both Cash games and MTTs. Your tone is professional, direct, and concise.
 
 You are coaching mid-stakes recreational regulars ($500-$1000 buy-ins). Your advice should be:
@@ -811,7 +848,20 @@ When answering conceptual questions, always ground your answer in a concrete exa
       const response = await invokeLLM({ messages });
       const content = response.choices[0].message.content;
       const answer = typeof content === "string" ? content : JSON.stringify(content);
-      return { answer };
+
+      // Log the call after success
+      if (ctx.user) {
+        await logAiCall(ctx.user.id, 'chat');
+      }
+
+      // Return remaining calls count for UI display
+      let remaining: number | null = null;
+      if (ctx.user && !ctx.user.isPro) {
+        const updated = await checkAiRateLimit(ctx.user.id, ctx.user.isPro);
+        remaining = updated.remaining;
+      }
+
+      return { answer, remaining };
     }),
 });
 
@@ -866,7 +916,16 @@ const statsRouter = router({
   }),
 });
 
-// ─── Root Router ─────────────────────────────────────────────────────────────────────────────
+// ─── Rate Limit Router ─────────────────────────────────────────────────────────────────────────────────
+
+const rateLimitRouter = router({
+  // Get the user's current AI call usage for today
+  getStatus: protectedProcedure.query(async ({ ctx }) => {
+    return checkAiRateLimit(ctx.user.id, ctx.user.isPro);
+  }),
+});
+
+// ─── Root Router ─────────────────────────────────────────────────────────────────────────────────
 
 export const appRouter = router({
   auth: authRouter,
@@ -882,6 +941,7 @@ export const appRouter = router({
   chat: chatRouter,
   study: studyRouter,
   stats: statsRouter,
+  rateLimit: rateLimitRouter,
   system: systemRouter,
 });
 

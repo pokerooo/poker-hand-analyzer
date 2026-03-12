@@ -6,13 +6,15 @@
  *  - Auto-prefill input with hand summary when arriving from replayer
  *  - "Study this concept" save button on each coach response
  *  - Session question counter in the header
+ *  - Elapsed time indicator while Claude is thinking
+ *  - Daily remaining AI calls badge for free users
  */
 
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Link, useLocation } from "wouter";
-import { Send, RotateCcw, Zap, RefreshCw, ArrowLeft, BookOpen, Check } from "lucide-react";
+import { Send, RotateCcw, Zap, RefreshCw, ArrowLeft, BookOpen, Check, Clock, AlertCircle } from "lucide-react";
 import { Streamdown } from "streamdown";
 import { toast } from "sonner";
 
@@ -44,6 +46,7 @@ interface Message {
   role: "user" | "assistant";
   content: string;
   question?: string; // the user question that prompted this assistant response (for Study button)
+  elapsed?: number;  // seconds taken for this response
 }
 
 export default function CoachChat() {
@@ -51,11 +54,15 @@ export default function CoachChat() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [remainingCalls, setRemainingCalls] = useState<number | null>(null);
   const [visiblePrompts, setVisiblePrompts] = useState<string[]>(() => getRandomPrompts());
   const [savedTopics, setSavedTopics] = useState<Set<number>>(new Set()); // index of saved assistant messages
   const [sessionCount, setSessionCount] = useState(0); // questions asked this session
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const startTimeRef = useRef<number>(0);
 
   // Parse query params for hand context (slug + title from HandReplayer)
   const searchParams = useMemo(
@@ -64,6 +71,21 @@ export default function CoachChat() {
   );
   const fromSlug = searchParams.get("from");
   const fromTitle = searchParams.get("title");
+
+  // Fetch rate limit status on mount (authenticated users only)
+  const { data: rateLimitStatus } = trpc.rateLimit.getStatus.useQuery(undefined, {
+    enabled: !!isAuthenticated,
+    refetchOnWindowFocus: false,
+  });
+
+  // Sync remainingCalls from server on load
+  useEffect(() => {
+    if (rateLimitStatus && !rateLimitStatus.allowed) {
+      setRemainingCalls(0);
+    } else if (rateLimitStatus) {
+      setRemainingCalls(rateLimitStatus.remaining === Infinity ? null : rateLimitStatus.remaining);
+    }
+  }, [rateLimitStatus]);
 
   // Auto-prefill input with hand summary when arriving from replayer
   useEffect(() => {
@@ -76,21 +98,64 @@ export default function CoachChat() {
     }
   }, [fromSlug, fromTitle]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Start/stop elapsed timer
+  const startTimer = useCallback(() => {
+    setElapsedSeconds(0);
+    startTimeRef.current = Date.now();
+    timerRef.current = setInterval(() => {
+      setElapsedSeconds(Math.floor((Date.now() - startTimeRef.current) / 1000));
+    }, 1000);
+  }, []);
+
+  const stopTimer = useCallback(() => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    return Math.floor((Date.now() - startTimeRef.current) / 1000);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, []);
+
   const chatMutation = trpc.chat.ask.useMutation({
-    onMutate: () => setIsTyping(true),
-    onSettled: () => setIsTyping(false),
+    onMutate: () => {
+      setIsTyping(true);
+      startTimer();
+    },
+    onSettled: () => {
+      setIsTyping(false);
+    },
     onSuccess: (data, variables) => {
+      const elapsed = stopTimer();
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: data.answer, question: variables.question },
+        { role: "assistant", content: data.answer, question: variables.question, elapsed },
       ]);
       setSessionCount((c) => c + 1);
+      // Update remaining calls from server response
+      if (data.remaining !== null && data.remaining !== undefined) {
+        setRemainingCalls(data.remaining);
+      }
     },
-    onError: () => {
+    onError: (error) => {
+      stopTimer();
+      const isRateLimit = error.message?.includes("Daily AI limit reached");
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: "Something went wrong. Please try again." },
+        {
+          role: "assistant",
+          content: isRateLimit
+            ? "**Daily limit reached.** You've used all 20 AI calls for today. Your limit resets at midnight UTC.\n\nUpgrade to **Pro** for unlimited access."
+            : "Something went wrong. Please try again.",
+        },
       ]);
+      if (isRateLimit) {
+        setRemainingCalls(0);
+      }
     },
   });
 
@@ -102,6 +167,10 @@ export default function CoachChat() {
   const sendMessage = useCallback(
     (text: string) => {
       if (!text.trim() || isTyping) return;
+      if (remainingCalls === 0) {
+        toast.error("Daily AI limit reached. Resets at midnight UTC.");
+        return;
+      }
       const userMsg: Message = { role: "user", content: text.trim() };
       const newMessages = [...messages, userMsg];
       setMessages(newMessages);
@@ -111,7 +180,7 @@ export default function CoachChat() {
         history: messages.slice(-10),
       });
     },
-    [messages, isTyping, chatMutation]
+    [messages, isTyping, chatMutation, remainingCalls]
   );
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -151,6 +220,16 @@ export default function CoachChat() {
       ? "1 question this session"
       : `${sessionCount} questions this session`;
 
+  // Remaining calls badge color
+  const remainingColor =
+    remainingCalls === null
+      ? null // Pro user — no badge needed
+      : remainingCalls === 0
+      ? "#ef4444"
+      : remainingCalls <= 5
+      ? "#f59e0b"
+      : "#4ade80";
+
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "#0a0e1a" }}>
       {/* Header */}
@@ -188,8 +267,27 @@ export default function CoachChat() {
           </div>
         </div>
 
-        {/* Right side: session counter + new chat */}
+        {/* Right side: remaining calls + session counter + new chat */}
         <div className="flex items-center gap-3">
+          {/* Daily remaining calls badge — only for free authenticated users */}
+          {isAuthenticated && remainingCalls !== null && (
+            <span
+              className="hidden sm:flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full"
+              style={{
+                color: remainingColor!,
+                background: `${remainingColor}14`,
+                border: `1px solid ${remainingColor}26`,
+              }}
+            >
+              {remainingCalls === 0 ? (
+                <AlertCircle className="h-3 w-3" />
+              ) : (
+                <Zap className="h-3 w-3" />
+              )}
+              {remainingCalls === 0 ? "Limit reached" : `${remainingCalls} calls left today`}
+            </span>
+          )}
+
           {counterLabel && (
             <span
               className="hidden sm:flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full"
@@ -246,6 +344,24 @@ export default function CoachChat() {
               Ask anything — hand lines, theoretical concepts, tournament adjustments, or exploitative reads. Direct answers, no fluff.
             </p>
 
+            {/* Daily limit notice for free users near limit */}
+            {isAuthenticated && remainingCalls !== null && remainingCalls <= 5 && (
+              <div
+                className="w-full max-w-lg mb-6 rounded-xl px-4 py-3 flex items-center gap-3"
+                style={{
+                  background: remainingCalls === 0 ? "rgba(239,68,68,0.08)" : "rgba(245,158,11,0.08)",
+                  border: `1px solid ${remainingCalls === 0 ? "rgba(239,68,68,0.2)" : "rgba(245,158,11,0.2)"}`,
+                }}
+              >
+                <AlertCircle className="h-4 w-4 shrink-0" style={{ color: remainingCalls === 0 ? "#ef4444" : "#f59e0b" }} />
+                <p className="text-sm" style={{ color: remainingCalls === 0 ? "#ef4444" : "#f59e0b" }}>
+                  {remainingCalls === 0
+                    ? "Daily limit reached. Resets at midnight UTC. Upgrade to Pro for unlimited access."
+                    : `${remainingCalls} AI call${remainingCalls === 1 ? "" : "s"} remaining today. Resets at midnight UTC.`}
+                </p>
+              </div>
+            )}
+
             {/* Hand context banner — shown when arriving from replayer */}
             {fromSlug && (
               <div
@@ -262,7 +378,7 @@ export default function CoachChat() {
                   </p>
                 </div>
                 <button
-                  className="text-xs px-2 py-1 rounded-lg shrink-0"
+                  className="shrink-0 text-xs px-3 py-1.5 rounded-lg font-medium"
                   style={{ color: "#4ade80", border: "1px solid rgba(74,222,128,0.2)" }}
                   onClick={() => sendMessage(input)}
                 >
@@ -277,15 +393,18 @@ export default function CoachChat() {
                 <button
                   key={prompt}
                   onClick={() => sendMessage(prompt)}
-                  className="w-full text-left px-5 py-3.5 rounded-full text-sm font-medium transition-all hover:scale-[1.01] active:scale-[0.99]"
+                  disabled={remainingCalls === 0}
+                  className="w-full text-left px-5 py-3.5 rounded-full text-sm font-medium transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed"
                   style={{
                     background: "rgba(255,255,255,0.05)",
                     border: "1px solid rgba(255,255,255,0.1)",
                     color: "#e2e8f0",
                   }}
                   onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLButtonElement).style.background = "rgba(74,222,128,0.08)";
-                    (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(74,222,128,0.2)";
+                    if (remainingCalls !== 0) {
+                      (e.currentTarget as HTMLButtonElement).style.background = "rgba(74,222,128,0.08)";
+                      (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(74,222,128,0.2)";
+                    }
                   }}
                   onMouseLeave={(e) => {
                     (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.05)";
@@ -350,59 +469,86 @@ export default function CoachChat() {
                       )}
                     </div>
 
-                    {/* Study this concept button — only on assistant messages */}
-                    {msg.role === "assistant" && questionForStudy && (
-                      <button
-                        onClick={() => handleSaveTopic(i, questionForStudy, msg.content)}
-                        disabled={savedTopics.has(i)}
-                        className="self-start flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg transition-all"
-                        style={
-                          savedTopics.has(i)
-                            ? { color: "#4ade80", background: "rgba(74,222,128,0.08)", border: "1px solid rgba(74,222,128,0.2)", cursor: "default" }
-                            : { color: "#64748b", background: "transparent", border: "1px solid rgba(255,255,255,0.06)" }
-                        }
-                        onMouseEnter={(e) => {
-                          if (!savedTopics.has(i)) {
-                            (e.currentTarget as HTMLButtonElement).style.color = "#94a3b8";
-                            (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.15)";
-                          }
-                        }}
-                        onMouseLeave={(e) => {
-                          if (!savedTopics.has(i)) {
-                            (e.currentTarget as HTMLButtonElement).style.color = "#64748b";
-                            (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.06)";
-                          }
-                        }}
-                      >
-                        {savedTopics.has(i) ? (
-                          <><Check className="h-3 w-3" /> Saved to Study List</>
-                        ) : (
-                          <><BookOpen className="h-3 w-3" /> Study this concept</>
+                    {/* Elapsed time + Study button row — only on assistant messages */}
+                    {msg.role === "assistant" && (
+                      <div className="flex items-center gap-2">
+                        {/* Elapsed time */}
+                        {msg.elapsed !== undefined && msg.elapsed > 0 && (
+                          <span
+                            className="flex items-center gap-1 text-xs"
+                            style={{ color: "#334155" }}
+                          >
+                            <Clock className="h-3 w-3" />
+                            {msg.elapsed}s
+                          </span>
                         )}
-                      </button>
+
+                        {/* Study this concept button */}
+                        {questionForStudy && (
+                          <button
+                            onClick={() => handleSaveTopic(i, questionForStudy, msg.content)}
+                            disabled={savedTopics.has(i)}
+                            className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg transition-all"
+                            style={
+                              savedTopics.has(i)
+                                ? { color: "#4ade80", background: "rgba(74,222,128,0.08)", border: "1px solid rgba(74,222,128,0.2)", cursor: "default" }
+                                : { color: "#64748b", background: "transparent", border: "1px solid rgba(255,255,255,0.06)" }
+                            }
+                            onMouseEnter={(e) => {
+                              if (!savedTopics.has(i)) {
+                                (e.currentTarget as HTMLButtonElement).style.color = "#94a3b8";
+                                (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.15)";
+                              }
+                            }}
+                            onMouseLeave={(e) => {
+                              if (!savedTopics.has(i)) {
+                                (e.currentTarget as HTMLButtonElement).style.color = "#64748b";
+                                (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.06)";
+                              }
+                            }}
+                          >
+                            {savedTopics.has(i) ? (
+                              <><Check className="h-3 w-3" /> Saved to Study List</>
+                            ) : (
+                              <><BookOpen className="h-3 w-3" /> Study this concept</>
+                            )}
+                          </button>
+                        )}
+                      </div>
                     )}
                   </div>
                 </div>
               );
             })}
 
-            {/* Typing indicator */}
+            {/* Thinking indicator with elapsed timer */}
             {isTyping && (
               <div className="flex gap-3">
                 <div className="shrink-0 w-9 h-9 rounded-xl overflow-hidden" style={{ border: "1px solid rgba(74,222,128,0.2)" }}>
                   <img src={MASCOT_URL} alt="Coach" className="w-full h-full object-cover" />
                 </div>
                 <div
-                  className="rounded-2xl px-4 py-3 flex items-center gap-1"
+                  className="rounded-2xl px-4 py-3 flex items-center gap-3"
                   style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderBottomLeftRadius: "4px" }}
                 >
-                  {[0, 1, 2].map((dot) => (
-                    <div
-                      key={dot}
-                      className="w-2 h-2 rounded-full animate-bounce"
-                      style={{ background: "#4ade80", animationDelay: `${dot * 0.15}s` }}
-                    />
-                  ))}
+                  {/* Animated dots */}
+                  <div className="flex items-center gap-1">
+                    {[0, 1, 2].map((dot) => (
+                      <div
+                        key={dot}
+                        className="w-2 h-2 rounded-full animate-bounce"
+                        style={{ background: "#4ade80", animationDelay: `${dot * 0.15}s` }}
+                      />
+                    ))}
+                  </div>
+                  {/* Elapsed time */}
+                  <span
+                    className="flex items-center gap-1 text-xs font-mono"
+                    style={{ color: "#4ade80" }}
+                  >
+                    <Clock className="h-3 w-3" />
+                    Thinking... {elapsedSeconds}s
+                  </span>
                 </div>
               </div>
             )}
@@ -419,18 +565,22 @@ export default function CoachChat() {
         <div className="max-w-3xl mx-auto">
           <div
             className="flex items-end gap-2 rounded-2xl px-4 py-2"
-            style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}
+            style={{
+              background: "rgba(255,255,255,0.06)",
+              border: `1px solid ${remainingCalls === 0 ? "rgba(239,68,68,0.3)" : "rgba(255,255,255,0.1)"}`,
+            }}
           >
             <textarea
               ref={inputRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Ask anything about your game..."
+              placeholder={remainingCalls === 0 ? "Daily limit reached. Resets at midnight UTC." : "Ask anything about your game..."}
+              disabled={remainingCalls === 0}
               rows={1}
-              className="flex-1 bg-transparent resize-none outline-none text-sm py-1.5"
+              className="flex-1 bg-transparent resize-none outline-none text-sm py-1.5 disabled:cursor-not-allowed"
               style={{
-                color: "#e2e8f0",
+                color: remainingCalls === 0 ? "#475569" : "#e2e8f0",
                 maxHeight: "120px",
                 lineHeight: "1.5",
               }}
@@ -442,9 +592,9 @@ export default function CoachChat() {
             />
             <button
               onClick={() => sendMessage(input)}
-              disabled={!input.trim() || isTyping}
+              disabled={!input.trim() || isTyping || remainingCalls === 0}
               className="shrink-0 w-9 h-9 rounded-xl flex items-center justify-center transition-all disabled:opacity-40"
-              style={{ background: input.trim() && !isTyping ? "linear-gradient(135deg, #16a34a, #15803d)" : "rgba(255,255,255,0.08)" }}
+              style={{ background: input.trim() && !isTyping && remainingCalls !== 0 ? "linear-gradient(135deg, #16a34a, #15803d)" : "rgba(255,255,255,0.08)" }}
             >
               <Send className="h-4 w-4 text-white" />
             </button>

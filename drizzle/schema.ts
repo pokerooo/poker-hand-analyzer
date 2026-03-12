@@ -106,3 +106,18 @@ export const siteStats = mysqlTable("siteStats", {
 });
 
 export type SiteStat = typeof siteStats.$inferSelect;
+
+/**
+ * AI call log — tracks per-user AI usage for rate limiting.
+ * Free users: max 20 AI calls per calendar day (UTC).
+ * Pro users: unlimited.
+ */
+export const aiCallLog = mysqlTable("aiCallLog", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  callType: varchar("callType", { length: 64 }).notNull(), // "chat", "analyze", "patterns"
+  calledAt: timestamp("calledAt").defaultNow().notNull(),
+});
+
+export type AiCallLog = typeof aiCallLog.$inferSelect;
+export type InsertAiCallLog = typeof aiCallLog.$inferInsert;

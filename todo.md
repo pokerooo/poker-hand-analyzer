@@ -416,3 +416,15 @@ Optional paid AI coach scores the hand and explains what to do differently.
 - [x] Switch LLM model from gemini-2.5-flash to claude-sonnet-4-5
 - [x] Fix incrementStat SQL error — confirmed working (errors were stale from before the Drizzle ODKU fix; current incrementStat returns ok:true, DB shows 5002 views)
 - [x] Run all tests to confirm 0 regressions — 105/105 passing
+
+## Session: Rate Limiting + Response Time Indicator (Mar 2026)
+- [x] Add aiCallLog table to DB schema (userId, callType, createdAt) — created via SQL
+- [x] Add checkAiRateLimit() helper — max 20 AI calls/day for free users, unlimited for Pro
+- [x] Gate all AI procedures (chat.ask, coach.analyze, patterns.analyze) behind rate limit check
+- [x] Return remaining calls count in rate limit response for UI display
+- [x] Add "Thinking... Xs" elapsed timer to AI Coach chat (live second counter while Claude responds)
+- [x] Show remaining daily AI calls badge in coach chat header (colour-coded: green/amber/red)
+- [x] Disable prompts and input when daily limit is reached
+- [x] Show limit warning banner on welcome screen when ≤5 calls remaining
+- [x] Add rateLimit.getStatus tRPC query for frontend to fetch current usage on load
+- [x] 105/105 tests passing, 0 TypeScript errors
