@@ -664,7 +664,7 @@ function CoachPanel({ handId, isUnlocked, cachedAnalysis, storedVillainType }: {
 function VillainRoastCard({ roast }: { roast: string }) {
   const [copied, setCopied] = useState(false);
   const handleCopy = () => {
-    navigator.clipboard.writeText(`"${roast}" -- PokerReplay AI Coach`);
+    navigator.clipboard.writeText(`"${roast}" -- Poker AI Coach`);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
     toast.success("Roast copied!");
@@ -999,7 +999,7 @@ export default function HandReplayer() {
   return (
     <>
     <Helmet>
-      <title>{ogTitle} | PokerReplay</title>
+      <title>{ogTitle} | Poker AI</title>
       <meta property="og:title" content={ogTitle} />
       <meta property="og:description" content={ogDescription} />
       <meta property="og:image" content={ogImageUrl} />
@@ -1120,20 +1120,29 @@ export default function HandReplayer() {
               >
                 {currentStep.street}
               </span>
-              {/* Effective stack badge */}
-              {effStack != null && effStack > 0 && (
-                <span
-                  className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full"
-                  style={{
-                    color: "#93c5fd",
-                    background: "rgba(59,130,246,0.1)",
-                    border: "1px solid rgba(59,130,246,0.2)",
-                    fontFamily: "monospace",
-                  }}
-                >
-                  Eff: {effStack >= 1_000_000 ? `${(effStack / 1_000_000).toFixed(1)}M` : effStack >= 1_000 ? `${(effStack / 1_000).toFixed(1)}k` : effStack.toLocaleString()}
-                </span>
-              )}
+              {/* Effective stack badge with BB depth */}
+              {effStack != null && effStack > 0 && (() => {
+                const bb = parsed.bigBlind || 0;
+                const effLabel = effStack >= 1_000_000
+                  ? `${(effStack / 1_000_000).toFixed(1)}M`
+                  : effStack >= 1_000
+                  ? `${(effStack / 1_000).toFixed(1)}k`
+                  : effStack.toLocaleString();
+                const bbDepth = bb > 0 ? Math.round(effStack / bb) : null;
+                return (
+                  <span
+                    className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full"
+                    style={{
+                      color: "#93c5fd",
+                      background: "rgba(59,130,246,0.1)",
+                      border: "1px solid rgba(59,130,246,0.2)",
+                      fontFamily: "monospace",
+                    }}
+                  >
+                    Eff: {effLabel}{bbDepth != null ? ` (${bbDepth}bb)` : ""}
+                  </span>
+                );
+              })()}
             </div>
             <p
               className="text-sm font-semibold leading-snug"

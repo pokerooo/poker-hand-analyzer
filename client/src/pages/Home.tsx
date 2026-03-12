@@ -131,15 +131,18 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <Helmet>
-        <title>PokerReplay — Your Personal AI Poker Coach</title>
+        <title>Poker AI — Your Personal AI Poker Coach</title>
         <meta name="description" content="Describe any hand. Get instant visual replays, street-by-street AI coaching, and leak detection — all in seconds. Built for mid-to-high stakes players." />
-        <meta property="og:title" content="PokerReplay — Your Personal AI Poker Coach" />
+        <meta property="og:title" content="Poker AI — Your Personal AI Poker Coach" />
         <meta property="og:description" content="Stop guessing. Start playing like a pro. Paste your hand, get AI coaching, spot your leaks." />
         <meta property="og:type" content="website" />
-        <meta property="og:image" content="https://d2xsxph8kpxj0f.cloudfront.net/310519663320611071/g6HPzuQNwUJzsGs4mHVNkx/TrailerVideo_102f302f.mp4" />
+        <meta property="og:image" content="https://d2xsxph8kpxj0f.cloudfront.net/310519663320611071/g6HPzuQNwUJzsGs4mHVNkx/poker-ai-og-image-7drWg25DKCagfvcgG6iVn7.png" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="PokerReplay — Your Personal AI Poker Coach" />
+        <meta name="twitter:title" content="Poker AI — Your Personal AI Poker Coach" />
         <meta name="twitter:description" content="Stop guessing. Start playing like a pro. Paste your hand, get AI coaching, spot your leaks." />
+        <meta name="twitter:image" content="https://d2xsxph8kpxj0f.cloudfront.net/310519663320611071/g6HPzuQNwUJzsGs4mHVNkx/poker-ai-og-image-7drWg25DKCagfvcgG6iVn7.png" />
       </Helmet>
 
       {/* Header */}
@@ -148,7 +151,7 @@ export default function Home() {
           <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
             <span className="text-primary-foreground text-sm font-bold">♠</span>
           </div>
-          <span className="font-bold text-lg tracking-tight">PokerReplay</span>
+          <span className="font-bold text-lg tracking-tight">Poker AI</span>
         </div>
         <div className="flex items-center gap-2">
           <ThemeToggle />
@@ -396,7 +399,7 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="text-center text-xs text-muted-foreground py-4 border-t border-border">
-        PokerReplay · Share your story from the felt
+        Poker AI · Your Personal AI Poker Coach
       </footer>
     </div>
   );

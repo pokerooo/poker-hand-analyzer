@@ -380,3 +380,10 @@ Optional paid AI coach scores the hand and explains what to do differently.
 - [x] Add OG meta tags: og:title, og:description, og:type, og:image, twitter:card
 - [x] HelmetProvider already wired in main.tsx, react-helmet-async already installed
 - [x] 0 TypeScript errors, 105 tests passing
+
+## Session: Rebrand + OG Image + BB Depth (Mar 2026)
+- [x] Rename site to "Poker AI" — updated index.html, Home.tsx, HandReplayer.tsx, ProPaywall.tsx
+- [x] Generated 1200x630 OG image: dark bg, headline, poker table, Poker AI branding
+- [x] OG image uploaded to CDN, og:image and twitter:image meta tags updated
+- [x] BB depth label added: Eff badge now shows "Eff: 62k (62bb)" format
+- [x] 0 TypeScript errors, 105 tests passing
