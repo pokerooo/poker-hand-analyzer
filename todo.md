@@ -448,3 +448,8 @@ Optional paid AI coach scores the hand and explains what to do differently.
 - [x] Increase replay speed to 1.5x (2500ms → 1667ms per step)
 - [x] Desktop: Coach panel opens as fixed right-side panel (420px wide)
 - [x] Mobile: Coach panel opens as bottom sheet with minimize/maximize
+
+## Session: Persist Coach Panel State (Mar 2026)
+- [x] Store coachPanelOpen in sessionStorage keyed by hand slug
+- [x] Restore panel state on mount from sessionStorage
+- [x] Sync panel state to sessionStorage on every open/close toggle

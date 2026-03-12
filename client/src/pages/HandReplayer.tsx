@@ -911,8 +911,17 @@ export default function HandReplayer() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [activeTab, setActiveTab] = useState<"replay" | "share" | "coach">("replay");
   // Coach panel state: desktop = right side panel, mobile = bottom sheet
-  const [coachPanelOpen, setCoachPanelOpen] = useState(false);
+  // Persisted per-hand in sessionStorage so it reopens on return
+  const coachSessionKey = `coach-panel-${slug}`;
+  const [coachPanelOpen, setCoachPanelOpen] = useState<boolean>(() => {
+    try { return sessionStorage.getItem(coachSessionKey) === "1"; } catch { return false; }
+  });
   const [mobileSheetMinimized, setMobileSheetMinimized] = useState(false);
+
+  // Sync coachPanelOpen → sessionStorage whenever it changes
+  useEffect(() => {
+    try { sessionStorage.setItem(coachSessionKey, coachPanelOpen ? "1" : "0"); } catch { /* ignore */ }
+  }, [coachPanelOpen, coachSessionKey]);
   const [descriptionKey, setDescriptionKey] = useState(0); // increment to trigger fade-in
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const captureRef = useRef<HTMLDivElement | null>(null); // ref for video export capture
