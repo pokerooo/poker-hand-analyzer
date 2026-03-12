@@ -1,7 +1,4 @@
 {
-  "buildCommand": "cd client && npm run build",
-  "outputDirectory": "dist/public",
-  "env": {
-    "NODE_ENV": "production"
-  }
+  "buildCommand": "pnpm build",
+  "outputDirectory": "dist/public"
 }
