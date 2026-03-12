@@ -1,4 +1,4 @@
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { users, hands, discordWebhooks, studyTopics, siteStats, InsertUser } from "../drizzle/schema";
 import { ENV } from './_core/env';
@@ -298,13 +298,12 @@ export async function deleteStudyTopic(id: number, userId: number) {
 export async function incrementStat(key: string): Promise<void> {
   const db = await getDb();
   if (!db) return;
-  // Try raw SQL for atomic increment
+  // Atomic upsert: insert with value 1, or increment if key already exists
   try {
-    await (db as any).execute(
-      `INSERT INTO siteStats (statKey, statValue) VALUES (?, 1)
-       ON DUPLICATE KEY UPDATE statValue = statValue + 1`,
-      [key]
-    );
+    await db
+      .insert(siteStats)
+      .values({ statKey: key, statValue: 1 })
+      .onDuplicateKeyUpdate({ set: { statValue: sql`${siteStats.statValue} + 1` } });
   } catch (e) {
     console.warn('[Stats] incrementStat failed:', e);
   }
