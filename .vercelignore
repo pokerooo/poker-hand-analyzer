@@ -1,0 +1,10 @@
+server/
+drizzle/
+*.config.ts
+.env
+.env.local
+.env.*.local
+node_modules/
+.git/
+.gitignore
+README.md
