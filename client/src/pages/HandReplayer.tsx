@@ -623,35 +623,29 @@ function CoachPanel({ handId, isUnlocked, cachedAnalysis, storedVillainType }: {
         </div>
       ) : (
         <div className="space-y-3">
-          {!isPro ? (
-            <ProPaywall feature="coach" />
-          ) : (
-            <>
-              <Button
-                onClick={handleAnalyze}
-                disabled={analyzeMutation.isPending}
-                className="w-full gap-2"
-                style={{
-                  background: effectiveVillainType
-                    ? "linear-gradient(135deg, #065f46, #047857)"
-                    : "linear-gradient(135deg, #1e293b, #0f172a)",
-                  color: effectiveVillainType ? "#6ee7b7" : "#64748b",
-                  border: effectiveVillainType ? "1px solid rgba(16,185,129,0.3)" : "1px solid rgba(255,255,255,0.08)",
-                  boxShadow: effectiveVillainType ? "0 0 16px rgba(16,185,129,0.2)" : "none",
-                }}
-              >
-                {analyzeMutation.isPending ? (
-                  <><Loader2 className="h-4 w-4 animate-spin" /> Analysing...</>
-                ) : (
-                  <><Sparkles className="h-4 w-4" /> {effectiveVillainType ? `Analyse vs ${effectiveVillainType}` : "Analyse My Hand"}</>
-                )}
-              </Button>
-              {effectiveVillainType && (
-                <p className="text-[11px] text-center" style={{ color: "#475569" }}>
-                  Analysis will be tailored to exploit a <strong className="capitalize" style={{ color: "#94a3b8" }}>{effectiveVillainType}</strong>
-                </p>
-              )}
-            </>
+          <Button
+            onClick={handleAnalyze}
+            disabled={analyzeMutation.isPending}
+            className="w-full gap-2"
+            style={{
+              background: effectiveVillainType
+                ? "linear-gradient(135deg, #065f46, #047857)"
+                : "linear-gradient(135deg, #1e293b, #0f172a)",
+              color: effectiveVillainType ? "#6ee7b7" : "#64748b",
+              border: effectiveVillainType ? "1px solid rgba(16,185,129,0.3)" : "1px solid rgba(255,255,255,0.08)",
+              boxShadow: effectiveVillainType ? "0 0 16px rgba(16,185,129,0.2)" : "none",
+            }}
+          >
+            {analyzeMutation.isPending ? (
+              <><Loader2 className="h-4 w-4 animate-spin" /> Analysing...</>
+            ) : (
+              <><Sparkles className="h-4 w-4" /> {effectiveVillainType ? `Analyse vs ${effectiveVillainType}` : "Analyse My Hand"}</>
+            )}
+          </Button>
+          {effectiveVillainType && (
+            <p className="text-[11px] text-center" style={{ color: "#475569" }}>
+              Analysis will be tailored to exploit a <strong className="capitalize" style={{ color: "#94a3b8" }}>{effectiveVillainType}</strong>
+            </p>
           )}
         </div>
       )}

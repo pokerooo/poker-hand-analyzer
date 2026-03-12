@@ -428,3 +428,7 @@ Optional paid AI coach scores the hand and explains what to do differently.
 - [x] Show limit warning banner on welcome screen when ≤5 calls remaining
 - [x] Add rateLimit.getStatus tRPC query for frontend to fetch current usage on load
 - [x] 105/105 tests passing, 0 TypeScript errors
+
+## Session: Remove AI Coach Paywall (Mar 2026)
+- [x] Remove Pro paywall from AI Coach tab in HandReplayer
+- [x] Ensure rate limiting (20 calls/day) remains active for free users
