@@ -1,4 +1,5 @@
 {
-  "buildCommand": "pnpm build",
-  "outputDirectory": "dist/public"
+  "buildCommand": "pnpm build && cp -r dist/public .",
+  "outputDirectory": "public",
+  "public": "public"
 }
