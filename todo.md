@@ -436,3 +436,15 @@ Optional paid AI coach scores the hand and explains what to do differently.
 ## Session: Collapse Note Section (Mar 2026)
 - [x] Collapse the parser Note section in HandReplayer by default
 - [x] Add click-to-expand toggle with chevron icon
+
+## Session: Coach Side Panel + Mobile Bottom Sheet (Mar 2026)
+- [ ] Desktop: Coach tab opens as fixed right-side panel alongside the replayer
+- [ ] Mobile: Coach tab opens as a bottom sheet with minimize/maximize toggle
+- [ ] Coach panel triggered by clicking the Coach tab (not a separate page)
+- [ ] Panel can be dismissed/closed independently of the replayer
+
+## Session: Replay Speed + Coach Panel Redesign (Mar 2026)
+- [x] Fix JSX error from coach panel redesign
+- [x] Increase replay speed to 1.5x (2500ms → 1667ms per step)
+- [x] Desktop: Coach panel opens as fixed right-side panel (420px wide)
+- [x] Mobile: Coach panel opens as bottom sheet with minimize/maximize

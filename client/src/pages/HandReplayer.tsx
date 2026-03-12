@@ -13,7 +13,7 @@ import { Helmet } from "react-helmet-async";
 import {
   ArrowLeft, Play, Pause, SkipBack, SkipForward,
   Share2, Copy, Loader2, Sparkles, Lock, ChevronDown, ChevronUp,
-  MessageCircle, Zap
+  MessageCircle, Zap, X, ChevronRight, Minus
 } from "lucide-react";
 import { VideoExport } from "@/components/VideoExport";
 import ProPaywall from "@/components/ProPaywall";
@@ -910,6 +910,9 @@ export default function HandReplayer() {
   const [stepIndex, setStepIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [activeTab, setActiveTab] = useState<"replay" | "share" | "coach">("replay");
+  // Coach panel state: desktop = right side panel, mobile = bottom sheet
+  const [coachPanelOpen, setCoachPanelOpen] = useState(false);
+  const [mobileSheetMinimized, setMobileSheetMinimized] = useState(false);
   const [descriptionKey, setDescriptionKey] = useState(0); // increment to trigger fade-in
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const captureRef = useRef<HTMLDivElement | null>(null); // ref for video export capture
@@ -1025,7 +1028,7 @@ export default function HandReplayer() {
     setDescriptionKey((k) => k + 1);
   }, [stepIndex]);
 
-  // Auto-play -- 2.5s per step so it feels like a live hand
+  // Auto-play -- 1667ms per step (1.5x speed)
   useEffect(() => {
     if (intervalRef.current) clearInterval(intervalRef.current);
     if (isPlaying) {
@@ -1038,7 +1041,7 @@ export default function HandReplayer() {
           }
           return i + 1;
         });
-      }, 2500);
+      }, 1667);
     }
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
   }, [isPlaying, steps.length]);
@@ -1098,6 +1101,103 @@ export default function HandReplayer() {
       className="min-h-screen flex flex-col"
       style={{ background: "linear-gradient(160deg, #0a0f0d 0%, #0d1a12 50%, #0a0f0d 100%)" }}
     >
+      {/* Desktop Coach Side Panel -- fixed right panel, only visible on lg+ */}
+      {coachPanelOpen && (
+        <div
+          className="hidden lg:flex flex-col fixed top-0 right-0 h-full z-40"
+          style={{
+            width: "420px",
+            background: "rgba(10,15,13,0.97)",
+            backdropFilter: "blur(20px)",
+            borderLeft: "1px solid rgba(16,185,129,0.15)",
+            boxShadow: "-8px 0 40px rgba(0,0,0,0.5)",
+          }}
+        >
+          {/* Panel header */}
+          <div
+            className="flex items-center justify-between px-4 py-3 shrink-0"
+            style={{ borderBottom: "1px solid rgba(16,185,129,0.12)", background: "rgba(10,15,13,0.9)" }}
+          >
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4" style={{ color: "#fbbf24" }} />
+              <span className="text-sm font-bold" style={{ color: "#e2e8f0" }}>AI Coach</span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold" style={{ background: "rgba(234,179,8,0.12)", color: "#fbbf24", border: "1px solid rgba(234,179,8,0.25)" }}>Claude</span>
+            </div>
+            <button
+              onClick={() => setCoachPanelOpen(false)}
+              className="w-7 h-7 flex items-center justify-center rounded-lg transition-all"
+              style={{ color: "#64748b", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+          {/* Panel content */}
+          <div className="flex-1 overflow-y-auto px-4 py-4">
+            <CoachPanel
+              handId={hand.id}
+              isUnlocked={hand.coachUnlocked}
+              cachedAnalysis={hand.coachAnalysis}
+              storedVillainType={(hand as any).villainType}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Mobile Coach Bottom Sheet -- only visible on <lg */}
+      {coachPanelOpen && (
+        <div
+          className="lg:hidden fixed bottom-0 left-0 right-0 z-50"
+          style={{
+            background: "rgba(10,15,13,0.98)",
+            backdropFilter: "blur(20px)",
+            borderTop: "1px solid rgba(16,185,129,0.2)",
+            boxShadow: "0 -8px 40px rgba(0,0,0,0.6)",
+            maxHeight: mobileSheetMinimized ? "48px" : "75vh",
+            transition: "max-height 0.3s cubic-bezier(0.4,0,0.2,1)",
+            overflow: "hidden",
+          }}
+        >
+          {/* Sheet drag handle + header */}
+          <div
+            className="flex items-center justify-between px-4 py-3 cursor-pointer"
+            style={{ borderBottom: mobileSheetMinimized ? "none" : "1px solid rgba(16,185,129,0.1)" }}
+            onClick={() => setMobileSheetMinimized(v => !v)}
+          >
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-3.5 w-3.5" style={{ color: "#fbbf24" }} />
+              <span className="text-xs font-bold" style={{ color: "#e2e8f0" }}>AI Coach</span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold" style={{ background: "rgba(234,179,8,0.12)", color: "#fbbf24", border: "1px solid rgba(234,179,8,0.25)" }}>Claude</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <button
+                className="w-6 h-6 flex items-center justify-center rounded-md"
+                style={{ color: "#64748b", background: "rgba(255,255,255,0.05)" }}
+                onClick={(e) => { e.stopPropagation(); setMobileSheetMinimized(v => !v); }}
+              >
+                {mobileSheetMinimized ? <ChevronUp className="h-3 w-3" /> : <Minus className="h-3 w-3" />}
+              </button>
+              <button
+                className="w-6 h-6 flex items-center justify-center rounded-md"
+                style={{ color: "#64748b", background: "rgba(255,255,255,0.05)" }}
+                onClick={(e) => { e.stopPropagation(); setCoachPanelOpen(false); }}
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </div>
+          </div>
+          {/* Sheet content */}
+          {!mobileSheetMinimized && (
+            <div className="overflow-y-auto px-4 py-3" style={{ maxHeight: "calc(75vh - 48px)" }}>
+              <CoachPanel
+                handId={hand.id}
+                isUnlocked={hand.coachUnlocked}
+                cachedAnalysis={hand.coachAnalysis}
+                storedVillainType={(hand as any).villainType}
+              />
+            </div>
+          )}
+        </div>
+      )}
       {/* Header */}
       <header
         className="flex items-center justify-between px-4 py-3 sticky top-0 z-10"
@@ -1132,19 +1232,14 @@ export default function HandReplayer() {
           <button
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
             style={{
-              background: "rgba(234,179,8,0.08)",
+              background: coachPanelOpen ? "rgba(234,179,8,0.18)" : "rgba(234,179,8,0.08)",
               color: "#fbbf24",
-              border: "1px solid rgba(234,179,8,0.25)",
+              border: coachPanelOpen ? "1px solid rgba(234,179,8,0.5)" : "1px solid rgba(234,179,8,0.25)",
             }}
-            onClick={() => {
-              const title = handTitle || "";
-              const params = new URLSearchParams({ from: slug });
-              if (title) params.set("title", title);
-              navigate(`/coach?${params.toString()}`);
-            }}
-            title="Ask AI Coach about this hand"
+            onClick={() => { setCoachPanelOpen(v => !v); setMobileSheetMinimized(false); }}
+            title="AI Coach analysis"
           >
-            <Zap className="h-3.5 w-3.5" /> Coach
+            <Sparkles className="h-3.5 w-3.5" /> Coach
           </button>
           <button
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
@@ -1161,11 +1256,18 @@ export default function HandReplayer() {
         </div>
       </header>
 
+      {/* Main content — shifts left on desktop when coach panel is open */}
+      <div
+        className="flex flex-col flex-1 transition-all duration-300"
+        style={{ marginRight: coachPanelOpen ? "0" : "0" }}
+      >
+
       {/* Table + narration -- captured for video export */}
       <div ref={captureRef} style={{ background: "linear-gradient(160deg, #0a0f0d 0%, #0d1a12 50%, #0a0f0d 100%)" }}>
       {/* Table -- swipe left/right to step through hand */}
       <div
         className="w-full max-w-lg mx-auto px-4 pt-4"
+        style={{ paddingRight: coachPanelOpen ? undefined : undefined }}
         {...swipeHandlers}
       >
         {currentStep && (
@@ -1423,6 +1525,7 @@ export default function HandReplayer() {
           )}
         </div>
       </div>
+      </div>{/* end main content wrapper */}
     </div>
     </>
   );
