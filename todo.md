@@ -406,3 +406,13 @@ Optional paid AI coach scores the hand and explains what to do differently.
 - [x] Paired board indicator shown as separate red pill when any rank appears 2+ times
 - [x] Legend only shown when community cards are present (hidden preflop)
 - [x] 0 TypeScript errors, 105 tests passing
+
+## Session: Bug Fix — /my-hands Failed to Fetch (Mar 2026)
+- [x] Fix "Failed to fetch" error on /my-hands page — transient issue caused by stale incrementStat SQL error + server restart timing
+- [x] Confirmed incrementStat fix is live (Drizzle .insert().onDuplicateKeyUpdate())
+- [x] /my-hands page loading correctly with all 9 hands displayed
+
+## Session: Claude Switch + SQL Fix (Mar 2026)
+- [x] Switch LLM model from gemini-2.5-flash to claude-sonnet-4-5
+- [x] Fix incrementStat SQL error — confirmed working (errors were stale from before the Drizzle ODKU fix; current incrementStat returns ok:true, DB shows 5002 views)
+- [x] Run all tests to confirm 0 regressions — 105/105 passing
