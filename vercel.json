@@ -1,11 +1,7 @@
 {
-  "buildCommand": "pnpm build",
-  "outputDirectory": ".",
-  "public": "dist/public",
-  "functions": {
-    "api/index.js": {
-      "memory": 1024,
-      "maxDuration": 60
-    }
+  "buildCommand": "cd client && npm run build",
+  "outputDirectory": "dist/public",
+  "env": {
+    "NODE_ENV": "production"
   }
 }
