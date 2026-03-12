@@ -387,3 +387,13 @@ Optional paid AI coach scores the hand and explains what to do differently.
 - [x] OG image uploaded to CDN, og:image and twitter:image meta tags updated
 - [x] BB depth label added: Eff badge now shows "Eff: 62k (62bb)" format
 - [x] 0 TypeScript errors, 105 tests passing
+
+## Session: Four-Colour Card Scheme (Mar 2026)
+- [x] Audited all card rendering: PokerTable.tsx (CardFace), PlayingCard.tsx (hero cards in HandReplayer)
+- [x] SUIT_META updated in both files: Hearts=Red, Spades=Dark, Diamonds=Blue, Clubs=Green
+- [x] CardFace in PokerTable: coloured filled background, white rank/suit text
+- [x] PlayingCard.tsx: fully rewritten with four-colour filled scheme
+- [x] FALLBACK_META added for unknown/unparseable cards (dark slate)
+- [x] Reinforced suit parsing in handParser.ts with CRITICAL SUIT RULE section
+- [x] Parser now maps word suits (club/spade/heart/diamond) and symbols (♣♠♥♦) to correct letter codes
+- [x] 0 TypeScript errors, 105 tests passing

@@ -104,7 +104,20 @@ Return ONLY valid JSON matching this exact schema (no markdown, no explanation):
   "parseNotes": string | null
 }
 
-For cards, use standard notation: rank + suit lowercase. Ranks: A K Q J T 9 8 7 6 5 4 3 2. Suits: s h d c.
+For cards, use standard notation: rank + suit lowercase. Ranks: A K Q J T 9 8 7 6 5 4 3 2.
+
+CRITICAL SUIT RULE — NEVER confuse suits. The four suits are:
+- h = hearts (♥) — the heart shape
+- d = diamonds (♦) — the diamond/rhombus shape
+- s = spades (♠) — the spade/leaf shape
+- c = clubs (♣) — the clover/trefoil shape
+
+When the hand text explicitly states a suit (e.g. "Ac", "Kh", "Td", "9s", "club", "spade", "heart", "diamond"), you MUST use that exact suit. NEVER substitute 'c' (clubs) for 's' (spades) or vice versa. NEVER substitute 'h' (hearts) for 'd' (diamonds) or vice versa.
+
+If the suit is written as a word: "club" → c, "spade" → s, "heart" → h, "diamond" → d.
+If the suit is written as a symbol: ♣ → c, ♠ → s, ♥ → h, ♦ → d.
+If the suit is ambiguous or not specified (e.g. "ATo" with no suit info), pick a plausible suit and note it in parseNotes.
+
 Example: "ATo" hero hand → ["As", "Tc"] or ["Ah", "Ts"] (pick the most common suit combo, note it in parseNotes).
 Board "A99r" → ["Ah", "9s", "9c"] (rainbow = different suits).
 Board "Th bdfd" → ["Th"] with boardTexture "bdfd".

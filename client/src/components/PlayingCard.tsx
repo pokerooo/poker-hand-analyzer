@@ -1,10 +1,7 @@
 /**
- * PlayingCard — Premium gaming aesthetic
- * - Crisp white card face with sharp rank/suit typography
- * - Red suits (♥ ♦) vs black suits (♠ ♣) with proper contrast
- * - Subtle inner shadow and rounded corners for depth
- * - Face-down (back) card with elegant diamond pattern
- * - Compact size optimised for the poker table view
+ * PlayingCard — Four-Colour Deck Design
+ * Hearts = Crimson Red | Spades = Dark Charcoal | Diamonds = Royal Blue | Clubs = Forest Green
+ * Coloured card backgrounds with white rank/suit text for instant suit recognition.
  */
 
 import React from "react";
@@ -17,7 +14,16 @@ interface PlayingCardProps {
   style?: React.CSSProperties;
 }
 
-// ── Parsing helpers ────────────────────────────────────────────────────────────
+// ── Four-colour suit metadata ──────────────────────────────────────────────────
+
+const SUIT_META: Record<string, { bg: string; border: string; symbol: string }> = {
+  s: { bg: "linear-gradient(145deg, #2d3748, #1a202c)", border: "rgba(160,174,192,0.25)", symbol: "♠" },
+  h: { bg: "linear-gradient(145deg, #c0392b, #96281b)", border: "rgba(255,100,100,0.3)",   symbol: "♥" },
+  d: { bg: "linear-gradient(145deg, #2563eb, #1d4ed8)", border: "rgba(96,165,250,0.3)",    symbol: "♦" },
+  c: { bg: "linear-gradient(145deg, #16a34a, #15803d)", border: "rgba(74,222,128,0.25)",   symbol: "♣" },
+};
+
+const FALLBACK_META = { bg: "linear-gradient(145deg, #334155, #1e293b)", border: "rgba(148,163,184,0.2)", symbol: "?" };
 
 const RANK_MAP: Record<string, string> = {
   A: "A", K: "K", Q: "Q", J: "J", T: "10",
@@ -25,18 +31,7 @@ const RANK_MAP: Record<string, string> = {
   "6": "6", "7": "7", "8": "8", "9": "9", "10": "10",
 };
 
-const SUIT_MAP: Record<string, { symbol: string; color: string }> = {
-  s: { symbol: "♠", color: "#1a1a2e" },
-  c: { symbol: "♣", color: "#1a2e1a" },
-  h: { symbol: "♥", color: "#c0392b" },
-  d: { symbol: "♦", color: "#c0392b" },
-  S: { symbol: "♠", color: "#1a1a2e" },
-  C: { symbol: "♣", color: "#1a2e1a" },
-  H: { symbol: "♥", color: "#c0392b" },
-  D: { symbol: "♦", color: "#c0392b" },
-};
-
-function parseCard(card: string): { rank: string; suit: { symbol: string; color: string } } | null {
+function parseCard(card: string): { rank: string; meta: typeof SUIT_META[string] } | null {
   if (!card || card === "?" || card === "x" || card === "X") return null;
 
   const cleaned = card.trim();
@@ -44,7 +39,6 @@ function parseCard(card: string): { rank: string; suit: { symbol: string; color:
   let suitChar = "";
 
   if (cleaned.length >= 2) {
-    // Handle "10s", "10h" etc.
     if (cleaned.startsWith("10") || cleaned.startsWith("T") || cleaned.startsWith("t")) {
       rank = cleaned.startsWith("10") ? "10" : "T";
       suitChar = cleaned.slice(cleaned.startsWith("10") ? 2 : 1);
@@ -55,9 +49,8 @@ function parseCard(card: string): { rank: string; suit: { symbol: string; color:
   }
 
   const displayRank = RANK_MAP[rank] || rank;
-  const suit = SUIT_MAP[suitChar.toLowerCase()] || SUIT_MAP[suitChar] || { symbol: "?", color: "#666" };
-
-  return { rank: displayRank, suit };
+  const meta = SUIT_META[suitChar.toLowerCase()] ?? FALLBACK_META;
+  return { rank: displayRank, meta };
 }
 
 // ── Size config ────────────────────────────────────────────────────────────────
@@ -126,18 +119,17 @@ export function PlayingCard({ card, size = "md", faceDown = false, className = "
     );
   }
 
-  // ── Face-up card ─────────────────────────────────────────────────────────────
-  const { rank, suit } = parsed;
-  const isRed = suit.color === "#c0392b";
+  // ── Face-up card (four-colour filled) ────────────────────────────────────────
+  const { rank, meta } = parsed;
 
   return (
     <div
       className={className}
       style={{
         ...baseStyle,
-        background: "linear-gradient(160deg, #ffffff 0%, #f8f8f8 100%)",
-        border: "1.5px solid rgba(0,0,0,0.15)",
-        boxShadow: "0 3px 10px rgba(0,0,0,0.45), 0 1px 3px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.9)",
+        background: meta.bg,
+        border: `1.5px solid ${meta.border}`,
+        boxShadow: "0 3px 10px rgba(0,0,0,0.5), 0 1px 3px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.12)",
         overflow: "hidden",
       }}
     >
@@ -158,7 +150,7 @@ export function PlayingCard({ card, size = "md", faceDown = false, className = "
           style={{
             fontSize: cfg.cornerSize,
             fontWeight: 800,
-            color: suit.color,
+            color: "#ffffff",
             fontFamily: "'Arial Black', 'Arial', sans-serif",
             lineHeight: 1,
           }}
@@ -168,20 +160,19 @@ export function PlayingCard({ card, size = "md", faceDown = false, className = "
         <span
           style={{
             fontSize: cfg.cornerSize - 1,
-            color: suit.color,
+            color: "rgba(255,255,255,0.85)",
             lineHeight: 1,
           }}
         >
-          {suit.symbol}
+          {meta.symbol}
         </span>
       </div>
 
-      {/* Center suit */}
+      {/* Center suit watermark */}
       <span
         style={{
           fontSize: cfg.suitSize + 4,
-          color: suit.color,
-          opacity: 0.15,
+          color: "rgba(255,255,255,0.15)",
           position: "absolute",
           top: "50%",
           left: "50%",
@@ -189,7 +180,7 @@ export function PlayingCard({ card, size = "md", faceDown = false, className = "
           userSelect: "none",
         }}
       >
-        {suit.symbol}
+        {meta.symbol}
       </span>
 
       {/* Bottom-right corner (rotated) */}
@@ -210,7 +201,7 @@ export function PlayingCard({ card, size = "md", faceDown = false, className = "
           style={{
             fontSize: cfg.cornerSize,
             fontWeight: 800,
-            color: suit.color,
+            color: "#ffffff",
             fontFamily: "'Arial Black', 'Arial', sans-serif",
             lineHeight: 1,
           }}
@@ -220,26 +211,13 @@ export function PlayingCard({ card, size = "md", faceDown = false, className = "
         <span
           style={{
             fontSize: cfg.cornerSize - 1,
-            color: suit.color,
+            color: "rgba(255,255,255,0.85)",
             lineHeight: 1,
           }}
         >
-          {suit.symbol}
+          {meta.symbol}
         </span>
       </div>
-
-      {/* Red tint overlay for hearts/diamonds */}
-      {isRed && (
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            background: "rgba(192,57,43,0.03)",
-            borderRadius: cfg.borderRadius - 1,
-            pointerEvents: "none",
-          }}
-        />
-      )}
     </div>
   );
 }

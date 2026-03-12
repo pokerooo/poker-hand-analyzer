@@ -20,20 +20,23 @@ interface PokerTableProps {
   spr?: number | null;
 }
 
-// ─── Suit colours & symbols ───────────────────────────────────────────────────
+// ─── Suit colours & symbols (Four-Colour Deck) ───────────────────────────────
+// Hearts = Crimson Red | Spades = Dark Charcoal | Diamonds = Royal Blue | Clubs = Forest Green
 
-const SUIT_META: Record<string, { color: string; symbol: string; isRed: boolean }> = {
-  s: { color: "#1a1a2e", symbol: "♠", isRed: false },
-  h: { color: "#c0392b", symbol: "♥", isRed: true },
-  d: { color: "#c0392b", symbol: "♦", isRed: true },
-  c: { color: "#1a2e1a", symbol: "♣", isRed: false },
+const SUIT_META: Record<string, { bg: string; border: string; symbol: string }> = {
+  s: { bg: "linear-gradient(145deg, #2d3748, #1a202c)", border: "rgba(160,174,192,0.25)", symbol: "♠" },
+  h: { bg: "linear-gradient(145deg, #c0392b, #96281b)", border: "rgba(255,100,100,0.3)",   symbol: "♥" },
+  d: { bg: "linear-gradient(145deg, #2563eb, #1d4ed8)", border: "rgba(96,165,250,0.3)",    symbol: "♦" },
+  c: { bg: "linear-gradient(145deg, #16a34a, #15803d)", border: "rgba(74,222,128,0.25)",   symbol: "♣" },
 };
 
+const FALLBACK_META = { bg: "linear-gradient(145deg, #334155, #1e293b)", border: "rgba(148,163,184,0.2)", symbol: "?" };
+
 function parseCard(card: string): { rank: string; suit: string; meta: typeof SUIT_META[string] } {
-  if (!card || card.length < 2) return { rank: "?", suit: "?", meta: { color: "#94a3b8", symbol: "?", isRed: false } };
+  if (!card || card.length < 2) return { rank: "?", suit: "?", meta: FALLBACK_META };
   const suit = card.slice(-1).toLowerCase();
   const rank = card.slice(0, -1).toUpperCase();
-  return { rank, suit, meta: SUIT_META[suit] ?? { color: "#94a3b8", symbol: suit, isRed: false } };
+  return { rank, suit, meta: SUIT_META[suit] ?? FALLBACK_META };
 }
 
 // ─── Card Face Component ───────────────────────────────────────────────────────
@@ -62,28 +65,28 @@ function CardFace({ card, small = false, animate = false }: { card: string; smal
         opacity: visible ? 1 : 0,
         transform: visible ? "scale(1)" : "scale(0.7) rotateY(90deg)",
         transition: "opacity 0.25s ease, transform 0.35s cubic-bezier(0.34,1.56,0.64,1)",
-        background: "linear-gradient(160deg, #ffffff 0%, #f5f5f5 100%)",
-        border: "1.5px solid rgba(0,0,0,0.18)",
+        background: meta.bg,
+        border: `1.5px solid ${meta.border}`,
         borderRadius: 5,
         position: "relative",
-        boxShadow: "0 3px 10px rgba(0,0,0,0.5), 0 1px 3px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.9)",
+        boxShadow: "0 3px 10px rgba(0,0,0,0.5), 0 1px 3px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.12)",
         flexShrink: 0,
         overflow: "hidden",
       }}
     >
       {/* Top-left corner */}
       <div style={{ position: "absolute", top: 2, left: 2.5, display: "flex", flexDirection: "column", alignItems: "center", lineHeight: 1, gap: 0 }}>
-        <span style={{ fontSize: cornerSize, fontWeight: 900, color: meta.color, fontFamily: "'Arial Black', Arial, sans-serif", lineHeight: 1 }}>{rank}</span>
-        <span style={{ fontSize: cornerSize - 1, color: meta.color, lineHeight: 1 }}>{meta.symbol}</span>
+        <span style={{ fontSize: cornerSize, fontWeight: 900, color: "#fff", fontFamily: "'Arial Black', Arial, sans-serif", lineHeight: 1 }}>{rank}</span>
+        <span style={{ fontSize: cornerSize - 1, color: "rgba(255,255,255,0.85)", lineHeight: 1 }}>{meta.symbol}</span>
       </div>
       {/* Center watermark */}
       <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <span style={{ fontSize: cornerSize + 6, color: meta.color, opacity: 0.12, userSelect: "none" }}>{meta.symbol}</span>
+        <span style={{ fontSize: cornerSize + 6, color: "rgba(255,255,255,0.15)", userSelect: "none" }}>{meta.symbol}</span>
       </div>
       {/* Bottom-right corner (rotated) */}
       <div style={{ position: "absolute", bottom: 2, right: 2.5, display: "flex", flexDirection: "column", alignItems: "center", lineHeight: 1, gap: 0, transform: "rotate(180deg)" }}>
-        <span style={{ fontSize: cornerSize, fontWeight: 900, color: meta.color, fontFamily: "'Arial Black', Arial, sans-serif", lineHeight: 1 }}>{rank}</span>
-        <span style={{ fontSize: cornerSize - 1, color: meta.color, lineHeight: 1 }}>{meta.symbol}</span>
+        <span style={{ fontSize: cornerSize, fontWeight: 900, color: "#fff", fontFamily: "'Arial Black', Arial, sans-serif", lineHeight: 1 }}>{rank}</span>
+        <span style={{ fontSize: cornerSize - 1, color: "rgba(255,255,255,0.85)", lineHeight: 1 }}>{meta.symbol}</span>
       </div>
     </div>
   );
