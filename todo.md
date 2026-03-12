@@ -353,3 +353,12 @@ Optional paid AI coach scores the hand and explains what to do differently.
 - [x] Main villain identified as last non-hero, non-folded player in the hand
 - [x] Both SPR and Eff only shown when pot > 0 (hidden on preflop start)
 - [x] 0 TypeScript errors, 105 tests passing
+
+## Session: Homepage Video + Headline Rewrite (Mar 2026)
+- [x] Upload TrailerVideo.mp4 to CDN via manus-upload-file --webdev
+- [x] Rewrite homepage headline: "Stop guessing. Start thinking like a pro."
+- [x] Updated subheadline to focus on AI coaching, visual replays, and leak detection
+- [x] Embed trailer video above the hand input area on homepage
+- [x] Video autoplays muted, loops, playsInline, with controls available
+- [x] Video styled with green glow border to match site theme
+- [x] 0 TypeScript errors, 105 tests passing

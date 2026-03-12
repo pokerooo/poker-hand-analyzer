@@ -149,13 +149,27 @@ export default function Home() {
             <span>♠</span> Free · No signup required
           </div>
           <h1 className="text-4xl sm:text-5xl font-bold tracking-tight leading-tight">
-            Turn your poker hands
+            Stop guessing.
             <br />
-            <span className="text-primary">into instant replays</span>
+            <span className="text-primary">Start thinking like a pro.</span>
           </h1>
           <p className="text-muted-foreground text-lg leading-relaxed max-w-lg mx-auto">
-            Type your hand the way you'd describe it on WhatsApp. We'll turn it into a visual replay you can share anywhere.
+            Describe any hand. Get instant visual replays, street-by-street AI coaching, and leak detection — all in seconds.
           </p>
+        </div>
+
+        {/* Trailer Video */}
+        <div className="w-full rounded-xl overflow-hidden shadow-2xl" style={{ border: "1px solid rgba(16,185,129,0.2)", boxShadow: "0 0 40px rgba(16,185,129,0.08), 0 8px 32px rgba(0,0,0,0.4)" }}>
+          <video
+            src="https://d2xsxph8kpxj0f.cloudfront.net/310519663320611071/g6HPzuQNwUJzsGs4mHVNkx/TrailerVideo_102f302f.mp4"
+            autoPlay
+            muted
+            loop
+            playsInline
+            controls
+            className="w-full block"
+            style={{ display: "block", maxHeight: 360, objectFit: "cover" }}
+          />
         </div>
 
         {/* Input Section */}
