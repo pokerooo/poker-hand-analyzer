@@ -362,3 +362,9 @@ Optional paid AI coach scores the hand and explains what to do differently.
 - [x] Video autoplays muted, loops, playsInline, with controls available
 - [x] Video styled with green glow border to match site theme
 - [x] 0 TypeScript errors, 105 tests passing
+
+## Session: Homepage Copy Polish + Domain Research (Mar 2026)
+- [x] Change headline: "thinking" -> "playing" ("Start playing like a pro.")
+- [x] Change badge text to "Your Personal AI Poker Coach"
+- [x] Add animated social counter: starts at 5,000, ticks up randomly every 4-8s
+- [ ] Research and propose available domain names under $50 that reflect AI poker coaching brand

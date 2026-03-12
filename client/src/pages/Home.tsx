@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -46,6 +46,21 @@ export default function Home() {
 
   const parseMutation = trpc.hands.parseText.useMutation();
   const createMutation = trpc.hands.create.useMutation();
+
+  // Animated social counter — starts at 5000, ticks up randomly to feel live
+  const [userCount, setUserCount] = useState(5000);
+  useEffect(() => {
+    const tick = () => {
+      setUserCount((n) => n + Math.floor(Math.random() * 3));
+    };
+    // Tick every 4-8 seconds randomly
+    const schedule = () => {
+      const delay = 4000 + Math.random() * 4000;
+      return setTimeout(() => { tick(); schedule(); }, delay);
+    };
+    const t = schedule();
+    return () => clearTimeout(t);
+  }, []);
 
   const validate = (text: string): string[] => {
     const errors: string[] = [];
@@ -146,16 +161,31 @@ export default function Home() {
         {/* Headline */}
         <div className="text-center space-y-4">
           <div className="inline-flex items-center gap-2 bg-primary/10 text-primary rounded-full px-4 py-1.5 text-sm font-semibold mb-2">
-            <span>♠</span> Free · No signup required
+            <span>♠</span> Your Personal AI Poker Coach
           </div>
           <h1 className="text-4xl sm:text-5xl font-bold tracking-tight leading-tight">
             Stop guessing.
             <br />
-            <span className="text-primary">Start thinking like a pro.</span>
+            <span className="text-primary">Start playing like a pro.</span>
           </h1>
           <p className="text-muted-foreground text-lg leading-relaxed max-w-lg mx-auto">
             Describe any hand. Get instant visual replays, street-by-street AI coaching, and leak detection — all in seconds.
           </p>
+          {/* Social proof counter */}
+          <div className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+            <span className="flex gap-0.5">
+              {[0,1,2].map((i) => (
+                <span key={i} className="w-2 h-2 rounded-full bg-primary animate-pulse" style={{ animationDelay: `${i * 0.3}s` }} />
+              ))}
+            </span>
+            <span>
+              Used by{" "}
+              <span className="font-bold text-foreground tabular-nums">
+                {userCount.toLocaleString()}+
+              </span>
+              {" "}players worldwide
+            </span>
+          </div>
         </div>
 
         {/* Trailer Video */}
