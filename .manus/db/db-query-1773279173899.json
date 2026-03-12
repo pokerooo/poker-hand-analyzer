@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS `siteStats` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `statKey` varchar(64) NOT NULL,\n  `statValue` int NOT NULL DEFAULT 0,\n  `updatedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n  PRIMARY KEY (`id`),\n  UNIQUE KEY `siteStats_statKey_unique` (`statKey`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3S5EK7kkwn3cfqa.root --database g6HPzuQNwUJzsGs4mHVNkx --execute CREATE TABLE IF NOT EXISTS `siteStats` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `statKey` varchar(64) NOT NULL,\n  `statValue` int NOT NULL DEFAULT 0,\n  `updatedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n  PRIMARY KEY (`id`),\n  UNIQUE KEY `siteStats_statKey_unique` (`statKey`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 2092
+}

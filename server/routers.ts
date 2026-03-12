@@ -26,6 +26,8 @@ import {
   getStudyTopics,
   markStudyTopicReviewed,
   deleteStudyTopic,
+  incrementStat,
+  getStat,
 } from "./db";
 import { parseHandText } from "./handParser";
 import { invokeLLM } from "./_core/llm";
@@ -847,7 +849,24 @@ const studyRouter = router({
     }),
 });
 
-// ─── Root Router ──────────────────────────────────────────────────────────────
+// ─── Stats Router ─────────────────────────────────────────────────────────────────────────────
+
+const statsRouter = router({
+  // Get the live usage counter for the homepage
+  getUsageCount: publicProcedure.query(async () => {
+    const count = await getStat('visualiser_views');
+    return { count };
+  }),
+
+  // Increment the usage counter — called when a user enters the visualiser
+  // Fire-and-forget: no auth required, no user data stored
+  incrementUsage: publicProcedure.mutation(async () => {
+    await incrementStat('visualiser_views');
+    return { ok: true };
+  }),
+});
+
+// ─── Root Router ─────────────────────────────────────────────────────────────────────────────
 
 export const appRouter = router({
   auth: authRouter,
@@ -862,6 +881,7 @@ export const appRouter = router({
   winrate: winrateRouter,
   chat: chatRouter,
   study: studyRouter,
+  stats: statsRouter,
   system: systemRouter,
 });
 

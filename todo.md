@@ -367,4 +367,16 @@ Optional paid AI coach scores the hand and explains what to do differently.
 - [x] Change headline: "thinking" -> "playing" ("Start playing like a pro.")
 - [x] Change badge text to "Your Personal AI Poker Coach"
 - [x] Add animated social counter: starts at 5,000, ticks up randomly every 4-8s
-- [ ] Research and propose available domain names under $50 that reflect AI poker coaching brand
+- [x] Research and propose available domain names under $50 that reflect AI poker coaching brand
+
+## Session: Real Counter + Feature Tiles + OG Tags (Mar 2026)
+- [x] Add siteStats table to DB schema (key, value) for usage counter
+- [x] Add incrementStat and getStat helpers in db.ts (atomic SQL INSERT ON DUPLICATE KEY UPDATE)
+- [x] Add tRPC publicProcedure: stats.getUsageCount (returns live count)
+- [x] Add tRPC publicProcedure: stats.incrementUsage (called when entering visualiser)
+- [x] Update homepage counter to read from live DB count instead of static 5000
+- [x] Increment counter in HandReplayer on mount (once per hand load, not per step)
+- [x] Add 3 feature tiles below the video: Hand Replayer, AI Coach, Leak Detection
+- [x] Add OG meta tags: og:title, og:description, og:type, og:image, twitter:card
+- [x] HelmetProvider already wired in main.tsx, react-helmet-async already installed
+- [x] 0 TypeScript errors, 105 tests passing

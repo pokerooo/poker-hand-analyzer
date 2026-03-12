@@ -1,6 +1,6 @@
 import { eq, and, desc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { users, hands, discordWebhooks, studyTopics, InsertUser } from "../drizzle/schema";
+import { users, hands, discordWebhooks, studyTopics, siteStats, InsertUser } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -287,4 +287,36 @@ export async function deleteStudyTopic(id: number, userId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   await db.delete(studyTopics).where(eq(studyTopics.id, id));
+}
+
+// ─── Site Stats ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Atomically increment a stat counter by 1.
+ * Uses INSERT ... ON DUPLICATE KEY UPDATE to handle concurrent requests safely.
+ */
+export async function incrementStat(key: string): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  // Try raw SQL for atomic increment
+  try {
+    await (db as any).execute(
+      `INSERT INTO siteStats (statKey, statValue) VALUES (?, 1)
+       ON DUPLICATE KEY UPDATE statValue = statValue + 1`,
+      [key]
+    );
+  } catch (e) {
+    console.warn('[Stats] incrementStat failed:', e);
+  }
+}
+
+/**
+ * Get the current value of a stat counter.
+ * Returns 0 if the key doesn't exist yet.
+ */
+export async function getStat(key: string): Promise<number> {
+  const db = await getDb();
+  if (!db) return 0;
+  const result = await db.select().from(siteStats).where(eq(siteStats.statKey, key)).limit(1);
+  return result[0]?.statValue ?? 0;
 }

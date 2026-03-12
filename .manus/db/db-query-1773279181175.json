@@ -1,0 +1,9 @@
+{
+  "query": "INSERT INTO `siteStats` (`statKey`, `statValue`) VALUES ('visualiser_views', 5000) ON DUPLICATE KEY UPDATE `statValue` = `statValue`;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3S5EK7kkwn3cfqa.root --database g6HPzuQNwUJzsGs4mHVNkx --execute INSERT INTO `siteStats` (`statKey`, `statValue`) VALUES ('visualiser_views', 5000) ON DUPLICATE KEY UPDATE `statValue` = `statValue`;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1637
+}

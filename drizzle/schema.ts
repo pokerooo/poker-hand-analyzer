@@ -93,3 +93,16 @@ export const studyTopics = mysqlTable("studyTopics", {
 
 export type StudyTopic = typeof studyTopics.$inferSelect;
 export type InsertStudyTopic = typeof studyTopics.$inferInsert;
+
+/**
+ * Site-wide stats — simple key/value counter store.
+ * Used for the homepage usage counter (key: 'visualiser_views').
+ */
+export const siteStats = mysqlTable("siteStats", {
+  id: int("id").autoincrement().primaryKey(),
+  statKey: varchar("statKey", { length: 64 }).notNull().unique(),
+  statValue: int("statValue").default(0).notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type SiteStat = typeof siteStats.$inferSelect;

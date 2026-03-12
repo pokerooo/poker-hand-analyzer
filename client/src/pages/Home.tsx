@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { Helmet } from "react-helmet-async";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -47,16 +48,22 @@ export default function Home() {
   const parseMutation = trpc.hands.parseText.useMutation();
   const createMutation = trpc.hands.create.useMutation();
 
-  // Animated social counter — starts at 5000, ticks up randomly to feel live
+  // Live usage counter from DB — seeded at 5000, increments on each visualiser visit
+  const { data: usageData } = trpc.stats.getUsageCount.useQuery();
   const [userCount, setUserCount] = useState(5000);
   useEffect(() => {
-    const tick = () => {
-      setUserCount((n) => n + Math.floor(Math.random() * 3));
-    };
-    // Tick every 4-8 seconds randomly
+    if (usageData?.count) {
+      setUserCount(usageData.count);
+    }
+  }, [usageData?.count]);
+  // Subtle random tick to feel live (adds 1-2 every 5-10s)
+  useEffect(() => {
     const schedule = () => {
-      const delay = 4000 + Math.random() * 4000;
-      return setTimeout(() => { tick(); schedule(); }, delay);
+      const delay = 5000 + Math.random() * 5000;
+      return setTimeout(() => {
+        setUserCount((n) => n + Math.floor(Math.random() * 2) + 1);
+        schedule();
+      }, delay);
     };
     const t = schedule();
     return () => clearTimeout(t);
@@ -123,6 +130,17 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
+      <Helmet>
+        <title>PokerReplay — Your Personal AI Poker Coach</title>
+        <meta name="description" content="Describe any hand. Get instant visual replays, street-by-street AI coaching, and leak detection — all in seconds. Built for mid-to-high stakes players." />
+        <meta property="og:title" content="PokerReplay — Your Personal AI Poker Coach" />
+        <meta property="og:description" content="Stop guessing. Start playing like a pro. Paste your hand, get AI coaching, spot your leaks." />
+        <meta property="og:type" content="website" />
+        <meta property="og:image" content="https://d2xsxph8kpxj0f.cloudfront.net/310519663320611071/g6HPzuQNwUJzsGs4mHVNkx/TrailerVideo_102f302f.mp4" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="PokerReplay — Your Personal AI Poker Coach" />
+        <meta name="twitter:description" content="Stop guessing. Start playing like a pro. Paste your hand, get AI coaching, spot your leaks." />
+      </Helmet>
 
       {/* Header */}
       <header className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-10">
@@ -200,6 +218,46 @@ export default function Home() {
             className="w-full block"
             style={{ display: "block", maxHeight: 360, objectFit: "cover" }}
           />
+        </div>
+
+        {/* Feature Tiles */}
+        <div className="w-full grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {[
+            {
+              icon: "🎬",
+              title: "Hand Replayer",
+              desc: "See every street play out on an animated table with pot, SPR, and stack tracking in real time.",
+              cta: "Paste a hand below",
+              onClick: () => textareaRef.current?.focus(),
+            },
+            {
+              icon: "🧠",
+              title: "AI Coach",
+              desc: "Get street-by-street analysis, a grade, and exploitative adjustments tailored to your villain type.",
+              cta: "Open AI Coach",
+              onClick: () => navigate("/coach"),
+            },
+            {
+              icon: "🔍",
+              title: "Leak Detection",
+              desc: "Scan your hand history for recurring patterns — positional leaks, sizing tells, and EV losses quantified.",
+              cta: "View My Hands",
+              onClick: () => navigate("/my-hands"),
+            },
+          ].map((tile) => (
+            <button
+              key={tile.title}
+              onClick={tile.onClick}
+              className="text-left p-4 rounded-xl border border-border bg-card hover:border-primary/40 hover:bg-primary/5 transition-all group space-y-2"
+            >
+              <div className="text-2xl">{tile.icon}</div>
+              <div className="font-semibold text-sm text-foreground">{tile.title}</div>
+              <p className="text-xs text-muted-foreground leading-snug">{tile.desc}</p>
+              <div className="text-xs font-semibold text-primary group-hover:underline flex items-center gap-1">
+                {tile.cta} <ChevronRight className="h-3 w-3" />
+              </div>
+            </button>
+          ))}
         </div>
 
         {/* Input Section */}

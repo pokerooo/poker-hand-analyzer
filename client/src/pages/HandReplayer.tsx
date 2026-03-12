@@ -881,6 +881,17 @@ export default function HandReplayer() {
 
   const { data: hand, isLoading } = trpc.hands.getBySlug.useQuery({ slug }, { enabled: !!slug });
 
+  // Fire-and-forget: increment the global usage counter once when a hand loads
+  const incrementUsage = trpc.stats.incrementUsage.useMutation();
+  const hasIncrementedRef = useRef(false);
+  useEffect(() => {
+    if (hand && !hasIncrementedRef.current) {
+      hasIncrementedRef.current = true;
+      incrementUsage.mutate();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [!!hand]);
+
   const [stepIndex, setStepIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [activeTab, setActiveTab] = useState<"replay" | "share" | "coach">("replay");
