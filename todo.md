@@ -432,3 +432,7 @@ Optional paid AI coach scores the hand and explains what to do differently.
 ## Session: Remove AI Coach Paywall (Mar 2026)
 - [x] Remove Pro paywall from AI Coach tab in HandReplayer
 - [x] Ensure rate limiting (20 calls/day) remains active for free users
+
+## Session: Collapse Note Section (Mar 2026)
+- [x] Collapse the parser Note section in HandReplayer by default
+- [x] Add click-to-expand toggle with chevron icon

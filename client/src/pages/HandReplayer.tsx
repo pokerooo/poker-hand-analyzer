@@ -304,6 +304,27 @@ function buildReplaySteps(parsed: ParsedHand): ReplayStep[] {
   return steps;
 }
 
+// --- Note Toggle ─────────────────────────────────────────────────────────────
+
+function NoteToggle({ note }: { note: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", marginTop: "0.5rem", paddingTop: "0.5rem" }}>
+      <button
+        onClick={() => setOpen(v => !v)}
+        className="flex items-center gap-1 text-xs"
+        style={{ color: "#475569", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+      >
+        {open ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+        <span className="italic">Parser notes</span>
+      </button>
+      {open && (
+        <p className="text-xs italic mt-1 leading-relaxed" style={{ color: "#475569" }}>{note}</p>
+      )}
+    </div>
+  );
+}
+
 // --- Share Sheet ──────────────────────────────────────────────────────────────
 
 function ShareSheet({ slug, rawText }: { slug: string; rawText: string }) {
@@ -1368,7 +1389,7 @@ export default function HandReplayer() {
                 {hand.rawText}
               </div>
               {parsed.parseNotes && (
-                <p className="text-xs italic" style={{ color: "#475569" }}>Note: {parsed.parseNotes}</p>
+                <NoteToggle note={parsed.parseNotes} />
               )}
             </div>
           )}
