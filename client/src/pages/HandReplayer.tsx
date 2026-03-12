@@ -908,6 +908,73 @@ export default function HandReplayer() {
   const currentStep = steps[stepIndex];
 
   // Compute SPR and effective stack from current step
+  // ── Board texture legend ────────────────────────────────────────────────────
+  const boardTextureLegend = useMemo(() => {
+    if (!currentStep || currentStep.communityCards.length === 0) return null;
+    const cards = currentStep.communityCards;
+
+    // Extract suits from community cards
+    const suits = cards.map((c) => c.slice(-1).toLowerCase()).filter((s) => ["h", "d", "s", "c"].includes(s));
+    if (suits.length === 0) return null;
+
+    const SUIT_COLORS: Record<string, { color: string; symbol: string; label: string }> = {
+      h: { color: "#e53e3e", symbol: "♥", label: "hearts" },
+      d: { color: "#3182ce", symbol: "♦", label: "diamonds" },
+      s: { color: "#a0aec0", symbol: "♠", label: "spades" },
+      c: { color: "#38a169", symbol: "♣", label: "clubs" },
+    };
+
+    // Count suit frequencies
+    const freq: Record<string, number> = {};
+    for (const s of suits) freq[s] = (freq[s] || 0) + 1;
+    const counts = Object.values(freq).sort((a, b) => b - a);
+    const maxCount = counts[0];
+    const totalCards = suits.length;
+
+    // Determine texture label
+    let textureLabel = "";
+    let textureBg = "rgba(100,116,139,0.15)";
+    let textureBorder = "rgba(100,116,139,0.3)";
+    let textureColor = "#94a3b8";
+
+    if (maxCount === totalCards && totalCards >= 3) {
+      textureLabel = "Monotone";
+      textureBg = "rgba(251,191,36,0.1)";
+      textureBorder = "rgba(251,191,36,0.3)";
+      textureColor = "#fbbf24";
+    } else if (maxCount === 2 && totalCards >= 3) {
+      textureLabel = totalCards === 3 ? "Flush Draw" : "Two-Tone";
+      textureBg = "rgba(251,191,36,0.08)";
+      textureBorder = "rgba(251,191,36,0.2)";
+      textureColor = "#fbbf24";
+    } else if (maxCount === 1 && totalCards >= 3) {
+      textureLabel = "Rainbow";
+      textureBg = "rgba(74,222,128,0.08)";
+      textureBorder = "rgba(74,222,128,0.2)";
+      textureColor = "#4ade80";
+    } else if (totalCards === 2) {
+      textureLabel = maxCount === 2 ? "Suited" : "Offsuit";
+    } else if (totalCards === 1) {
+      textureLabel = "";
+    }
+
+    // Build suit pip display — ordered by frequency desc
+    const suitPips = Object.entries(freq)
+      .sort((a, b) => b[1] - a[1])
+      .map(([s, count]) => ({
+        ...SUIT_COLORS[s],
+        count,
+      }));
+
+    // Check for paired board
+    const ranks = cards.map((c) => c.slice(0, -1).toUpperCase());
+    const rankFreq: Record<string, number> = {};
+    for (const r of ranks) rankFreq[r] = (rankFreq[r] || 0) + 1;
+    const isPaired = Object.values(rankFreq).some((n) => n >= 2);
+
+    return { textureLabel, textureBg, textureBorder, textureColor, suitPips, isPaired };
+  }, [currentStep]);
+
   const { spr, effStack } = useMemo(() => {
     if (!currentStep || currentStep.pot <= 0) return { spr: null, effStack: null };
     const hero = currentStep.players.find((p) => p.isHero);
@@ -1144,6 +1211,49 @@ export default function HandReplayer() {
                 );
               })()}
             </div>
+            {/* Board texture legend */}
+            {boardTextureLegend && (
+              <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
+                {/* Suit pips */}
+                {boardTextureLegend.suitPips.map((pip, i) => (
+                  <span
+                    key={i}
+                    className="inline-flex items-center gap-0.5 text-[11px] font-bold"
+                    style={{ color: pip.color }}
+                  >
+                    {Array.from({ length: pip.count }, (_, j) => (
+                      <span key={j}>{pip.symbol}</span>
+                    ))}
+                  </span>
+                ))}
+                {/* Texture label */}
+                {boardTextureLegend.textureLabel && (
+                  <span
+                    className="inline-block text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full"
+                    style={{
+                      color: boardTextureLegend.textureColor,
+                      background: boardTextureLegend.textureBg,
+                      border: `1px solid ${boardTextureLegend.textureBorder}`,
+                    }}
+                  >
+                    {boardTextureLegend.textureLabel}
+                  </span>
+                )}
+                {/* Paired board indicator */}
+                {boardTextureLegend.isPaired && (
+                  <span
+                    className="inline-block text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full"
+                    style={{
+                      color: "#f87171",
+                      background: "rgba(248,113,113,0.1)",
+                      border: "1px solid rgba(248,113,113,0.25)",
+                    }}
+                  >
+                    Paired
+                  </span>
+                )}
+              </div>
+            )}
             <p
               className="text-sm font-semibold leading-snug"
               style={{ color: currentStep.currentAction === null ? "#4ade80" : "#e2e8f0" }}

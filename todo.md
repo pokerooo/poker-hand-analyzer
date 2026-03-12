@@ -397,3 +397,12 @@ Optional paid AI coach scores the hand and explains what to do differently.
 - [x] Reinforced suit parsing in handParser.ts with CRITICAL SUIT RULE section
 - [x] Parser now maps word suits (club/spade/heart/diamond) and symbols (♣♠♥♦) to correct letter codes
 - [x] 0 TypeScript errors, 105 tests passing
+
+## Session: Board Texture Legend (Mar 2026)
+- [x] Add board texture legend to narration card in HandReplayer
+- [x] Compute texture: Monotone / Flush Draw / Two-Tone / Rainbow based on suit frequency
+- [x] Colour-coded suit pips (♥ red, ♦ blue, ♠ slate, ♣ green) shown in order of frequency
+- [x] Texture label pill: Monotone=amber, Flush Draw=amber, Rainbow=green, Paired=red
+- [x] Paired board indicator shown as separate red pill when any rank appears 2+ times
+- [x] Legend only shown when community cards are present (hidden preflop)
+- [x] 0 TypeScript errors, 105 tests passing
