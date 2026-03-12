@@ -571,7 +571,12 @@ function CoachPanel({ handId, isUnlocked, cachedAnalysis, storedVillainType }: {
               {analysis.grade}
             </div>
             <div>
-              <div className="font-semibold text-sm">{analysis.gradeLabel}</div>
+              <div
+                className={`font-bold text-base ${gradeColors[analysis.grade] || "text-foreground"}`}
+                style={{ textShadow: "0 0 10px currentColor" }}
+              >
+                {analysis.gradeLabel}
+              </div>
               <div className="text-xs mt-0.5" style={{ color: "#94a3b8" }}>{analysis.summary}</div>
             </div>
           </div>
