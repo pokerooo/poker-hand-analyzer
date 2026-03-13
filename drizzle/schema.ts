@@ -1,21 +1,21 @@
-import { integer, pgEnum, pgTable, text, timestamp, varchar, json, boolean } from "drizzle-orm/pg-core";
+import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, json, boolean } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
  */
-export const users = pgTable("users", {
-  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+export const users = mysqlTable("users", {
+  id: int("id").primaryKey().autoincrement(),
   openId: varchar("openId", { length: 64 }).notNull().unique(),
   name: text("name"),
   email: varchar("email", { length: 320 }),
   loginMethod: varchar("loginMethod", { length: 64 }),
-  role: pgEnum("role", ["user", "admin"]).default("user").notNull(),
+  role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
-  studyStreak: integer("studyStreak").default(0).notNull(),
+  studyStreak: int("studyStreak").default(0).notNull(),
   lastStudyDate: varchar("lastStudyDate", { length: 10 }), // YYYY-MM-DD UTC
-  longestStreak: integer("longestStreak").default(0).notNull(),
+  longestStreak: int("longestStreak").default(0).notNull(),
   // Stripe subscription
   stripeCustomerId: varchar("stripe_customer_id", { length: 255 }),
   stripeSubscriptionId: varchar("stripe_subscription_id", { length: 255 }),
@@ -29,9 +29,9 @@ export type InsertUser = typeof users.$inferInsert;
  * Poker hands table — simplified for the new casual visualiser product.
  * Stores the raw text input and the parsed structured data.
  */
-export const hands = pgTable("hands", {
-  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
-  userId: integer("userId"), // nullable — guests can create hands too (stored in session)
+export const hands = mysqlTable("hands", {
+  id: int("id").primaryKey().autoincrement(),
+  userId: int("userId"), // nullable — guests can create hands too (stored in session)
 
   // Raw input from user (WhatsApp-style text)
   rawText: text("rawText").notNull(),
@@ -65,9 +65,9 @@ export type InsertHand = typeof hands.$inferInsert;
 /**
  * Discord webhooks — for sharing hands to study groups
  */
-export const discordWebhooks = pgTable("discordWebhooks", {
-  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
-  userId: integer("userId").notNull(),
+export const discordWebhooks = mysqlTable("discordWebhooks", {
+  id: int("id").primaryKey().autoincrement(),
+  userId: int("userId").notNull(),
   name: varchar("name", { length: 100 }).notNull(),
   webhookUrl: text("webhookUrl").notNull(),
   isDefault: boolean("isDefault").default(false).notNull(),
@@ -81,9 +81,9 @@ export type InsertDiscordWebhook = typeof discordWebhooks.$inferInsert;
 /**
  * Study list — concepts saved by users from AI Coach responses
  */
-export const studyTopics = pgTable("studyTopics", {
-  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
-  userId: integer("userId").notNull(),
+export const studyTopics = mysqlTable("studyTopics", {
+  id: int("id").primaryKey().autoincrement(),
+  userId: int("userId").notNull(),
   topic: varchar("topic", { length: 500 }).notNull(),       // the concept/question text
   context: text("context"),                                  // the coach's answer snippet
   handSlug: varchar("handSlug", { length: 16 }),             // optional — linked hand
@@ -98,10 +98,10 @@ export type InsertStudyTopic = typeof studyTopics.$inferInsert;
  * Site-wide stats — simple key/value counter store.
  * Used for the homepage usage counter (key: 'visualiser_views').
  */
-export const siteStats = pgTable("siteStats", {
-  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+export const siteStats = mysqlTable("siteStats", {
+  id: int("id").primaryKey().autoincrement(),
   statKey: varchar("statKey", { length: 64 }).notNull().unique(),
-  statValue: integer("statValue").default(0).notNull(),
+  statValue: int("statValue").default(0).notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
 
@@ -112,9 +112,9 @@ export type SiteStat = typeof siteStats.$inferSelect;
  * Free users: max 20 AI calls per calendar day (UTC).
  * Pro users: unlimited.
  */
-export const aiCallLog = pgTable("aiCallLog", {
-  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
-  userId: integer("userId").notNull(),
+export const aiCallLog = mysqlTable("aiCallLog", {
+  id: int("id").primaryKey().autoincrement(),
+  userId: int("userId").notNull(),
   callType: varchar("callType", { length: 64 }).notNull(), // "chat", "analyze", "patterns"
   calledAt: timestamp("calledAt").defaultNow().notNull(),
 });
