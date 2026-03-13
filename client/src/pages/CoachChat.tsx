@@ -231,11 +231,11 @@ export default function CoachChat() {
       : "#4ade80";
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: "#0a0e1a" }}>
+    <div className="min-h-screen flex flex-col" style={{ background: "var(--poker-page-bg)" }}>
       {/* Header */}
       <div
         className="sticky top-0 z-10 border-b px-4 py-3 flex items-center justify-between shrink-0"
-        style={{ background: "rgba(10,14,26,0.95)", borderColor: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)" }}
+        style={{ background: "var(--poker-header-bg)", borderColor: "var(--poker-border)", backdropFilter: "blur(12px)" }}
       >
         <div className="flex items-center gap-3">
           {/* Back to hand link if arrived from replayer */}
@@ -244,9 +244,9 @@ export default function CoachChat() {
               <button
                 className="flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg transition-all"
                 style={{
-                  color: "#4ade80",
-                  border: "1px solid rgba(74,222,128,0.2)",
-                  background: "rgba(74,222,128,0.06)",
+                  color: "var(--poker-green)",
+                  border: "1px solid var(--poker-green-subtle-border)",
+                  background: "var(--poker-green-subtle)",
                 }}
               >
                 <ArrowLeft className="h-3.5 w-3.5" />
@@ -255,14 +255,14 @@ export default function CoachChat() {
             </Link>
           ) : (
             <Link href="/my-hands">
-              <button className="text-sm font-medium" style={{ color: "#64748b" }}>
+              <button className="text-sm font-medium" style={{ color: "var(--poker-text-muted)" }}>
                 ← My Hands
               </button>
             </Link>
           )}
-          <span style={{ color: "#334155" }}>/</span>
+            <span style={{ color: "var(--poker-text-muted)" }}>/</span>
           <div className="flex items-center gap-2">
-            <Zap className="h-5 w-5" style={{ color: "#4ade80" }} />
+            <Zap className="h-5 w-5" style={{ color: "var(--poker-green)" }} />
             <span className="font-bold text-white">AI Coach</span>
           </div>
         </div>
@@ -291,7 +291,7 @@ export default function CoachChat() {
           {counterLabel && (
             <span
               className="hidden sm:flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full"
-              style={{ color: "#4ade80", background: "rgba(74,222,128,0.08)", border: "1px solid rgba(74,222,128,0.15)" }}
+              style={{ color: "var(--poker-green)", background: "var(--poker-green-subtle)", border: "1px solid var(--poker-green-subtle-border)" }}
             >
               <Zap className="h-3 w-3" />
               {counterLabel}
@@ -301,7 +301,7 @@ export default function CoachChat() {
             <button
               onClick={() => { setMessages([]); setSessionCount(0); setSavedTopics(new Set()); }}
               className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg"
-              style={{ color: "#64748b", border: "1px solid rgba(255,255,255,0.08)" }}
+              style={{ color: "var(--poker-text-muted)", border: "1px solid var(--poker-border)" }}
             >
               <RotateCcw className="h-3 w-3" />
               New chat
@@ -325,13 +325,13 @@ export default function CoachChat() {
             <div className="relative mb-6">
               <div
                 className="w-24 h-24 rounded-2xl overflow-hidden"
-                style={{ border: "2px solid rgba(74,222,128,0.3)", boxShadow: "0 0 40px rgba(74,222,128,0.15)" }}
+                style={{ border: "2px solid var(--poker-green-subtle-border)" }}
               >
                 <img src={MASCOT_URL} alt="AI Coach" className="w-full h-full object-cover" />
               </div>
               <div
                 className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center"
-                style={{ background: "#16a34a", border: "2px solid #0a0e1a" }}
+                style={{ background: "var(--poker-green)", border: "2px solid var(--poker-page-bg)" }}
               >
                 <Zap className="h-3 w-3 text-white" />
               </div>
@@ -340,7 +340,7 @@ export default function CoachChat() {
             <h1 className="text-3xl font-bold text-white text-center mb-2">
               Instant review, evolve your poker mind.
             </h1>
-            <p className="text-center max-w-md mb-8" style={{ color: "#64748b" }}>
+            <p className="text-center max-w-md mb-8" style={{ color: "var(--poker-text-muted)" }}>
               Ask anything — hand lines, theoretical concepts, tournament adjustments, or exploitative reads. Direct answers, no fluff.
             </p>
 
@@ -368,18 +368,18 @@ export default function CoachChat() {
                 className="w-full max-w-lg mb-6 rounded-xl px-4 py-3 flex items-center gap-3"
                 style={{ background: "rgba(74,222,128,0.08)", border: "1px solid rgba(74,222,128,0.2)" }}
               >
-                <Zap className="h-4 w-4 shrink-0" style={{ color: "#4ade80" }} />
+                <Zap className="h-4 w-4 shrink-0" style={{ color: "var(--poker-green)" }} />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-white">
+                  <p className="text-sm font-semibold" style={{ color: "var(--poker-text)" }}>
                     {fromTitle ? `Reviewing: "${fromTitle}"` : "Hand context loaded"}
                   </p>
-                  <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>
+                  <p className="text-xs mt-0.5" style={{ color: "var(--poker-text-muted)" }}>
                     Input pre-filled below — just press Enter to ask.
                   </p>
                 </div>
                 <button
                   className="shrink-0 text-xs px-3 py-1.5 rounded-lg font-medium"
-                  style={{ color: "#4ade80", border: "1px solid rgba(74,222,128,0.2)" }}
+                  style={{ color: "var(--poker-green)", border: "1px solid var(--poker-green-subtle-border)" }}
                   onClick={() => sendMessage(input)}
                 >
                   Ask now →
@@ -396,19 +396,19 @@ export default function CoachChat() {
                   disabled={remainingCalls === 0}
                   className="w-full text-left px-5 py-3.5 rounded-full text-sm font-medium transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed"
                   style={{
-                    background: "rgba(255,255,255,0.05)",
-                    border: "1px solid rgba(255,255,255,0.1)",
-                    color: "#e2e8f0",
+                    background: "var(--poker-surface)",
+                    border: "1px solid var(--poker-border)",
+                    color: "var(--poker-text)",
                   }}
                   onMouseEnter={(e) => {
                     if (remainingCalls !== 0) {
-                      (e.currentTarget as HTMLButtonElement).style.background = "rgba(74,222,128,0.08)";
-                      (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(74,222,128,0.2)";
+                      (e.currentTarget as HTMLButtonElement).style.background = "var(--poker-green-subtle)";
+                      (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--poker-green-subtle-border)";
                     }
                   }}
                   onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.05)";
-                    (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.1)";
+                    (e.currentTarget as HTMLButtonElement).style.background = "var(--poker-surface)";
+                    (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--poker-border)";
                   }}
                 >
                   {prompt}
@@ -420,17 +420,17 @@ export default function CoachChat() {
                 onClick={shufflePrompts}
                 className="w-full flex items-center justify-center gap-2 px-5 py-2.5 rounded-full text-xs font-medium transition-all hover:scale-[1.01]"
                 style={{
-                  background: "transparent",
-                  border: "1px dashed rgba(255,255,255,0.12)",
-                  color: "#475569",
-                }}
+                    background: "transparent",
+                    border: "1px dashed var(--poker-border)",
+                    color: "var(--poker-text-muted)",
+                  }}
                 onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.color = "#94a3b8";
-                  (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.2)";
+                  (e.currentTarget as HTMLButtonElement).style.color = "var(--poker-text)";
+                  (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--poker-border-strong)";
                 }}
                 onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.color = "#475569";
-                  (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.12)";
+                  (e.currentTarget as HTMLButtonElement).style.color = "var(--poker-text-muted)";
+                  (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--poker-border)";
                 }}
               >
                 <RefreshCw className="h-3 w-3" />
@@ -459,7 +459,7 @@ export default function CoachChat() {
                       style={
                         msg.role === "user"
                           ? { background: "linear-gradient(135deg, #16a34a, #15803d)", color: "white", borderBottomRightRadius: "4px" }
-                          : { background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", color: "#e2e8f0", borderBottomLeftRadius: "4px" }
+                          : { background: "var(--poker-surface)", border: "1px solid var(--poker-border)", color: "var(--poker-text)", borderBottomLeftRadius: "4px" }
                       }
                     >
                       {msg.role === "assistant" ? (
@@ -476,7 +476,7 @@ export default function CoachChat() {
                         {msg.elapsed !== undefined && msg.elapsed > 0 && (
                           <span
                             className="flex items-center gap-1 text-xs"
-                            style={{ color: "#334155" }}
+                            style={{ color: "var(--poker-text-muted)" }}
                           >
                             <Clock className="h-3 w-3" />
                             {msg.elapsed}s
@@ -491,19 +491,19 @@ export default function CoachChat() {
                             className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg transition-all"
                             style={
                               savedTopics.has(i)
-                                ? { color: "#4ade80", background: "rgba(74,222,128,0.08)", border: "1px solid rgba(74,222,128,0.2)", cursor: "default" }
-                                : { color: "#64748b", background: "transparent", border: "1px solid rgba(255,255,255,0.06)" }
+                                ? { color: "var(--poker-green)", background: "var(--poker-green-subtle)", border: "1px solid var(--poker-green-subtle-border)", cursor: "default" }
+                                : { color: "var(--poker-text-muted)", background: "transparent", border: "1px solid var(--poker-border)" }
                             }
                             onMouseEnter={(e) => {
                               if (!savedTopics.has(i)) {
-                                (e.currentTarget as HTMLButtonElement).style.color = "#94a3b8";
-                                (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.15)";
+                              (e.currentTarget as HTMLButtonElement).style.color = "var(--poker-text)";
+                              (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--poker-border-strong)";
                               }
                             }}
                             onMouseLeave={(e) => {
                               if (!savedTopics.has(i)) {
-                                (e.currentTarget as HTMLButtonElement).style.color = "#64748b";
-                                (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.06)";
+                              (e.currentTarget as HTMLButtonElement).style.color = "var(--poker-text-muted)";
+                              (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--poker-border)";
                               }
                             }}
                           >
@@ -529,7 +529,7 @@ export default function CoachChat() {
                 </div>
                 <div
                   className="rounded-2xl px-4 py-3 flex items-center gap-3"
-                  style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderBottomLeftRadius: "4px" }}
+                  style={{ background: "var(--poker-surface)", border: "1px solid var(--poker-border)", borderBottomLeftRadius: "4px" }}
                 >
                   {/* Animated dots */}
                   <div className="flex items-center gap-1">
@@ -537,14 +537,14 @@ export default function CoachChat() {
                       <div
                         key={dot}
                         className="w-2 h-2 rounded-full animate-bounce"
-                        style={{ background: "#4ade80", animationDelay: `${dot * 0.15}s` }}
+                        style={{ background: "var(--poker-green)", animationDelay: `${dot * 0.15}s` }}
                       />
                     ))}
                   </div>
                   {/* Elapsed time */}
                   <span
                     className="flex items-center gap-1 text-xs font-mono"
-                    style={{ color: "#4ade80" }}
+                    style={{ color: "var(--poker-green)" }}
                   >
                     <Clock className="h-3 w-3" />
                     Thinking... {elapsedSeconds}s
@@ -560,14 +560,15 @@ export default function CoachChat() {
       {/* Input bar */}
       <div
         className="sticky bottom-0 border-t px-4 py-3 shrink-0"
-        style={{ background: "rgba(10,14,26,0.97)", borderColor: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)" }}
+        style={{ background: "var(--poker-header-bg)", borderColor: "var(--poker-border)", backdropFilter: "blur(12px)" }}
       >
         <div className="max-w-3xl mx-auto">
           <div
             className="flex items-end gap-2 rounded-2xl px-4 py-2"
             style={{
-              background: "rgba(255,255,255,0.06)",
-              border: `1px solid ${remainingCalls === 0 ? "rgba(239,68,68,0.3)" : "rgba(255,255,255,0.1)"}`,
+              background: "var(--poker-surface)",
+              border: `1px solid ${remainingCalls === 0 ? "rgba(239,68,68,0.3)" : "var(--poker-border)"}`,
+
             }}
           >
             <textarea
@@ -580,7 +581,7 @@ export default function CoachChat() {
               rows={1}
               className="flex-1 bg-transparent resize-none outline-none text-sm py-1.5 disabled:cursor-not-allowed"
               style={{
-                color: remainingCalls === 0 ? "#475569" : "#e2e8f0",
+                color: remainingCalls === 0 ? "var(--poker-text-muted)" : "var(--poker-text)",
                 maxHeight: "120px",
                 lineHeight: "1.5",
               }}
@@ -594,12 +595,12 @@ export default function CoachChat() {
               onClick={() => sendMessage(input)}
               disabled={!input.trim() || isTyping || remainingCalls === 0}
               className="shrink-0 w-9 h-9 rounded-xl flex items-center justify-center transition-all disabled:opacity-40"
-              style={{ background: input.trim() && !isTyping && remainingCalls !== 0 ? "linear-gradient(135deg, #16a34a, #15803d)" : "rgba(255,255,255,0.08)" }}
+              style={{ background: input.trim() && !isTyping && remainingCalls !== 0 ? "var(--poker-green)" : "var(--poker-surface-2)" }}
             >
               <Send className="h-4 w-4 text-white" />
             </button>
           </div>
-          <p className="text-center text-xs mt-2" style={{ color: "#334155" }}>
+          <p className="text-center text-xs mt-2" style={{ color: "var(--poker-text-muted)" }}>
             Press Enter to send · Shift+Enter for new line
           </p>
         </div>

@@ -367,7 +367,7 @@ export default function MyHands() {
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex-1 min-w-0 space-y-1.5">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-mono font-black text-base" style={{ color: "#4ade80", textShadow: "0 0 8px rgba(74,222,128,0.3)" }}>
+                             <span className="font-mono font-black text-base" style={{ color: "var(--poker-green)" }}>
                               {heroCards}
                             </span>
                             <span

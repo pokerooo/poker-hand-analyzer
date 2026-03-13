@@ -45,9 +45,9 @@ function GradeBar({ gradeDist }: { gradeDist: Record<string, number> }) {
   return (
     <div
       className="rounded-xl p-5 border"
-      style={{ background: "#0d1220", borderColor: "rgba(255,255,255,0.06)" }}
+      style={{ background: "var(--poker-surface)", borderColor: "var(--poker-border)" }}
     >
-      <h3 className="text-sm font-semibold mb-3" style={{ color: "#94a3b8" }}>Grade Distribution</h3>
+      <h3 className="text-sm font-semibold mb-3" style={{ color: "var(--poker-text-muted)" }}>Grade Distribution</h3>
       <div className="flex h-8 rounded-lg overflow-hidden gap-0.5">
         {grades.map((g) => {
           const count = gradeDist[g] || 0;
@@ -72,7 +72,7 @@ function GradeBar({ gradeDist }: { gradeDist: Record<string, number> }) {
           return (
             <div key={g} className="flex items-center gap-1">
               <div className="w-2.5 h-2.5 rounded-sm" style={{ background: gradeColors[g] }} />
-              <span className="text-xs" style={{ color: "#64748b" }}>{g}: {count}</span>
+              <span className="text-xs" style={{ color: "var(--poker-text-muted)" }}>{g}: {count}</span>
             </div>
           );
         })}
@@ -98,13 +98,13 @@ function PatternCard({ pattern, index }: { pattern: any; index: number }) {
         <div className="flex items-start gap-3">
           <div
             className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
-            style={{ background: "rgba(255,255,255,0.04)", color: sev.text }}
+            style={{ background: "var(--poker-surface-2)", color: sev.text }}
           >
             {icon}
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-semibold text-sm" style={{ color: "#e2e8f0" }}>
+              <span className="font-semibold text-sm" style={{ color: "var(--poker-text)" }}>
                 {index + 1}. {pattern.title}
               </span>
               <Badge
@@ -115,20 +115,20 @@ function PatternCard({ pattern, index }: { pattern: any; index: number }) {
               </Badge>
               <Badge
                 className="text-[10px] px-1.5 py-0"
-                style={{ background: "rgba(255,255,255,0.04)", color: "#64748b", border: "1px solid rgba(255,255,255,0.08)" }}
+                style={{ background: "var(--poker-surface-2)", color: "var(--poker-text-muted)", border: "1px solid var(--poker-border)" }}
               >
                 {pattern.category}
               </Badge>
               {pattern.frequency && (
                 <Badge
                   className="text-[10px] px-1.5 py-0"
-                  style={{ background: "rgba(255,255,255,0.04)", color: "#64748b", border: "1px solid rgba(255,255,255,0.08)" }}
-                >
-                  {pattern.frequency}
+                style={{ background: "var(--poker-surface-2)", color: "var(--poker-text-muted)", border: "1px solid var(--poker-border)" }}
+              >
+                {pattern.frequency}
                 </Badge>
               )}
             </div>
-            <p className="text-xs mt-1.5 leading-relaxed" style={{ color: "#94a3b8" }}>
+            <p className="text-xs mt-1.5 leading-relaxed" style={{ color: "var(--poker-text-muted)" }}>
               {pattern.description}
             </p>
           </div>
@@ -137,7 +137,7 @@ function PatternCard({ pattern, index }: { pattern: any; index: number }) {
               <div className="text-sm font-black" style={{ color: "#f87171" }}>
                 -{pattern.estimatedBuyinImpact}
               </div>
-              <div className="text-[10px]" style={{ color: "#475569" }}>BI/100</div>
+              <div className="text-[10px]" style={{ color: "var(--poker-text-muted)" }}>BI/100</div>
             </div>
           )}
         </div>
@@ -149,13 +149,13 @@ function PatternCard({ pattern, index }: { pattern: any; index: number }) {
         >
           <div
             className="rounded-lg p-3 mt-3"
-            style={{ background: "rgba(255,255,255,0.03)" }}
+            style={{ background: "var(--poker-surface)" }}
           >
             <div className="flex items-center gap-2 mb-1.5">
               <Target className="h-3.5 w-3.5" style={{ color: "#10b981" }} />
-              <span className="text-xs font-semibold" style={{ color: "#10b981" }}>Study Drill</span>
+              <span className="text-xs font-semibold" style={{ color: "var(--poker-green)" }}>Study Drill</span>
             </div>
-            <p className="text-xs leading-relaxed" style={{ color: "#94a3b8" }}>
+            <p className="text-xs leading-relaxed" style={{ color: "var(--poker-text-muted)" }}>
               {pattern.drill}
             </p>
           </div>
@@ -179,24 +179,24 @@ export default function PatternRecognition() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "#0a0e1a" }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--poker-page-bg)" }}>
         <Loader2 className="h-8 w-8 animate-spin" style={{ color: "#10b981" }} />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen" style={{ background: "#0a0e1a", color: "#e2e8f0" }}>
+    <div className="min-h-screen" style={{ background: "var(--poker-page-bg)", color: "var(--poker-text)" }}>
       {/* Header */}
       <div
         className="border-b px-6 py-4 flex items-center gap-4 sticky top-0 z-10"
-        style={{ borderColor: "rgba(255,255,255,0.06)", background: "rgba(10,14,26,0.92)", backdropFilter: "blur(12px)" }}
+        style={{ borderColor: "var(--poker-border)", background: "var(--poker-header-bg)", backdropFilter: "blur(12px)" }}
       >
         <button
           className="flex items-center gap-2 text-sm transition-colors"
-          style={{ color: "#64748b" }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = "#10b981")}
-          onMouseLeave={(e) => (e.currentTarget.style.color = "#64748b")}
+          style={{ color: "var(--poker-text-muted)" }}
+          onMouseEnter={(e) => (e.currentTarget.style.color = "var(--poker-green)")}
+          onMouseLeave={(e) => (e.currentTarget.style.color = "var(--poker-text-muted)")}
           onClick={() => navigate("/my-hands")}
         >
           <ChevronLeft className="h-4 w-4" />
@@ -219,11 +219,11 @@ export default function PatternRecognition() {
         {!isAuthenticated && (
           <div
             className="rounded-xl p-8 text-center border"
-            style={{ background: "#0d1220", borderColor: "rgba(255,255,255,0.08)" }}
+            style={{ background: "var(--poker-surface)", borderColor: "var(--poker-border)" }}
           >
             <BarChart2 className="h-10 w-10 mx-auto mb-4" style={{ color: "#a78bfa" }} />
             <h2 className="text-xl font-bold mb-2">Sign in to analyse patterns</h2>
-            <p className="text-sm mb-6" style={{ color: "#64748b" }}>
+            <p className="text-sm mb-6" style={{ color: "var(--poker-text-muted)" }}>
               Pattern recognition requires a Pro subscription. Sign in first.
             </p>
             <Button onClick={() => navigate("/")}>Go to Home</Button>
@@ -239,7 +239,7 @@ export default function PatternRecognition() {
         {isAuthenticated && isPro && isLoading && (
           <div className="flex flex-col items-center gap-4 py-16">
             <Loader2 className="h-10 w-10 animate-spin" style={{ color: "#a78bfa" }} />
-            <p className="text-sm" style={{ color: "#64748b" }}>
+            <p className="text-sm" style={{ color: "var(--poker-text-muted)" }}>
               Analysing your hand history for patterns…
             </p>
           </div>
@@ -261,14 +261,14 @@ export default function PatternRecognition() {
         {isAuthenticated && isPro && data && !data.hasEnoughData && (
           <div
             className="rounded-xl p-8 text-center border"
-            style={{ background: "#0d1220", borderColor: "rgba(255,255,255,0.08)" }}
+            style={{ background: "var(--poker-surface)", borderColor: "var(--poker-border)" }}
           >
             <BarChart2 className="h-12 w-12 mx-auto mb-4" style={{ color: "#a78bfa", opacity: 0.5 }} />
             <h2 className="text-xl font-bold mb-2">Not enough data yet</h2>
-            <p className="text-sm mb-2" style={{ color: "#64748b" }}>
+            <p className="text-sm mb-2" style={{ color: "var(--poker-text-muted)" }}>
               You have {data.handsAnalyzed} hand{data.handsAnalyzed !== 1 ? "s" : ""} — need at least {data.minRequired} to detect patterns.
             </p>
-            <p className="text-xs mb-6" style={{ color: "#475569" }}>
+            <p className="text-xs mb-6" style={{ color: "var(--poker-text-muted)" }}>
               Add more hands and run AI Coach analysis on them to improve accuracy.
             </p>
             <Button onClick={() => navigate("/")}>Add a Hand</Button>
@@ -281,14 +281,14 @@ export default function PatternRecognition() {
             {/* Summary card */}
             <div
               className="rounded-xl p-5 border"
-              style={{ background: "#0d1220", borderColor: "rgba(139,92,246,0.2)" }}
+              style={{ background: "var(--poker-surface)", borderColor: "rgba(139,92,246,0.2)" }}
             >
               <div className="flex items-start justify-between gap-4 mb-3">
                 <div>
-                  <h2 className="font-bold text-lg" style={{ color: "#e2e8f0" }}>
+                  <h2 className="font-bold text-lg" style={{ color: "var(--poker-text)" }}>
                     Your Game Profile
                   </h2>
-                  <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>
+                  <p className="text-xs mt-0.5" style={{ color: "var(--poker-text-muted)" }}>
                     Based on {data.handsAnalyzed} hands
                   </p>
                 </div>
@@ -305,7 +305,7 @@ export default function PatternRecognition() {
                 )}
               </div>
               {data.summary && (
-                <p className="text-sm leading-relaxed" style={{ color: "#94a3b8" }}>
+                <p className="text-sm leading-relaxed" style={{ color: "var(--poker-text-muted)" }}>
                   {data.summary}
                 </p>
               )}
@@ -331,10 +331,10 @@ export default function PatternRecognition() {
             {/* Leak patterns */}
             {data.patterns && data.patterns.length > 0 && (
               <div className="space-y-3">
-                <h3 className="font-semibold text-sm flex items-center gap-2" style={{ color: "#94a3b8" }}>
+                <h3 className="font-semibold text-sm flex items-center gap-2" style={{ color: "var(--poker-text-muted)" }}>
                   <AlertTriangle className="h-4 w-4" style={{ color: "#fbbf24" }} />
                   Identified Leaks
-                  <span className="text-xs" style={{ color: "#475569" }}>— click to see drill</span>
+                  <span className="text-xs" style={{ color: "var(--poker-text-muted)" }}>— click to see drill</span>
                 </h3>
                 {data.patterns.map((pattern: any, i: number) => (
                   <PatternCard key={i} pattern={pattern} index={i} />
@@ -345,8 +345,8 @@ export default function PatternRecognition() {
             {/* Strengths */}
             {data.strengths && data.strengths.length > 0 && (
               <div className="space-y-3">
-                <h3 className="font-semibold text-sm flex items-center gap-2" style={{ color: "#94a3b8" }}>
-                  <TrendingUp className="h-4 w-4" style={{ color: "#4ade80" }} />
+                <h3 className="font-semibold text-sm flex items-center gap-2" style={{ color: "var(--poker-text-muted)" }}>
+                  <TrendingUp className="h-4 w-4" style={{ color: "var(--poker-green)" }} />
                   Strengths to Reinforce
                 </h3>
                 {data.strengths.map((strength: any, i: number) => (
@@ -356,12 +356,12 @@ export default function PatternRecognition() {
                     style={{ background: "rgba(16,185,129,0.05)", borderColor: "rgba(16,185,129,0.15)" }}
                   >
                     <div className="flex items-center gap-2 mb-1">
-                      <TrendingUp className="h-3.5 w-3.5" style={{ color: "#4ade80" }} />
-                      <span className="font-semibold text-sm" style={{ color: "#4ade80" }}>
+                      <TrendingUp className="h-3.5 w-3.5" style={{ color: "var(--poker-green)" }} />
+                      <span className="font-semibold text-sm" style={{ color: "var(--poker-green)" }}>
                         {strength.title}
                       </span>
                     </div>
-                    <p className="text-xs leading-relaxed" style={{ color: "#94a3b8" }}>
+                    <p className="text-xs leading-relaxed" style={{ color: "var(--poker-text-muted)" }}>
                       {strength.description}
                     </p>
                   </div>

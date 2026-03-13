@@ -461,3 +461,17 @@ Optional paid AI coach scores the hand and explains what to do differently.
 - [x] Home: Tighten hero section padding on mobile (py-6 on xs, py-16 on sm+), gap reduced
 - [x] Home: "How it works" grid stacks to 1 column on mobile (was fixed 3-col)
 - [x] Home: Hero h1 reduced to text-3xl on mobile (was text-4xl)
+
+## Session: Full Day/Night Theme Support (Mar 2026)
+- [x] Audit all pages for hardcoded dark inline styles (rgba(10,15,13,...), #0a0f0d, etc.)
+- [x] Extend index.css with complete light/dark CSS variable palette (backgrounds, borders, text, accents)
+- [x] Refactor HandReplayer.tsx — replace all hardcoded dark styles with CSS variables
+- [x] Refactor MyHands.tsx — replace all hardcoded dark styles with CSS variables
+- [x] Refactor CoachChat.tsx — replace all hardcoded dark styles with CSS variables
+- [x] Refactor MemoryBank.tsx — replace all hardcoded dark styles with CSS variables
+- [x] Refactor WinRateVisualizer.tsx — replace all hardcoded dark styles with CSS variables
+- [x] Refactor PokerTable.tsx — replace hardcoded felt/rim colours with theme-aware variables
+- [x] Refactor PatternRecognition.tsx and ImportHistory.tsx
+- [x] Add floating ThemeToggle button (Moon/Sun) to App.tsx — visible on all pages
+- [x] ThemeProvider set to switchable=true with localStorage persistence
+- [x] 0 TypeScript errors, 105 tests passing

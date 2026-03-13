@@ -31,13 +31,13 @@ function PnlBar({ value, max }: { value: number; max: number }) {
   const isPos = value >= 0;
   return (
     <div className="flex items-center gap-2 w-full">
-      <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+      <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: "var(--poker-surface-2)" }}>
         <div
           className="h-full rounded-full transition-all duration-700"
           style={{
             width: `${Math.min(pct * 100, 100)}%`,
             background: isPos
-              ? "linear-gradient(90deg, #16a34a, #4ade80)"
+              ? "var(--poker-green)"
               : "linear-gradient(90deg, #ef4444, #f87171)",
             marginLeft: isPos ? "0" : "auto",
           }}
@@ -45,7 +45,7 @@ function PnlBar({ value, max }: { value: number; max: number }) {
       </div>
       <span
         className="text-xs font-bold w-12 text-right"
-        style={{ color: isPos ? "#4ade80" : "#ef4444" }}
+        style={{ color: isPos ? "var(--poker-green)" : "#ef4444" }}
       >
         {isPos ? "+" : ""}{value.toFixed(1)}
       </span>
@@ -59,10 +59,10 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return (
     <div
       className="rounded-lg px-3 py-2 text-xs"
-      style={{ background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", color: "#e2e8f0" }}
+      style={{ background: "var(--poker-surface)", border: "1px solid var(--poker-border)", color: "var(--poker-text)" }}
     >
       <p className="font-semibold mb-0.5">{label}</p>
-      <p style={{ color: val >= 0 ? "#4ade80" : "#ef4444" }}>
+      <p style={{ color: val >= 0 ? "var(--poker-green)" : "#ef4444" }}>
         {val >= 0 ? "+" : ""}{val.toFixed(2)} buy-ins
       </p>
     </div>
@@ -77,7 +77,7 @@ export default function WinRateVisualizer() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "#0a0e1a" }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--poker-page-bg)" }}>
         <div className="w-8 h-8 border-2 border-green-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -85,17 +85,17 @@ export default function WinRateVisualizer() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "#0a0e1a" }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--poker-page-bg)" }}>
         <div className="text-center space-y-4 max-w-sm px-4">
-          <Lock className="h-12 w-12 mx-auto" style={{ color: "#4ade80" }} />
-          <h2 className="text-2xl font-bold text-white">Sign in to view Win Rate</h2>
-          <p className="text-sm" style={{ color: "#64748b" }}>
+          <Lock className="h-12 w-12 mx-auto" style={{ color: "var(--poker-green)" }} />
+          <h2 className="text-2xl font-bold" style={{ color: "var(--poker-text)" }}>Sign in to view Win Rate</h2>
+          <p className="text-sm" style={{ color: "var(--poker-text-muted)" }}>
             Track your simulated P&L across positions and hand groups as you fix leaks.
           </p>
           <a
             href={getLoginUrl()}
             className="inline-flex items-center gap-2 px-6 py-3 rounded-lg font-semibold text-sm text-white"
-            style={{ background: "linear-gradient(135deg, #16a34a, #15803d)" }}
+            style={{ background: "var(--poker-green)" }}
           >
             Sign In
           </a>
@@ -121,26 +121,26 @@ export default function WinRateVisualizer() {
   const isWinning = totalPnl >= 0;
 
   return (
-    <div className="min-h-screen" style={{ background: "#0a0e1a" }}>
+    <div className="min-h-screen" style={{ background: "var(--poker-page-bg)" }}>
       {/* Header */}
       <div
         className="sticky top-0 z-10 border-b px-4 py-3 flex items-center justify-between"
-        style={{ background: "rgba(10,14,26,0.95)", borderColor: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)" }}
+        style={{ background: "var(--poker-header-bg)", borderColor: "var(--poker-border)", backdropFilter: "blur(12px)" }}
       >
         <div className="flex items-center gap-3">
           <Link href="/my-hands">
-            <button className="text-sm font-medium" style={{ color: "#64748b" }}>← My Hands</button>
+            <button className="text-sm font-medium" style={{ color: "var(--poker-text-muted)" }}>← My Hands</button>
           </Link>
-          <span style={{ color: "#334155" }}>/</span>
+          <span style={{ color: "var(--poker-text-muted)" }}>/</span>
           <div className="flex items-center gap-2">
-            <BarChart2 className="h-5 w-5" style={{ color: "#4ade80" }} />
+            <BarChart2 className="h-5 w-5" style={{ color: "var(--poker-green)" }} />
             <span className="font-bold text-white">Win Rate</span>
           </div>
         </div>
         <Link href="/memory-bank">
           <button
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold"
-            style={{ background: "rgba(74,222,128,0.1)", color: "#4ade80", border: "1px solid rgba(74,222,128,0.2)" }}
+            style={{ background: "var(--poker-green-subtle)", color: "var(--poker-green)", border: "1px solid var(--poker-green-subtle-border)" }}
           >
             View Leaks
             <ChevronRight className="h-3.5 w-3.5" />
@@ -152,7 +152,7 @@ export default function WinRateVisualizer() {
         {/* Title */}
         <div>
           <h1 className="text-3xl font-bold text-white mb-2">Win Rate Visualizer</h1>
-          <p style={{ color: "#64748b" }} className="text-sm">
+          <p style={{ color: "var(--poker-text-muted)" }} className="text-sm">
             Simulated P&L based on how well you played each hand. Fix your leaks and watch the graph turn green.
           </p>
         </div>
@@ -172,20 +172,20 @@ export default function WinRateVisualizer() {
           <div className="flex items-center justify-center py-20">
             <div className="text-center space-y-3">
               <div className="w-10 h-10 border-2 border-green-500 border-t-transparent rounded-full animate-spin mx-auto" />
-              <p className="text-sm" style={{ color: "#64748b" }}>Building your win rate graph...</p>
+              <p className="text-sm" style={{ color: "var(--poker-text-muted)" }}>Building your win rate graph...</p>
             </div>
           </div>
         ) : !data?.hasData ? (
           <div className="text-center py-20 space-y-4">
-            <BookOpen className="h-12 w-12 mx-auto" style={{ color: "#334155" }} />
+            <BookOpen className="h-12 w-12 mx-auto" style={{ color: "var(--poker-text-muted)" }} />
             <h3 className="text-lg font-semibold text-white">No data yet</h3>
-            <p className="text-sm max-w-sm mx-auto" style={{ color: "#64748b" }}>
+            <p className="text-sm max-w-sm mx-auto" style={{ color: "var(--poker-text-muted)" }}>
               Analyse at least one hand with the AI Coach to start tracking your win rate.
             </p>
             <Link href="/">
               <button
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold text-white"
-                style={{ background: "linear-gradient(135deg, #16a34a, #15803d)" }}
+                style={{ background: "var(--poker-green)" }}
               >
                 Analyse a Hand
               </button>
@@ -214,13 +214,13 @@ export default function WinRateVisualizer() {
                 <div
                   key={stat.label}
                   className="rounded-xl p-4 text-center"
-                  style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
+                  style={{ background: "var(--poker-surface)", border: "1px solid var(--poker-border)" }}
                 >
                   {stat.icon && (
                     <div className="flex justify-center mb-1" style={{ color: stat.color }}>{stat.icon}</div>
                   )}
                   <div className="text-2xl font-bold" style={{ color: stat.color || "white" }}>{stat.value}</div>
-                  <div className="text-xs mt-0.5" style={{ color: "#64748b" }}>{stat.label}</div>
+                  <div className="text-xs mt-0.5" style={{ color: "var(--poker-text-muted)" }}>{stat.label}</div>
                 </div>
               ))}
             </div>
@@ -229,9 +229,9 @@ export default function WinRateVisualizer() {
             {data.timeline && data.timeline.length > 1 && (
               <div
                 className="rounded-xl p-5"
-                style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}
+                style={{ background: "var(--poker-surface)", border: "1px solid var(--poker-border)" }}
               >
-                <h2 className="text-sm font-bold text-white mb-4">Cumulative P&L Over Time</h2>
+                <h2 className="text-sm font-bold mb-4" style={{ color: "var(--poker-text)" }}>Cumulative P&L Over Time</h2>
                 <ResponsiveContainer width="100%" height={200}>
                   <AreaChart data={data.timeline} margin={{ top: 5, right: 5, bottom: 0, left: -20 }}>
                     <defs>
@@ -240,11 +240,11 @@ export default function WinRateVisualizer() {
                         <stop offset="95%" stopColor={isWinning ? "#4ade80" : "#ef4444"} stopOpacity={0} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                    <XAxis dataKey="date" tick={{ fill: "#475569", fontSize: 10 }} tickLine={false} axisLine={false} />
-                    <YAxis tick={{ fill: "#475569", fontSize: 10 }} tickLine={false} axisLine={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--poker-border)" />
+                    <XAxis dataKey="date" tick={{ fill: "var(--poker-text-muted)", fontSize: 10 }} tickLine={false} axisLine={false} />
+                    <YAxis tick={{ fill: "var(--poker-text-muted)", fontSize: 10 }} tickLine={false} axisLine={false} />
                     <Tooltip content={<CustomTooltip />} />
-                    <ReferenceLine y={0} stroke="rgba(255,255,255,0.15)" strokeDasharray="4 4" />
+                    <ReferenceLine y={0} stroke="var(--poker-border-strong)" strokeDasharray="4 4" />
                     <Area
                       type="monotone"
                       dataKey="cumulativePnl"
@@ -262,19 +262,19 @@ export default function WinRateVisualizer() {
             {sortedPositions.length > 0 && (
               <div
                 className="rounded-xl p-5"
-                style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}
+                style={{ background: "var(--poker-surface)", border: "1px solid var(--poker-border)" }}
               >
-                <h2 className="text-sm font-bold text-white mb-4">P&L by Position</h2>
+                <h2 className="text-sm font-bold mb-4" style={{ color: "var(--poker-text)" }}>P&L by Position</h2>
                 <div className="space-y-3">
                   {sortedPositions.map((pos) => (
                     <div key={pos.position} className="flex items-center gap-3">
-                      <div className="w-14 text-xs font-bold text-right shrink-0" style={{ color: "#94a3b8" }}>
+                      <div className="w-14 text-xs font-bold text-right shrink-0" style={{ color: "var(--poker-text-muted)" }}>
                         {pos.position}
                       </div>
                       <div className="flex-1">
                         <PnlBar value={pos.pnl} max={maxPosPnl} />
                       </div>
-                      <div className="w-16 text-xs text-right shrink-0" style={{ color: "#475569" }}>
+                      <div className="w-16 text-xs text-right shrink-0" style={{ color: "var(--poker-text-muted)" }}>
                         {pos.hands} hand{pos.hands !== 1 ? "s" : ""}
                       </div>
                     </div>
@@ -287,19 +287,19 @@ export default function WinRateVisualizer() {
             {data.handGroups && data.handGroups.length > 0 && (
               <div
                 className="rounded-xl p-5"
-                style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}
+                style={{ background: "var(--poker-surface)", border: "1px solid var(--poker-border)" }}
               >
-                <h2 className="text-sm font-bold text-white mb-4">P&L by Hand Group</h2>
+                <h2 className="text-sm font-bold mb-4" style={{ color: "var(--poker-text)" }}>P&L by Hand Group</h2>
                 <div className="space-y-3">
                   {data.handGroups.map((group) => (
                     <div key={group.group} className="flex items-center gap-3">
-                      <div className="w-40 text-xs font-medium shrink-0 truncate" style={{ color: "#94a3b8" }}>
+                      <div className="w-40 text-xs font-medium shrink-0 truncate" style={{ color: "var(--poker-text-muted)" }}>
                         {group.group}
                       </div>
                       <div className="flex-1">
                         <PnlBar value={group.pnl} max={maxGroupPnl} />
                       </div>
-                      <div className="w-16 text-xs text-right shrink-0" style={{ color: "#475569" }}>
+                      <div className="w-16 text-xs text-right shrink-0" style={{ color: "var(--poker-text-muted)" }}>
                         {group.hands} hand{group.hands !== 1 ? "s" : ""}
                       </div>
                     </div>
@@ -311,18 +311,18 @@ export default function WinRateVisualizer() {
             {/* CTA */}
             <div
               className="rounded-xl p-5 text-center"
-              style={{ background: "rgba(74,222,128,0.05)", border: "1px solid rgba(74,222,128,0.15)" }}
+              style={{ background: "var(--poker-green-subtle)", border: "1px solid var(--poker-green-subtle-border)" }}
             >
               <p className="text-sm font-semibold text-white mb-1">
                 See exactly where you're losing money
               </p>
-              <p className="text-xs mb-3" style={{ color: "#64748b" }}>
+              <p className="text-xs mb-3" style={{ color: "var(--poker-text-muted)" }}>
                 Check your Memory Bank to get targeted drills for each losing position or hand group.
               </p>
               <Link href="/memory-bank">
                 <button
                   className="inline-flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold text-white"
-                  style={{ background: "linear-gradient(135deg, #16a34a, #15803d)" }}
+                  style={{ background: "var(--poker-green)" }}
                 >
                   Open Memory Bank
                   <ChevronRight className="h-4 w-4" />

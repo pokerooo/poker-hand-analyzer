@@ -53,7 +53,7 @@ export default function MemoryBank() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "#0a0e1a" }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--poker-page-bg)" }}>
         <div className="w-8 h-8 border-2 border-green-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -61,17 +61,17 @@ export default function MemoryBank() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "#0a0e1a" }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--poker-page-bg)" }}>
         <div className="text-center space-y-4 max-w-sm px-4">
-          <Lock className="h-12 w-12 mx-auto" style={{ color: "#4ade80" }} />
-          <h2 className="text-2xl font-bold text-white">Sign in to access Memory Bank</h2>
-          <p className="text-sm" style={{ color: "#64748b" }}>
+          <Lock className="h-12 w-12 mx-auto" style={{ color: "var(--poker-green)" }} />
+          <h2 className="text-2xl font-bold" style={{ color: "var(--poker-text)" }}>Sign in to access Memory Bank</h2>
+          <p className="text-sm" style={{ color: "var(--poker-text-muted)" }}>
             Memory Bank tracks your leaks across all saved hands. Sign in to see your patterns.
           </p>
           <a
             href={getLoginUrl()}
             className="inline-flex items-center gap-2 px-6 py-3 rounded-lg font-semibold text-sm text-white"
-            style={{ background: "linear-gradient(135deg, #16a34a, #15803d)" }}
+            style={{ background: "var(--poker-green)" }}
           >
             Sign In
           </a>
@@ -81,26 +81,26 @@ export default function MemoryBank() {
   }
 
   return (
-    <div className="min-h-screen" style={{ background: "#0a0e1a" }}>
+    <div className="min-h-screen" style={{ background: "var(--poker-page-bg)" }}>
       {/* Header */}
       <div
         className="sticky top-0 z-10 border-b px-4 py-3 flex items-center justify-between"
-        style={{ background: "rgba(10,14,26,0.95)", borderColor: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)" }}
+        style={{ background: "var(--poker-header-bg)", borderColor: "var(--poker-border)", backdropFilter: "blur(12px)" }}
       >
         <div className="flex items-center gap-3">
           <Link href="/my-hands">
-            <button className="text-sm font-medium" style={{ color: "#64748b" }}>← My Hands</button>
+            <button className="text-sm font-medium" style={{ color: "var(--poker-text-muted)" }}>← My Hands</button>
           </Link>
-          <span style={{ color: "#334155" }}>/</span>
+          <span style={{ color: "var(--poker-text-muted)" }}>/</span>
           <div className="flex items-center gap-2">
-            <Brain className="h-5 w-5" style={{ color: "#4ade80" }} />
+            <Brain className="h-5 w-5" style={{ color: "var(--poker-green)" }} />
             <span className="font-bold text-white">Memory Bank</span>
           </div>
         </div>
         <Link href="/coach">
           <button
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold"
-            style={{ background: "rgba(74,222,128,0.1)", color: "#4ade80", border: "1px solid rgba(74,222,128,0.2)" }}
+            style={{ background: "var(--poker-green-subtle)", color: "var(--poker-green)", border: "1px solid var(--poker-green-subtle-border)" }}
           >
             <Zap className="h-3.5 w-3.5" />
             Ask Coach
@@ -112,7 +112,7 @@ export default function MemoryBank() {
         {/* Title */}
         <div>
           <h1 className="text-3xl font-bold text-white mb-2">Memory Bank</h1>
-          <p style={{ color: "#64748b" }} className="text-sm">
+          <p style={{ color: "var(--poker-text-muted)" }} className="text-sm">
             Recurring patterns and leaks detected across your entire hand history.
           </p>
         </div>
@@ -121,20 +121,20 @@ export default function MemoryBank() {
           <div className="flex items-center justify-center py-20">
             <div className="text-center space-y-3">
               <div className="w-10 h-10 border-2 border-green-500 border-t-transparent rounded-full animate-spin mx-auto" />
-              <p className="text-sm" style={{ color: "#64748b" }}>Scanning your hand history...</p>
+              <p className="text-sm" style={{ color: "var(--poker-text-muted)" }}>Scanning your hand history...</p>
             </div>
           </div>
         ) : !data?.hasData ? (
           <div className="text-center py-20 space-y-4">
-            <BookOpen className="h-12 w-12 mx-auto" style={{ color: "#334155" }} />
+            <BookOpen className="h-12 w-12 mx-auto" style={{ color: "var(--poker-text-muted)" }} />
             <h3 className="text-lg font-semibold text-white">No data yet</h3>
-            <p className="text-sm max-w-sm mx-auto" style={{ color: "#64748b" }}>
+            <p className="text-sm max-w-sm mx-auto" style={{ color: "var(--poker-text-muted)" }}>
               Save and analyse at least 3 hands with the AI Coach to start building your Memory Bank.
             </p>
             <Link href="/">
               <button
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold text-white"
-                style={{ background: "linear-gradient(135deg, #16a34a, #15803d)" }}
+                style={{ background: "var(--poker-green)" }}
               >
                 Analyse a Hand
               </button>
@@ -152,11 +152,11 @@ export default function MemoryBank() {
                 <div
                   key={stat.label}
                   className="rounded-xl p-4 text-center"
-                  style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
+                  style={{ background: "var(--poker-surface)", border: "1px solid var(--poker-border)" }}
                 >
-                  <div className="flex justify-center mb-2" style={{ color: "#4ade80" }}>{stat.icon}</div>
+                  <div className="flex justify-center mb-2" style={{ color: "var(--poker-green)" }}>{stat.icon}</div>
                   <div className="text-2xl font-bold text-white">{stat.value}</div>
-                  <div className="text-xs mt-1" style={{ color: "#64748b" }}>{stat.label}</div>
+                  <div className="text-xs mt-1" style={{ color: "var(--poker-text-muted)" }}>{stat.label}</div>
                 </div>
               ))}
             </div>
@@ -185,7 +185,7 @@ export default function MemoryBank() {
                       <div
                         key={cat.name}
                         className="rounded-xl overflow-hidden"
-                        style={{ background: "rgba(255,255,255,0.03)", border: `1px solid ${sev.border}` }}
+                        style={{ background: "var(--poker-surface)", border: `1px solid ${sev.border}` }}
                       >
                         <div className="p-4">
                           <div className="flex items-start justify-between gap-3">
@@ -197,7 +197,7 @@ export default function MemoryBank() {
                                 >
                                   {sev.label}
                                 </span>
-                                <span className="text-xs" style={{ color: "#64748b" }}>
+                                <span className="text-xs" style={{ color: "var(--poker-text-muted)" }}>
                                   {cat.occurrences}× detected
                                 </span>
                               </div>
@@ -212,17 +212,17 @@ export default function MemoryBank() {
                               <div className="text-lg font-bold" style={{ color: "#ef4444" }}>
                                 -{cat.estimatedBuyinImpact}
                               </div>
-                              <div className="text-xs" style={{ color: "#64748b" }}>est. buy-ins</div>
+                              <div className="text-xs" style={{ color: "var(--poker-text-muted)" }}>est. buy-ins</div>
                             </div>
                           </div>
 
                           {/* Frequency bar */}
                           <div className="mt-3">
-                            <div className="flex justify-between text-xs mb-1" style={{ color: "#64748b" }}>
+                            <div className="flex justify-between text-xs mb-1" style={{ color: "var(--poker-text-muted)" }}>
                               <span>Frequency</span>
                               <span>{Math.round(cat.frequency * 100)}% of hands</span>
                             </div>
-                            <div className="h-1.5 rounded-full" style={{ background: "rgba(255,255,255,0.08)" }}>
+                            <div className="h-1.5 rounded-full" style={{ background: "var(--poker-surface-2)" }}>
                               <div
                                 className="h-full rounded-full transition-all duration-700"
                                 style={{ width: `${Math.min(cat.frequency * 100, 100)}%`, background: sev.color }}
@@ -233,13 +233,13 @@ export default function MemoryBank() {
                           {/* Drill */}
                           <div
                             className="mt-3 rounded-lg p-3"
-                            style={{ background: "rgba(74,222,128,0.05)", border: "1px solid rgba(74,222,128,0.1)" }}
+                              style={{ background: "var(--poker-green-subtle)", border: "1px solid var(--poker-green-subtle-border)" }}
                           >
                             <div className="flex items-start gap-2">
-                              <Target className="h-3.5 w-3.5 mt-0.5 shrink-0" style={{ color: "#4ade80" }} />
+                              <Target className="h-3.5 w-3.5 mt-0.5 shrink-0" style={{ color: "var(--poker-green)" }} />
                               <div>
-                                <p className="text-xs font-semibold mb-0.5" style={{ color: "#4ade80" }}>Drill</p>
-                                <p className="text-xs leading-relaxed" style={{ color: "#94a3b8" }}>{drill}</p>
+                                <p className="text-xs font-semibold mb-0.5" style={{ color: "var(--poker-green)" }}>Drill</p>
+                                <p className="text-xs leading-relaxed" style={{ color: "var(--poker-text-muted)" }}>{drill}</p>
                               </div>
                             </div>
                           </div>
@@ -250,7 +250,7 @@ export default function MemoryBank() {
                               <Link href="/my-hands">
                                 <button
                                   className="flex items-center gap-1 text-xs"
-                                  style={{ color: "#64748b" }}
+                                  style={{ color: "var(--poker-text-muted)" }}
                                 >
                                   View {cat.handIds.length} hand{cat.handIds.length > 1 ? "s" : ""}
                                   <ChevronRight className="h-3 w-3" />
@@ -270,18 +270,18 @@ export default function MemoryBank() {
             {(data.coachedHands || 0) < 10 && (
               <div
                 className="rounded-xl p-5 text-center"
-                style={{ background: "rgba(74,222,128,0.05)", border: "1px solid rgba(74,222,128,0.15)" }}
+                style={{ background: "var(--poker-green-subtle)", border: "1px solid var(--poker-green-subtle-border)" }}
               >
                 <p className="text-sm font-semibold text-white mb-1">
                   {10 - (data.coachedHands || 0)} more coached hands for deeper patterns
                 </p>
-                <p className="text-xs mb-3" style={{ color: "#64748b" }}>
+                <p className="text-xs mb-3" style={{ color: "var(--poker-text-muted)" }}>
                   The more hands you analyse, the more accurate your leak profile becomes.
                 </p>
                 <Link href="/">
                   <button
                     className="inline-flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold text-white"
-                    style={{ background: "linear-gradient(135deg, #16a34a, #15803d)" }}
+                    style={{ background: "var(--poker-green)" }}
                   >
                     Analyse Another Hand
                     <ChevronRight className="h-4 w-4" />

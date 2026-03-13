@@ -1,25 +1,38 @@
 import { Moon, Sun } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { useTheme } from "@/contexts/ThemeContext";
 
+/**
+ * Floating day/night toggle button.
+ * Rendered globally inside the App router wrapper so it appears on every page.
+ * Position: bottom-right corner.
+ */
 export function ThemeToggle() {
   const { theme, toggleTheme, switchable } = useTheme();
+  if (!switchable || !toggleTheme) return null;
 
-  if (!switchable || !toggleTheme) {
-    return null;
-  }
+  const isDark = theme === "dark";
 
   return (
-    <Button
-      variant="ghost"
-      size="icon"
+    <button
       onClick={toggleTheme}
-      className="relative"
-      title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+      aria-label={isDark ? "Switch to day mode" : "Switch to night mode"}
+      title={isDark ? "Day mode" : "Night mode"}
+      className="fixed bottom-6 right-5 z-50 w-11 h-11 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 hover:scale-110 active:scale-95"
+      style={{
+        background: isDark
+          ? "var(--poker-green)"
+          : "oklch(0.15 0.02 240)",
+        color: isDark ? "#000" : "#fff",
+        boxShadow: isDark
+          ? "0 0 20px rgba(16,185,129,0.35)"
+          : "0 4px 16px rgba(0,0,0,0.25)",
+      }}
     >
-      <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-      <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-      <span className="sr-only">Toggle theme</span>
-    </Button>
+      {isDark ? (
+        <Sun className="h-5 w-5" />
+      ) : (
+        <Moon className="h-5 w-5" />
+      )}
+    </button>
   );
 }

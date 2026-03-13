@@ -104,6 +104,35 @@
   --sidebar-accent-foreground: oklch(0.35 0.12 155);
   --sidebar-border: oklch(0.9 0.01 240);
   --sidebar-ring: oklch(0.52 0.18 155);
+
+  /* ── Poker app semantic tokens ── */
+  --poker-page-bg: oklch(0.97 0.006 155);          /* page background */
+  --poker-surface: oklch(1 0 0);                    /* card / panel surface */
+  --poker-surface-2: oklch(0.95 0.008 155);         /* secondary surface */
+  --poker-border: oklch(0.88 0.02 155);             /* subtle green-tinted border */
+  --poker-border-strong: oklch(0.72 0.12 155);      /* stronger accent border */
+  --poker-header-bg: rgba(255,255,255,0.92);        /* sticky header */
+  --poker-header-shadow: rgba(0,0,0,0.06);
+  --poker-text: oklch(0.15 0.02 240);               /* primary text */
+  --poker-text-muted: oklch(0.52 0.02 240);         /* muted text */
+  --poker-green: oklch(0.52 0.18 155);              /* primary green */
+  --poker-green-fg: oklch(1 0 0);
+  --poker-green-subtle: rgba(16,185,129,0.08);
+  --poker-green-subtle-border: rgba(16,185,129,0.2);
+  --poker-amber: oklch(0.72 0.16 75);               /* amber accent */
+  --poker-amber-subtle: rgba(245,158,11,0.08);
+  --poker-amber-subtle-border: rgba(245,158,11,0.2);
+  --poker-purple: oklch(0.62 0.18 290);
+  --poker-purple-subtle: rgba(139,92,246,0.08);
+  --poker-purple-subtle-border: rgba(139,92,246,0.2);
+  --poker-blue: oklch(0.62 0.18 240);
+  --poker-blue-subtle: rgba(59,130,246,0.08);
+  --poker-blue-subtle-border: rgba(59,130,246,0.2);
+  --poker-table-felt: oklch(0.35 0.12 155);         /* poker table felt */
+  --poker-table-rim: oklch(0.28 0.08 155);
+  --poker-table-rim-glow: rgba(16,185,129,0.3);
+  --poker-pill-bg: oklch(0.93 0.04 155);
+  --poker-pill-text: oklch(0.35 0.12 155);
 }
 
 /* ─── Dark Theme ─────────────────────────────────────────────────────────── */
@@ -150,6 +179,35 @@
   --sidebar-accent-foreground: oklch(0.85 0.08 155);
   --sidebar-border: oklch(0.28 0.02 240);
   --sidebar-ring: oklch(0.62 0.18 155);
+
+  /* ── Poker app semantic tokens (dark) ── */
+  --poker-page-bg: oklch(0.1 0.015 155);
+  --poker-surface: oklch(0.16 0.02 155);
+  --poker-surface-2: oklch(0.13 0.018 155);
+  --poker-border: rgba(16,185,129,0.12);
+  --poker-border-strong: rgba(16,185,129,0.35);
+  --poker-header-bg: rgba(10,15,13,0.92);
+  --poker-header-shadow: rgba(16,185,129,0.06);
+  --poker-text: oklch(0.92 0.01 240);
+  --poker-text-muted: oklch(0.55 0.02 240);
+  --poker-green: oklch(0.62 0.18 155);
+  --poker-green-fg: oklch(0.1 0.02 155);
+  --poker-green-subtle: rgba(16,185,129,0.08);
+  --poker-green-subtle-border: rgba(16,185,129,0.2);
+  --poker-amber: oklch(0.75 0.16 75);
+  --poker-amber-subtle: rgba(245,158,11,0.08);
+  --poker-amber-subtle-border: rgba(245,158,11,0.2);
+  --poker-purple: oklch(0.72 0.16 290);
+  --poker-purple-subtle: rgba(139,92,246,0.08);
+  --poker-purple-subtle-border: rgba(139,92,246,0.2);
+  --poker-blue: oklch(0.72 0.16 240);
+  --poker-blue-subtle: rgba(59,130,246,0.08);
+  --poker-blue-subtle-border: rgba(59,130,246,0.2);
+  --poker-table-felt: oklch(0.22 0.08 155);
+  --poker-table-rim: oklch(0.18 0.06 155);
+  --poker-table-rim-glow: rgba(16,185,129,0.4);
+  --poker-pill-bg: rgba(16,185,129,0.12);
+  --poker-pill-text: oklch(0.72 0.18 155);
 }
 
 @layer base {

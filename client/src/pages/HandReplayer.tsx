@@ -1113,7 +1113,7 @@ export default function HandReplayer() {
     </Helmet>
     <div
       className="min-h-screen flex flex-col"
-      style={{ background: "linear-gradient(160deg, #0a0f0d 0%, #0d1a12 50%, #0a0f0d 100%)" }}
+      style={{ background: "var(--poker-page-bg)" }}
     >
       {/* Desktop Coach Side Panel -- fixed right panel, only visible on lg+ */}
       {coachPanelOpen && (
@@ -1121,26 +1121,26 @@ export default function HandReplayer() {
           className="hidden lg:flex flex-col fixed top-0 right-0 h-full z-40"
           style={{
             width: "420px",
-            background: "rgba(10,15,13,0.97)",
+            background: "var(--poker-surface)",
             backdropFilter: "blur(20px)",
-            borderLeft: "1px solid rgba(16,185,129,0.15)",
-            boxShadow: "-8px 0 40px rgba(0,0,0,0.5)",
+            borderLeft: "1px solid var(--poker-border)",
+            boxShadow: "-8px 0 40px rgba(0,0,0,0.15)",
           }}
         >
           {/* Panel header */}
           <div
             className="flex items-center justify-between px-4 py-3 shrink-0"
-            style={{ borderBottom: "1px solid rgba(16,185,129,0.12)", background: "rgba(10,15,13,0.9)" }}
+            style={{ borderBottom: "1px solid var(--poker-border)", background: "var(--poker-surface)" }}
           >
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4" style={{ color: "#fbbf24" }} />
-              <span className="text-sm font-bold" style={{ color: "#e2e8f0" }}>AI Coach</span>
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold" style={{ background: "rgba(234,179,8,0.12)", color: "#fbbf24", border: "1px solid rgba(234,179,8,0.25)" }}>Claude</span>
+              <span className="text-sm font-bold" style={{ color: "var(--poker-text)" }}>AI Coach</span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold" style={{ background: "var(--poker-amber-subtle)", color: "var(--poker-amber)", border: "1px solid var(--poker-amber-subtle-border)" }}>Claude</span>
             </div>
             <button
               onClick={() => setCoachPanelOpen(false)}
               className="w-7 h-7 flex items-center justify-center rounded-lg transition-all"
-              style={{ color: "#64748b", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}
+              style={{ color: "var(--poker-text-muted)", background: "var(--poker-surface-2)", border: "1px solid var(--poker-border)" }}
             >
               <X className="h-3.5 w-3.5" />
             </button>
@@ -1162,10 +1162,10 @@ export default function HandReplayer() {
         <div
           className="lg:hidden fixed bottom-0 left-0 right-0 z-50"
           style={{
-            background: "rgba(10,15,13,0.98)",
+            background: "var(--poker-surface)",
             backdropFilter: "blur(20px)",
-            borderTop: "1px solid rgba(16,185,129,0.2)",
-            boxShadow: "0 -8px 40px rgba(0,0,0,0.6)",
+            borderTop: "1px solid var(--poker-border-strong)",
+            boxShadow: "0 -8px 40px rgba(0,0,0,0.15)",
             maxHeight: mobileSheetMinimized ? "48px" : "75vh",
             transition: "max-height 0.3s cubic-bezier(0.4,0,0.2,1)",
             overflow: "hidden",
@@ -1174,25 +1174,25 @@ export default function HandReplayer() {
           {/* Sheet drag handle + header */}
           <div
             className="flex items-center justify-between px-4 py-3 cursor-pointer"
-            style={{ borderBottom: mobileSheetMinimized ? "none" : "1px solid rgba(16,185,129,0.1)" }}
+            style={{ borderBottom: mobileSheetMinimized ? "none" : `1px solid var(--poker-border)` }}
             onClick={() => setMobileSheetMinimized(v => !v)}
           >
             <div className="flex items-center gap-2">
               <Sparkles className="h-3.5 w-3.5" style={{ color: "#fbbf24" }} />
-              <span className="text-xs font-bold" style={{ color: "#e2e8f0" }}>AI Coach</span>
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold" style={{ background: "rgba(234,179,8,0.12)", color: "#fbbf24", border: "1px solid rgba(234,179,8,0.25)" }}>Claude</span>
+              <span className="text-xs font-bold" style={{ color: "var(--poker-text)" }}>AI Coach</span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold" style={{ background: "var(--poker-amber-subtle)", color: "var(--poker-amber)", border: "1px solid var(--poker-amber-subtle-border)" }}>Claude</span>
             </div>
             <div className="flex items-center gap-1.5">
               <button
                 className="w-6 h-6 flex items-center justify-center rounded-md"
-                style={{ color: "#64748b", background: "rgba(255,255,255,0.05)" }}
+                style={{ color: "var(--poker-text-muted)", background: "var(--poker-surface-2)" }}
                 onClick={(e) => { e.stopPropagation(); setMobileSheetMinimized(v => !v); }}
               >
                 {mobileSheetMinimized ? <ChevronUp className="h-3 w-3" /> : <Minus className="h-3 w-3" />}
               </button>
               <button
                 className="w-6 h-6 flex items-center justify-center rounded-md"
-                style={{ color: "#64748b", background: "rgba(255,255,255,0.05)" }}
+                style={{ color: "var(--poker-text-muted)", background: "var(--poker-surface-2)" }}
                 onClick={(e) => { e.stopPropagation(); setCoachPanelOpen(false); }}
               >
                 <X className="h-3 w-3" />
@@ -1216,27 +1216,27 @@ export default function HandReplayer() {
       <header
         className="flex items-center justify-between px-4 py-3 sticky top-0 z-10"
         style={{
-          background: "rgba(10,15,13,0.85)",
+          background: "var(--poker-header-bg)",
           backdropFilter: "blur(12px)",
-          borderBottom: "1px solid rgba(16,185,129,0.12)",
-          boxShadow: "0 1px 0 rgba(16,185,129,0.06)",
+          borderBottom: "1px solid var(--poker-border)",
+          boxShadow: "0 1px 0 var(--poker-header-shadow)",
         }}
       >
         <div className="flex items-center gap-2 min-w-0">
           <button
             className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg transition-colors"
-            style={{ color: "#6ee7b7", background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.2)" }}
+            style={{ color: "var(--poker-green)", background: "var(--poker-green-subtle)", border: "1px solid var(--poker-green-subtle-border)" }}
             onClick={() => navigate("/")}
           >
             <ArrowLeft className="h-4 w-4" />
           </button>
           <div className="min-w-0">
             {handTitle && (
-              <div className="font-semibold text-sm truncate leading-tight" style={{ color: "#e2e8f0" }}>{handTitle}</div>
+              <div className="font-semibold text-sm truncate leading-tight" style={{ color: "var(--poker-text)" }}>{handTitle}</div>
             )}
             <div className="flex items-center gap-1.5">
-              <span className="font-mono font-bold text-sm" style={{ color: "#4ade80", textShadow: "0 0 8px rgba(74,222,128,0.4)" }}>{heroCards}</span>
-              <span className="text-xs" style={{ color: "#64748b" }}>{parsed.heroPosition} . {blinds}</span>
+              <span className="font-mono font-bold text-sm" style={{ color: "var(--poker-green)" }}>{heroCards}</span>
+              <span className="text-xs" style={{ color: "var(--poker-text-muted)" }}>{parsed.heroPosition} . {blinds}</span>
             </div>
           </div>
         </div>
@@ -1246,9 +1246,9 @@ export default function HandReplayer() {
           <button
             className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
             style={{
-              background: coachPanelOpen ? "rgba(234,179,8,0.18)" : "rgba(234,179,8,0.08)",
-              color: "#fbbf24",
-              border: coachPanelOpen ? "1px solid rgba(234,179,8,0.5)" : "1px solid rgba(234,179,8,0.25)",
+              background: "var(--poker-amber-subtle)",
+              color: "var(--poker-amber)",
+              border: coachPanelOpen ? "1px solid var(--poker-amber)" : "1px solid var(--poker-amber-subtle-border)",
             }}
             onClick={() => { setCoachPanelOpen(v => !v); setMobileSheetMinimized(false); }}
             title="AI Coach analysis"
@@ -1259,10 +1259,9 @@ export default function HandReplayer() {
           <button
             className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
             style={{
-              background: "linear-gradient(135deg, #065f46, #047857)",
-              color: "#6ee7b7",
-              border: "1px solid rgba(16,185,129,0.3)",
-              boxShadow: "0 0 12px rgba(16,185,129,0.2)",
+              background: "var(--poker-green)",
+              color: "var(--poker-green-fg)",
+              border: "1px solid var(--poker-green-subtle-border)",
             }}
             onClick={() => setActiveTab("share")}
           >
@@ -1279,7 +1278,7 @@ export default function HandReplayer() {
       >
 
       {/* Table + narration -- captured for video export */}
-      <div ref={captureRef} style={{ background: "linear-gradient(160deg, #0a0f0d 0%, #0d1a12 50%, #0a0f0d 100%)" }}>
+      <div ref={captureRef} style={{ background: "var(--poker-page-bg)" }}>
       {/* Table -- swipe left/right to step through hand */}
       <div
         className="w-full max-w-lg mx-auto px-4 pt-4"
@@ -1305,18 +1304,16 @@ export default function HandReplayer() {
             key={descriptionKey}
             className="rounded-xl px-4 py-3"
             style={{
-              background: "rgba(15,23,42,0.7)",
-              border: "1px solid rgba(16,185,129,0.15)",
-              backdropFilter: "blur(8px)",
+              background: "var(--poker-surface)",
+              border: "1px solid var(--poker-border)",
               animation: "fadeSlideIn 0.35s ease",
-              boxShadow: "0 0 20px rgba(16,185,129,0.05)",
             }}
           >
             {/* Street badge + Eff stack row */}
             <div className="flex items-center gap-2 mb-1.5">
               <span
                 className="inline-block text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full"
-                style={{ color: "#4ade80", background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.2)" }}
+                style={{ color: "var(--poker-green)", background: "var(--poker-green-subtle)", border: "1px solid var(--poker-green-subtle-border)" }}
               >
                 {currentStep.street}
               </span>
@@ -1333,9 +1330,9 @@ export default function HandReplayer() {
                   <span
                     className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full"
                     style={{
-                      color: "#93c5fd",
-                      background: "rgba(59,130,246,0.1)",
-                      border: "1px solid rgba(59,130,246,0.2)",
+                      color: "var(--poker-blue)",
+                      background: "var(--poker-blue-subtle)",
+                      border: "1px solid var(--poker-blue-subtle-border)",
                       fontFamily: "monospace",
                     }}
                   >
@@ -1389,12 +1386,12 @@ export default function HandReplayer() {
             )}
             <p
               className="text-sm font-semibold leading-snug"
-              style={{ color: currentStep.currentAction === null ? "#4ade80" : "#e2e8f0" }}
+              style={{ color: currentStep.currentAction === null ? "var(--poker-green)" : "var(--poker-text)" }}
             >
               {currentStep.description}
             </p>
             {/* Step counter */}
-            <p className="text-[11px] mt-1" style={{ color: "#475569" }}>
+            <p className="text-[11px] mt-1" style={{ color: "var(--poker-text-muted)" }}>
               Action {stepIndex + 1} of {steps.length}
             </p>
           </div>
@@ -1405,7 +1402,7 @@ export default function HandReplayer() {
       {/* Controls */}
       <div className="px-4 pb-3 max-w-lg mx-auto w-full space-y-3">
         {/* Progress bar (custom styled) */}
-        <div className="relative h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+        <div className="relative h-1.5 rounded-full overflow-hidden" style={{ background: "var(--poker-surface-2)" }}>
           <div
             className="absolute left-0 top-0 h-full rounded-full transition-all duration-300"
             style={{
@@ -1421,7 +1418,7 @@ export default function HandReplayer() {
           {/* Skip to start */}
           <button
             className="w-8 h-8 flex items-center justify-center rounded-lg transition-all"
-            style={{ color: stepIndex === 0 ? "#1e293b" : "#64748b", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}
+            style={{ color: stepIndex === 0 ? "var(--poker-border)" : "var(--poker-text-muted)", background: "var(--poker-surface-2)", border: "1px solid var(--poker-border)" }}
             onClick={() => goTo(0)} disabled={stepIndex === 0}
           >
             <SkipBack className="h-3.5 w-3.5" />
@@ -1429,7 +1426,7 @@ export default function HandReplayer() {
           {/* Prev */}
           <button
             className="w-8 h-8 flex items-center justify-center rounded-lg transition-all"
-            style={{ color: stepIndex === 0 ? "#1e293b" : "#94a3b8", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}
+            style={{ color: stepIndex === 0 ? "var(--poker-border)" : "var(--poker-text-muted)", background: "var(--poker-surface-2)", border: "1px solid var(--poker-border)" }}
             onClick={() => goTo(stepIndex - 1)} disabled={stepIndex === 0}
           >
             <ArrowLeft className="h-3.5 w-3.5" />
@@ -1455,7 +1452,7 @@ export default function HandReplayer() {
           {/* Next */}
           <button
             className="w-8 h-8 flex items-center justify-center rounded-lg transition-all"
-            style={{ color: stepIndex >= steps.length - 1 ? "#1e293b" : "#94a3b8", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}
+            style={{ color: stepIndex >= steps.length - 1 ? "var(--poker-border)" : "var(--poker-text-muted)", background: "var(--poker-surface-2)", border: "1px solid var(--poker-border)" }}
             onClick={() => goTo(stepIndex + 1)} disabled={stepIndex >= steps.length - 1}
           >
             <SkipForward className="h-3.5 w-3.5" />
@@ -1463,7 +1460,7 @@ export default function HandReplayer() {
           {/* Skip to end */}
           <button
             className="w-8 h-8 flex items-center justify-center rounded-lg transition-all"
-            style={{ color: stepIndex >= steps.length - 1 ? "#1e293b" : "#64748b", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}
+            style={{ color: stepIndex >= steps.length - 1 ? "var(--poker-border)" : "var(--poker-text-muted)", background: "var(--poker-surface-2)", border: "1px solid var(--poker-border)" }}
             onClick={() => goTo(steps.length - 1)} disabled={stepIndex >= steps.length - 1}
           >
             <SkipBack className="h-3.5 w-3.5 rotate-180" />
@@ -1472,7 +1469,7 @@ export default function HandReplayer() {
       </div>
 
       {/* Bottom tabs */}
-      <div className="max-w-lg mx-auto w-full" style={{ borderTop: "1px solid rgba(16,185,129,0.1)" }}>
+      <div className="max-w-lg mx-auto w-full" style={{ borderTop: "1px solid var(--poker-border)" }}>
         <div className="flex">
           {[
             { id: "replay" as const, label: "Replay", icon: "🎬" },
@@ -1484,9 +1481,8 @@ export default function HandReplayer() {
               onClick={() => setActiveTab(tab.id)}
               className="flex-1 py-3 text-xs font-medium flex flex-col items-center gap-0.5 transition-all"
               style={{
-                color: activeTab === tab.id ? "#4ade80" : "#475569",
-                borderTop: activeTab === tab.id ? "2px solid #4ade80" : "2px solid transparent",
-                textShadow: activeTab === tab.id ? "0 0 8px rgba(74,222,128,0.4)" : "none",
+                color: activeTab === tab.id ? "var(--poker-green)" : "var(--poker-text-muted)",
+                borderTop: activeTab === tab.id ? "2px solid var(--poker-green)" : "2px solid transparent",
               }}
             >
               <span className="text-base">{tab.icon}</span>
@@ -1499,10 +1495,10 @@ export default function HandReplayer() {
         <div className="px-4 py-4 max-h-[45vh] overflow-y-auto">
           {activeTab === "replay" && (
             <div className="space-y-2">
-              <p className="text-xs font-bold uppercase tracking-widest" style={{ color: "#4ade80" }}>Hand Summary</p>
+              <p className="text-xs font-bold uppercase tracking-widest" style={{ color: "var(--poker-green)" }}>Hand Summary</p>
               <div
                 className="font-mono text-sm leading-relaxed whitespace-pre-wrap p-3 rounded-lg"
-                style={{ color: "#94a3b8", background: "rgba(15,23,42,0.5)", border: "1px solid rgba(255,255,255,0.06)" }}
+                style={{ color: "var(--poker-text-muted)", background: "var(--poker-surface-2)", border: "1px solid var(--poker-border)" }}
               >
                 {hand.rawText}
               </div>
@@ -1519,8 +1515,8 @@ export default function HandReplayer() {
               {/* Spot the Mistake Challenge */}
               <SpotTheMistake slug={slug} parsed={parsed} steps={steps} currentStepIndex={stepIndex} />
 
-              <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: "1rem" }}>
-                <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: "#4ade80" }}>Video Export</p>
+              <div style={{ borderTop: "1px solid var(--poker-border)", paddingTop: "1rem" }}>
+                <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: "var(--poker-green)" }}>Video Export</p>
                 <VideoExport
                   captureRef={captureRef}
                   totalSteps={steps.length}

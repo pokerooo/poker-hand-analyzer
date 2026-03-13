@@ -281,17 +281,13 @@ export function PokerTable({ players, communityCards, potSize, currentAction, st
         className="absolute inset-0 overflow-visible"
         style={{
           borderRadius: "50%",
-          background: "radial-gradient(ellipse at 40% 35%, #0f4a2a 0%, #063a1a 40%, #021a0d 100%)",
-          border: "4px solid #0a3d20",
+          background: "var(--poker-table-felt)",
+          border: "4px solid var(--poker-table-rim)",
           boxShadow: [
-            "0 0 0 1px rgba(16,185,129,0.15)",
-            "0 0 0 5px #080e0a",
-            "0 0 0 7px rgba(16,185,129,0.08)",
-            "0 0 0 8px #080e0a",
-            "0 16px 60px rgba(0,0,0,0.85)",
+            `0 0 0 1px var(--poker-table-rim-glow)`,
+            "0 16px 60px rgba(0,0,0,0.4)",
             "inset 0 2px 0 rgba(255,255,255,0.05)",
-            "inset 0 -4px 16px rgba(0,0,0,0.5)",
-            "inset 0 0 80px rgba(0,0,0,0.3)",
+            "inset 0 -4px 16px rgba(0,0,0,0.2)",
           ].join(", "),
         }}
       >
@@ -350,10 +346,9 @@ export function PokerTable({ players, communityCards, potSize, currentAction, st
               <div
                 className="flex items-center gap-1.5 px-3 py-1 rounded-full"
                 style={{
-                  background: "rgba(0,0,0,0.55)",
-                  border: "1px solid rgba(16,185,129,0.25)",
+                  background: "rgba(0,0,0,0.4)",
+                  border: "1px solid var(--poker-green-subtle-border)",
                   backdropFilter: "blur(4px)",
-                  boxShadow: "0 0 12px rgba(16,185,129,0.15)",
                 }}
               >
                 <div
@@ -373,8 +368,8 @@ export function PokerTable({ players, communityCards, potSize, currentAction, st
                 <div
                   className="flex items-center gap-1 px-2 py-1 rounded-full"
                   style={{
-                    background: "rgba(0,0,0,0.55)",
-                    border: "1px solid rgba(148,163,184,0.18)",
+                    background: "rgba(0,0,0,0.4)",
+                    border: "1px solid var(--poker-border)",
                     backdropFilter: "blur(4px)",
                   }}
                 >
@@ -444,10 +439,10 @@ export function PokerTable({ players, communityCards, potSize, currentAction, st
                 style={{
                   minWidth: 54,
                   background: player.hasFolded
-                    ? "rgba(15,23,42,0.6)"
+                    ? "var(--poker-surface-2)"
                     : player.isHero
-                      ? "linear-gradient(135deg, #065f46 0%, #047857 100%)"
-                      : "linear-gradient(135deg, #1e293b 0%, #0f172a 100%)",
+                      ? "var(--poker-green)"
+                      : "var(--poker-surface)",
                   border: player.isHero
                     ? "1px solid #10b98160"
                     : isCurrentActor
@@ -465,8 +460,7 @@ export function PokerTable({ players, communityCards, potSize, currentAction, st
                 <span
                   className="text-[11px] font-bold leading-tight"
                   style={{
-                    color: player.isHero ? "#6ee7b7" : "#ffffff",
-                    textShadow: player.isHero ? "0 0 8px rgba(16,185,129,0.5)" : "0 1px 3px rgba(0,0,0,0.9)",
+                    color: player.isHero ? "var(--poker-green-fg)" : "var(--poker-text)",
                   }}
                 >
                   {player.position}
@@ -498,11 +492,11 @@ export function PokerTable({ players, communityCards, potSize, currentAction, st
                 <div
                   className="text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded-full"
                   style={{
-                    color: player.isHero ? "#6ee7b7" : "#94a3b8",
-                    background: "rgba(0,0,0,0.55)",
+                    color: player.isHero ? "var(--poker-green)" : "var(--poker-text-muted)",
+                    background: "rgba(0,0,0,0.3)",
                     border: player.isHero
-                      ? "1px solid rgba(16,185,129,0.25)"
-                      : "1px solid rgba(148,163,184,0.12)",
+                      ? "1px solid var(--poker-green-subtle-border)"
+                      : "1px solid var(--poker-border)",
                     letterSpacing: "0.02em",
                     marginTop: 1,
                   }}
@@ -527,7 +521,7 @@ export function PokerTable({ players, communityCards, potSize, currentAction, st
               )}
 
               {player.hasFolded && (
-                <span className="text-[9px] italic mt-0.5" style={{ color: "rgba(148,163,184,0.4)" }}>
+                <span className="text-[9px] italic mt-0.5" style={{ color: "var(--poker-text-muted)" }}>
                   folded
                 </span>
               )}

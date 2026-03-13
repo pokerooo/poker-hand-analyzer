@@ -92,25 +92,25 @@ export default function ImportHistory() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "#0a0e1a" }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--poker-page-bg)" }}>
         <Loader2 className="h-8 w-8 animate-spin" style={{ color: "#10b981" }} />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen" style={{ background: "#0a0e1a", color: "#e2e8f0" }}>
+    <div className="min-h-screen" style={{ background: "var(--poker-page-bg)", color: "var(--poker-text)" }}>
       {/* Header */}
       <div
         className="border-b px-6 py-4 flex items-center gap-4"
-        style={{ borderColor: "rgba(255,255,255,0.06)", background: "#0d1220" }}
+        style={{ borderColor: "var(--poker-border)", background: "var(--poker-header-bg)" }}
       >
         <Link href="/my-hands">
           <button
             className="flex items-center gap-2 text-sm transition-colors"
-            style={{ color: "#64748b" }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = "#10b981")}
-            onMouseLeave={(e) => (e.currentTarget.style.color = "#64748b")}
+            style={{ color: "var(--poker-text-muted)" }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = "var(--poker-green)")}
+            onMouseLeave={(e) => (e.currentTarget.style.color = "var(--poker-text-muted)")}
           >
             <ChevronLeft className="h-4 w-4" />
             My Hands
@@ -138,11 +138,11 @@ export default function ImportHistory() {
         {!isAuthenticated && (
           <div
             className="rounded-xl p-8 text-center border"
-            style={{ background: "#0d1220", borderColor: "rgba(255,255,255,0.08)" }}
+            style={{ background: "var(--poker-surface)", borderColor: "var(--poker-border)" }}
           >
             <Layers className="h-10 w-10 mx-auto mb-4" style={{ color: "#10b981" }} />
             <h2 className="text-xl font-bold mb-2">Sign in to import hands</h2>
-            <p className="text-sm mb-6" style={{ color: "#64748b" }}>
+            <p className="text-sm mb-6" style={{ color: "var(--poker-text-muted)" }}>
               Hand history import is a Pro feature. Sign in first, then upgrade to Pro.
             </p>
             <Link href="/">
@@ -157,9 +157,9 @@ export default function ImportHistory() {
             {/* Supported formats */}
             <div
               className="rounded-xl p-5 border"
-              style={{ background: "#0d1220", borderColor: "rgba(255,255,255,0.06)" }}
+              style={{ background: "var(--poker-surface)", borderColor: "var(--poker-border)" }}
             >
-              <h3 className="font-semibold text-sm mb-3" style={{ color: "#94a3b8" }}>
+              <h3 className="font-semibold text-sm mb-3" style={{ color: "var(--poker-text-muted)" }}>
                 Supported Formats
               </h3>
               <div className="flex gap-3">
@@ -174,7 +174,7 @@ export default function ImportHistory() {
                   </div>
                 ))}
               </div>
-              <p className="text-xs mt-3" style={{ color: "#475569" }}>
+              <p className="text-xs mt-3" style={{ color: "var(--poker-text-muted)" }}>
                 Upload your .txt hand history file. Up to 50 hands per import, 500KB max.
               </p>
             </div>
@@ -183,7 +183,7 @@ export default function ImportHistory() {
             <div
               className="rounded-xl border-2 border-dashed p-10 text-center cursor-pointer transition-all"
               style={{
-                borderColor: isDragging ? "#10b981" : fileContent ? "rgba(16,185,129,0.4)" : "rgba(255,255,255,0.1)",
+                  borderColor: isDragging ? "var(--poker-green)" : fileContent ? "rgba(16,185,129,0.4)" : "var(--poker-border)",
                 background: isDragging ? "rgba(16,185,129,0.05)" : fileContent ? "rgba(16,185,129,0.03)" : "transparent",
               }}
               onDrop={handleDrop}
@@ -207,7 +207,7 @@ export default function ImportHistory() {
                   <p className="font-semibold" style={{ color: "#6ee7b7" }}>
                     {fileName}
                   </p>
-                  <p className="text-sm" style={{ color: "#64748b" }}>
+                  <p className="text-sm" style={{ color: "var(--poker-text-muted)" }}>
                     {(fileContent.length / 1024).toFixed(1)} KB loaded — click to change
                   </p>
                 </div>
@@ -215,10 +215,10 @@ export default function ImportHistory() {
                 <div className="space-y-3">
                   <Upload className="h-10 w-10 mx-auto" style={{ color: "#475569" }} />
                   <div>
-                    <p className="font-semibold" style={{ color: "#94a3b8" }}>
+                    <p className="font-semibold" style={{ color: "var(--poker-text)" }}>
                       Drop your hand history file here
                     </p>
-                    <p className="text-sm mt-1" style={{ color: "#475569" }}>
+                    <p className="text-sm mt-1" style={{ color: "var(--poker-text-muted)" }}>
                       or click to browse
                     </p>
                   </div>
@@ -232,7 +232,7 @@ export default function ImportHistory() {
                 onClick={handleImport}
                 disabled={importMutation.isPending}
                 className="w-full gap-2 h-12 text-base font-semibold"
-                style={{ background: "linear-gradient(135deg, #065f46, #10b981)", color: "#fff" }}
+                style={{ background: "var(--poker-green)", color: "#fff" }}
               >
                 {importMutation.isPending ? (
                   <>
@@ -254,7 +254,7 @@ export default function ImportHistory() {
                 {/* Summary */}
                 <div
                   className="rounded-xl p-5 border"
-                  style={{ background: "#0d1220", borderColor: "rgba(16,185,129,0.2)" }}
+                  style={{ background: "var(--poker-surface)", borderColor: "rgba(16,185,129,0.2)" }}
                 >
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="font-bold text-lg">Import Complete</h3>
@@ -277,15 +277,15 @@ export default function ImportHistory() {
                       <div
                         key={label}
                         className="rounded-lg p-3"
-                        style={{ background: "rgba(255,255,255,0.03)" }}
+                        style={{ background: "var(--poker-surface-2)" }}
                       >
                         <div
                           className="text-2xl font-bold"
-                          style={{ color: accent ? "#10b981" : "#e2e8f0" }}
+                          style={{ color: accent ? "var(--poker-green)" : "var(--poker-text)" }}
                         >
                           {value}
                         </div>
-                        <div className="text-xs mt-1" style={{ color: "#64748b" }}>
+                        <div className="text-xs mt-1" style={{ color: "var(--poker-text-muted)" }}>
                           {label}
                         </div>
                       </div>
@@ -310,7 +310,7 @@ export default function ImportHistory() {
                         ) : (
                           <XCircle className="h-4 w-4 shrink-0" style={{ color: "#ef4444" }} />
                         )}
-                        <span className="text-sm truncate" style={{ color: r.success ? "#94a3b8" : "#64748b" }}>
+                        <span className="text-sm truncate" style={{ color: "var(--poker-text-muted)" }}>
                           {r.title}
                         </span>
                       </div>
@@ -339,7 +339,7 @@ export default function ImportHistory() {
                     <Button
                       className="w-full gap-2"
                       style={{
-                        background: "linear-gradient(135deg, #065f46, #10b981)",
+                        background: "var(--poker-green)",
                         color: "#fff",
                       }}
                     >
@@ -349,7 +349,7 @@ export default function ImportHistory() {
                   <Button
                     variant="outline"
                     className="flex-1 gap-2"
-                    style={{ borderColor: "rgba(255,255,255,0.1)", color: "#94a3b8" }}
+                    style={{ borderColor: "var(--poker-border)", color: "var(--poker-text-muted)" }}
                     onClick={() => {
                       setFileContent(null);
                       setFileName(null);
