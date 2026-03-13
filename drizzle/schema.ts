@@ -129,3 +129,33 @@ export const aiCallLog = mysqlTable("aiCallLog", {
 
 export type AiCallLog = typeof aiCallLog.$inferSelect;
 export type InsertAiCallLog = typeof aiCallLog.$inferInsert;
+
+/**
+ * Profile snapshots — weekly radar metric snapshots for Shark users.
+ * Each row captures the computed radar values + style tag at a point in time.
+ */
+export const profileSnapshots = mysqlTable("profileSnapshots", {
+  id: int("id").primaryKey().autoincrement(),
+  userId: int("userId").notNull(),
+  snapshotDate: varchar("snapshotDate", { length: 10 }).notNull(), // YYYY-MM-DD
+  handsCount: int("handsCount").default(0).notNull(),
+  styleTag: varchar("styleTag", { length: 64 }), // e.g. "TAG", "LAG"
+  // Radar axes (0-100 normalised)
+  vpip: int("vpip").default(0).notNull(),
+  pfr: int("pfr").default(0).notNull(),
+  threeBet: int("threeBet").default(0).notNull(),
+  cbet: int("cbet").default(0).notNull(),
+  foldToCbet: int("foldToCbet").default(0).notNull(),
+  aggression: int("aggression").default(0).notNull(),
+  // Street grades
+  preflopGrade: varchar("preflopGrade", { length: 2 }),
+  flopGrade: varchar("flopGrade", { length: 2 }),
+  turnGrade: varchar("turnGrade", { length: 2 }),
+  riverGrade: varchar("riverGrade", { length: 2 }),
+  // AI-generated narrative (cached)
+  aiReport: text("aiReport"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type ProfileSnapshot = typeof profileSnapshots.$inferSelect;
+export type InsertProfileSnapshot = typeof profileSnapshots.$inferInsert;

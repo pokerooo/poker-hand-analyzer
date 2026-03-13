@@ -565,3 +565,15 @@ Optional paid AI coach scores the hand and explains what to do differently.
 - [x] Client: Shark paywall gate — blur overlay + upgrade CTA for non-Shark users
 - [x] Client: Add Profile tab/link to navigation (My Hands header)
 - [x] Wire /profile route in App.tsx
+
+## Session: AI Profile Report + Radar Trend Tracker — COMPLETED (Mar 2026)
+- [x] DB: profile_snapshots table (userId, snapshotDate, styleTag, handsCount, radar axes, street grades, aiReport)
+- [x] DB: Applied migration via direct SQL (drizzle-kit interactive mode bypassed)
+- [x] Server: playerProfile.generateReport — LLM coaching narrative from radar + street stats (Shark-only)
+- [x] Server: playerProfile.saveSnapshot — persist current metrics as dated snapshot with upsert logic
+- [x] Server: playerProfile.getSnapshots — list last 12 snapshots in chronological order
+- [x] Client: AIReportSection — Generate Report button + Save Snapshot button + rendered markdown narrative
+- [x] Client: TrendTrackerSection — Recharts LineChart of all 6 radar axes over time
+- [x] Client: Delta badges showing change vs previous snapshot per axis (up/down/flat)
+- [x] Client: Snapshot history table (date, style, hands, AI report indicator)
+- [x] 135 tests passing, 0 TypeScript errors

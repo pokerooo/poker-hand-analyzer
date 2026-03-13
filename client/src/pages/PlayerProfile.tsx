@@ -4,11 +4,15 @@
  * Displays a 6-axis radar chart of playing style metrics derived from hand history,
  * plus a street-by-street stats table (hands analysed, avg grade, EV BB).
  *
+ * Shark-only extras:
+ *   - AI-generated coaching narrative (Generate Report button)
+ *   - Weekly radar snapshots with trend/progress tracker
+ *
  * Design: dark gaming aesthetic matching the rest of the app.
  * Paywall: non-Shark users see a blurred overlay with an upgrade CTA.
  */
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -16,8 +20,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LanguageToggle } from "@/components/LanguageToggle";
-import { Loader2, ArrowLeft, Lock, Crown, TrendingUp, Zap } from "lucide-react";
+import { Loader2, ArrowLeft, Lock, Crown, TrendingUp, Zap, Sparkles, Camera, ChevronUp, ChevronDown, Minus } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { toast } from "sonner";
 import {
   RadarChart,
   Radar,
@@ -26,6 +31,12 @@ import {
   PolarRadiusAxis,
   ResponsiveContainer,
   Tooltip,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Legend,
 } from "recharts";
 
 // ─── Grade badge ──────────────────────────────────────────────────────────────
@@ -57,6 +68,21 @@ function EVDisplay({ ev }: { ev: number }) {
     <span className={`font-mono font-bold text-sm ${isPos ? "text-emerald-400" : "text-red-400"}`}>
       {isPos ? "+" : ""}
       {ev.toFixed(1)} BB
+    </span>
+  );
+}
+
+// ─── Delta badge (trend change indicator) ─────────────────────────────────────
+
+function DeltaBadge({ current, previous }: { current: number; previous: number | undefined }) {
+  if (previous === undefined) return <span className="text-xs text-zinc-600">—</span>;
+  const diff = current - previous;
+  if (Math.abs(diff) < 1) return <span className="text-xs text-zinc-500 flex items-center gap-0.5"><Minus className="h-3 w-3" />0</span>;
+  const isUp = diff > 0;
+  return (
+    <span className={`text-xs font-bold flex items-center gap-0.5 ${isUp ? "text-emerald-400" : "text-red-400"}`}>
+      {isUp ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+      {Math.abs(Math.round(diff))}
     </span>
   );
 }
@@ -118,6 +144,279 @@ function StatCard({ label, value, sub }: { label: string; value: string; sub?: s
   );
 }
 
+// ─── AI Report section ────────────────────────────────────────────────────────
+
+function AIReportSection({ isShark }: { isShark: boolean }) {
+  const [report, setReport] = useState<string | null>(null);
+  const utils = trpc.useUtils();
+
+  const generateMutation = trpc.playerProfile.generateReport.useMutation({
+    onSuccess: (data) => {
+      setReport(data.report as string);
+      toast.success("AI coaching report generated");
+    },
+    onError: (err) => {
+      toast.error(err.message || "Failed to generate report");
+    },
+  });
+
+  const saveMutation = trpc.playerProfile.saveSnapshot.useMutation({
+    onSuccess: (data) => {
+      toast.success(data.updated ? "Snapshot updated" : "Snapshot saved");
+      utils.playerProfile.getSnapshots.invalidate();
+    },
+    onError: (err) => {
+      toast.error(err.message || "Failed to save snapshot");
+    },
+  });
+
+  if (!isShark) return null;
+
+  return (
+    <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 overflow-hidden">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-800">
+        <div className="flex items-center gap-2">
+          <Sparkles className="h-4 w-4 text-amber-400" />
+          <span className="font-bold text-sm text-white tracking-wide">AI Coaching Report</span>
+          <Badge className="text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/30">SHARK</Badge>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            className="text-xs border-zinc-700 text-zinc-300 hover:bg-zinc-800 gap-1.5"
+            onClick={() => saveMutation.mutate()}
+            disabled={saveMutation.isPending}
+          >
+            {saveMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Camera className="h-3 w-3" />}
+            Save Snapshot
+          </Button>
+          <Button
+            size="sm"
+            className="text-xs bg-amber-500 hover:bg-amber-400 text-black font-bold gap-1.5"
+            onClick={() => generateMutation.mutate()}
+            disabled={generateMutation.isPending}
+          >
+            {generateMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+            {generateMutation.isPending ? "Generating…" : "Generate Report"}
+          </Button>
+        </div>
+      </div>
+
+      <div className="px-5 py-5">
+        {!report && !generateMutation.isPending && (
+          <div className="text-center py-8 space-y-3">
+            <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mx-auto">
+              <Sparkles className="h-6 w-6 text-amber-400/60" />
+            </div>
+            <p className="text-sm text-zinc-500 max-w-xs mx-auto leading-relaxed">
+              Generate a personalised coaching assessment based on your radar metrics and street performance.
+              Direct, data-driven, no fluff.
+            </p>
+          </div>
+        )}
+
+        {generateMutation.isPending && (
+          <div className="flex flex-col items-center gap-3 py-10">
+            <Loader2 className="h-8 w-8 animate-spin text-amber-400" />
+            <p className="text-sm text-zinc-500">Analysing your play…</p>
+          </div>
+        )}
+
+        {report && (
+          <div
+            className="prose prose-invert prose-sm max-w-none leading-relaxed"
+            style={{ color: "#d4d4d8" }}
+          >
+            {report.split("\n").map((line, i) => {
+              if (line.startsWith("**") && line.endsWith("**")) {
+                return (
+                  <p key={i} className="font-bold text-amber-400 mt-4 mb-1 text-sm tracking-wide">
+                    {line.replace(/\*\*/g, "")}
+                  </p>
+                );
+              }
+              if (line.startsWith("**")) {
+                // Inline bold markers
+                const parts = line.split(/\*\*(.*?)\*\*/g);
+                return (
+                  <p key={i} className="text-sm leading-relaxed mb-2">
+                    {parts.map((part, j) =>
+                      j % 2 === 1 ? <strong key={j} className="text-white">{part}</strong> : part
+                    )}
+                  </p>
+                );
+              }
+              if (line.trim() === "") return <div key={i} className="h-2" />;
+              return <p key={i} className="text-sm leading-relaxed mb-2">{line}</p>;
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Trend tracker section ────────────────────────────────────────────────────
+
+const AXIS_COLORS: Record<string, string> = {
+  vpip: "#f59e0b",
+  pfr: "#22c55e",
+  threeBet: "#60a5fa",
+  cbet: "#a78bfa",
+  foldToCbet: "#f87171",
+  aggression: "#fb923c",
+};
+
+function TrendTrackerSection({ isShark }: { isShark: boolean }) {
+  const { data: snapshots, isLoading } = trpc.playerProfile.getSnapshots.useQuery(undefined, {
+    enabled: isShark,
+    retry: false,
+  });
+
+  if (!isShark) return null;
+
+  if (isLoading) {
+    return (
+      <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-8 flex justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-amber-400" />
+      </div>
+    );
+  }
+
+  if (!snapshots || snapshots.length === 0) {
+    return (
+      <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6 text-center space-y-2">
+        <div className="w-10 h-10 rounded-xl bg-zinc-800 flex items-center justify-center mx-auto">
+          <TrendingUp className="h-5 w-5 text-zinc-600" />
+        </div>
+        <p className="text-sm text-zinc-500">No snapshots yet. Save your first snapshot above to start tracking progress.</p>
+      </div>
+    );
+  }
+
+  // Build chart data
+  const chartData = snapshots.map((s) => ({
+    date: s.snapshotDate,
+    vpip: s.vpip,
+    pfr: s.pfr,
+    threeBet: s.threeBet,
+    cbet: s.cbet,
+    foldToCbet: s.foldToCbet,
+    aggression: s.aggression,
+  }));
+
+  const latest = snapshots[snapshots.length - 1];
+  const prev = snapshots.length >= 2 ? snapshots[snapshots.length - 2] : undefined;
+
+  const axes: { key: keyof typeof latest; label: string }[] = [
+    { key: "vpip", label: "VPIP" },
+    { key: "pfr", label: "PFR" },
+    { key: "threeBet", label: "3-Bet" },
+    { key: "cbet", label: "C-Bet" },
+    { key: "foldToCbet", label: "Fold/CBet" },
+    { key: "aggression", label: "Aggression" },
+  ];
+
+  return (
+    <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 overflow-hidden">
+      <div className="flex items-center gap-2 px-5 py-4 border-b border-zinc-800">
+        <TrendingUp className="h-4 w-4 text-emerald-400" />
+        <span className="font-bold text-sm text-white tracking-wide">Progress Tracker</span>
+        <span className="text-xs text-zinc-500 ml-1">{snapshots.length} snapshot{snapshots.length !== 1 ? "s" : ""}</span>
+      </div>
+
+      {/* Delta badges — change vs previous snapshot */}
+      {snapshots.length >= 2 && (
+        <div className="px-5 py-3 border-b border-zinc-800/60">
+          <p className="text-[10px] font-bold tracking-widest text-zinc-600 uppercase mb-2">vs Previous Snapshot</p>
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+            {axes.map(({ key, label }) => (
+              <div key={key} className="flex flex-col items-center gap-0.5 rounded-lg bg-zinc-900/60 border border-zinc-800 px-2 py-2">
+                <span className="text-[9px] font-bold tracking-wider text-zinc-500 uppercase">{label}</span>
+                <span className="font-mono text-sm font-bold text-white">{latest[key] as number}</span>
+                <DeltaBadge
+                  current={latest[key] as number}
+                  previous={prev ? (prev[key] as number) : undefined}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Line chart */}
+      <div className="px-2 py-4 h-64">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={chartData} margin={{ top: 5, right: 20, left: -20, bottom: 5 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+            <XAxis
+              dataKey="date"
+              tick={{ fill: "#71717a", fontSize: 10 }}
+              tickLine={false}
+              axisLine={{ stroke: "rgba(255,255,255,0.06)" }}
+            />
+            <YAxis
+              domain={[0, 100]}
+              tick={{ fill: "#71717a", fontSize: 10 }}
+              tickLine={false}
+              axisLine={false}
+            />
+            <Tooltip
+              contentStyle={{
+                background: "#18181b",
+                border: "1px solid rgba(255,255,255,0.1)",
+                borderRadius: "8px",
+                fontSize: "11px",
+                color: "#e4e4e7",
+              }}
+            />
+            <Legend
+              wrapperStyle={{ fontSize: "10px", color: "#71717a" }}
+            />
+            {axes.map(({ key, label }) => (
+              <Line
+                key={key}
+                type="monotone"
+                dataKey={key}
+                name={label}
+                stroke={AXIS_COLORS[key]}
+                strokeWidth={2}
+                dot={{ r: 3, fill: AXIS_COLORS[key], strokeWidth: 0 }}
+                activeDot={{ r: 5 }}
+              />
+            ))}
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Snapshot history table */}
+      <div className="border-t border-zinc-800/60">
+        <div className="grid grid-cols-4 px-4 py-2 text-[9px] font-bold tracking-widest text-zinc-600 uppercase border-b border-zinc-800/40">
+          <span>Date</span>
+          <span className="text-center">Style</span>
+          <span className="text-center">Hands</span>
+          <span className="text-right">AI Report</span>
+        </div>
+        {[...snapshots].reverse().map((s) => (
+          <div key={s.id} className="grid grid-cols-4 items-center px-4 py-2.5 border-b border-zinc-800/30 last:border-0 hover:bg-zinc-800/20 transition-colors">
+            <span className="text-xs font-mono text-zinc-400">{s.snapshotDate}</span>
+            <span className="text-xs text-center text-zinc-300 font-medium">{s.styleTag ?? "—"}</span>
+            <span className="text-xs text-center font-mono text-zinc-400">{s.handsCount.toLocaleString()}</span>
+            <span className="text-right">
+              {s.aiReport ? (
+                <Badge className="text-[9px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Saved</Badge>
+              ) : (
+                <span className="text-[10px] text-zinc-600">—</span>
+              )}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function PlayerProfile() {
@@ -127,19 +426,10 @@ export default function PlayerProfile() {
   const currentPlan = (user as any)?.plan ?? "fish";
   const isShark = currentPlan === "shark";
 
-  const [showUpgrade, setShowUpgrade] = useState(false);
-
-  const { data, isLoading, error } = trpc.playerProfile.getMetrics.useQuery(undefined, {
+  const { data, isLoading } = trpc.playerProfile.getMetrics.useQuery(undefined, {
     enabled: isAuthenticated && isShark,
     retry: false,
   });
-
-  // Redirect to login if not authenticated
-  useEffect(() => {
-    if (!isAuthenticated && !isLoading) {
-      // Show the page with paywall overlay — don't redirect
-    }
-  }, [isAuthenticated, isLoading]);
 
   const handleUpgrade = () => {
     navigate("/pricing");
@@ -212,8 +502,8 @@ export default function PlayerProfile() {
               My Hands
             </Button>
           ) : (
-            <Button variant="outline" size="sm" onClick={() => navigate("/login")} className="font-medium border-zinc-700 text-zinc-300 hover:bg-zinc-800">
-              Sign In
+            <Button variant="outline" size="sm" onClick={() => navigate("/pricing")} className="font-medium border-amber-500/40 text-amber-400 hover:bg-amber-500/10">
+              Upgrade
             </Button>
           )}
         </div>
@@ -332,6 +622,12 @@ export default function PlayerProfile() {
           ))}
         </div>
 
+        {/* AI Coaching Report — Shark only */}
+        <AIReportSection isShark={isShark} />
+
+        {/* Progress Trend Tracker — Shark only */}
+        <TrendTrackerSection isShark={isShark} />
+
         {/* Not enough data state */}
         {isShark && data && !data.hasEnoughData && (
           <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-8 text-center space-y-3">
@@ -361,7 +657,7 @@ export default function PlayerProfile() {
               <h3 className="font-bold text-white mb-1">Unlock Your Player Profile</h3>
               <p className="text-sm text-zinc-400">
                 See exactly how you play — VPIP, PFR, aggression factor, c-bet %, fold-to-c-bet, and more.
-                Exclusive to the Shark plan.
+                Plus AI coaching reports and weekly progress tracking. Exclusive to the Shark plan.
               </p>
             </div>
             <Button
