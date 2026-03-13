@@ -130,13 +130,21 @@ NEVER include cumulative board cards. Each street's board array is independent a
 
 Hero identification: "we", "I", "hero" always refer to the hero player. Set isHero=true for that player and mark their actions with isHero=true.
 
-CRITICAL STACK RULE: Always populate startingStack for every player:
-- If the hand says "80keff", "80k eff", "80000eff", "80bb eff" — this is the EFFECTIVE STACK. Assign this value as startingStack for ALL active players in the hand (effective stack = the smaller of the two stacks, so all players start at this value).
-- If individual stacks are mentioned (e.g. "UTG has 120bb", "hero covers") — use those specific values.
-- If no stack info is given, estimate from the action sizes (e.g. if someone jams 45,500 and has been calling, infer their starting stack).
-- NEVER leave startingStack as null if any stack information can be inferred from the hand text.
-- "with X behind" after a bet means the player has X chips left AFTER that bet — so their startingStack = bet amount + X.
-- "covering" means that player has MORE chips than the effective stack — set their startingStack to 1.5x the effective stack as an estimate.`;
+CRITICAL STACK RULE: Always populate startingStack for every player.
+
+Stack input formats you MUST handle:
+1. Single effective stack: "80keff", "80k eff", "80000eff", "80bb eff", "80bb", "2000eff" — assign this as startingStack for ALL active players.
+2. BB format: "100bb" without 'eff' = 100 big blinds. Multiply by bigBlind to get chip amount. E.g. "100bb" with BB=1000 → startingStack=100000.
+3. Split stacks — hero and villain have different stacks:
+   - "H 100bb V 80bb" or "hero 100bb villain 80bb" → hero startingStack = 100 × BB, villain startingStack = 80 × BB, effective = min(hero, villain)
+   - "100bb/80bb" → hero = 100 × BB, villain = 80 × BB
+   - "hero 1000 villain 800" → hero startingStack = 1000, villain startingStack = 800
+   - When stacks differ, set each player's startingStack to their INDIVIDUAL stack (NOT the effective). The effective stack is just min(hero, villain).
+4. If individual stacks are mentioned (e.g. "UTG has 120bb", "hero covers") — use those specific values.
+5. If no stack info is given, estimate from the action sizes.
+6. NEVER leave startingStack as null if any stack information can be inferred.
+7. "with X behind" after a bet means the player has X chips left AFTER that bet — startingStack = bet + X.
+8. "covering" means that player has MORE chips than the effective stack — set their startingStack to 1.5x the effective stack as an estimate.`;
 
 export async function parseHandText(rawText: string): Promise<ParsedHand> {
   const response = await invokeLLM({

@@ -18,11 +18,11 @@ const EXAMPLE_HANDS = [
   },
   {
     label: "River bluff spot",
-    text: "200/400 1200eff we btn KQs open 900, bb call\nFlop J72r bb check hero bet 600 bb call\nTurn 5h both check\nRiver 4s bb bet 2500 hero raise 7000 bb fold hero wins",
+    text: "200/400 H 120bb V 80bb we btn KQs open 900, bb call\nFlop J72r bb check hero bet 600 bb call\nTurn 5h both check\nRiver 4s bb bet 2500 hero raise 7000 bb fold hero wins",
   },
   {
     label: "Big pot 3bet",
-    text: "1000/2000 8000eff utg open 4500, we btn 3bet AKo 13500, utg call\nFlop K82r utg check hero bet 9000 utg call\nTurn 3h utg check hero bet 22000 utg allin hero call\nRiver Jd hero wins",
+    text: "1000/2000 H 100bb V 60bb utg open 4500, we btn 3bet AKo 13500, utg call\nFlop K82r utg check hero bet 9000 utg call\nTurn 3h utg check hero bet 22000 utg allin hero call\nRiver Jd hero wins",
   },
 ];
 
@@ -31,9 +31,12 @@ function hasBlinds(text: string): boolean {
   return /\d+\s*\/\s*\d+/.test(text);
 }
 
-// Detect if effective stack (e.g. 2000eff or 2keff) is present
+// Detect if effective stack or any stack info is present
+// Accepts: 2000eff, 80bb, H 100bb V 80bb, 100bb/80bb, hero 1000 villain 800
 function hasEffStack(text: string): boolean {
-  return /\d+(\.\d+)?\s*k?\s*eff/i.test(text);
+  return /\d+(\.\d+)?\s*k?\s*eff/i.test(text) ||
+    /\b\d+(\.\d+)?\s*bb\b/i.test(text) ||
+    /\b(hero|h|villain|v)\s+\d+/i.test(text);
 }
 
 export default function Home() {
@@ -292,7 +295,7 @@ export default function Home() {
                 ? "bg-green-50 text-green-700 border border-green-200"
                 : "bg-muted text-muted-foreground border border-transparent"
             }`}>
-              {hasEffStack(handText) ? "✓" : "!"} Eff. stack e.g. 2000eff
+              {hasEffStack(handText) ? "✓" : "!"} Stack e.g. 2000eff or 100bb or H 100bb V 80bb
             </span>
           </div>
 
@@ -302,7 +305,7 @@ export default function Home() {
               ref={textareaRef}
               value={handText}
               onChange={handleTextChange}
-              placeholder={`500/1000 2000eff utg open 2500, we co ATo flat, btn flat\nFlop A84r hero bet 3500 btn call\nTurn 2s hero bet 9000 btn raise 22000 hero fold`}
+              placeholder={`500/1000 2000eff utg open 2500, we co ATo flat, btn flat\nFlop A84r hero bet 3500 btn call\nTurn 2s hero bet 9000 btn raise 22000 hero fold\n\n(Stack formats: 2000eff · 100bb · H 100bb V 80bb)`}
               className="min-h-[160px] sm:min-h-[180px] text-sm resize-none font-mono leading-relaxed pb-14 bg-card"
               onKeyDown={(e) => {
                 if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {

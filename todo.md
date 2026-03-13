@@ -483,3 +483,13 @@ Optional paid AI coach scores the hand and explains what to do differently.
 - [x] prefs.updateTheme tRPC mutation (protectedProcedure) added and registered in appRouter
 - [x] ThemeContext syncs with server: loads user.theme on login, calls prefs.updateTheme on every toggle
 - [x] 0 TypeScript errors, 105 tests passing
+
+## Session: AI Coach Hand-Reading Fix + Stack Input (Mar 2026)
+- [x] Strengthen coach LLM prompt: inject hero hole cards + final board before analysis, explicit hand-reading rules
+- [x] Fix trips/gutshot miscalculation: LLM must enumerate exact 5-card best hand before commenting on each street
+- [x] Stack input: allow bb format (e.g. 100bb) or absolute (e.g. 1000) in the effective stack field
+- [x] Stack input: allow separate hero/villain stack entry (e.g. H 100bb V 80bb → eff = 80bb)
+- [x] Parser CRITICAL STACK RULE updated: handles bb, split stacks, H/V notation, 100bb/80bb format
+- [x] Home.tsx validation hint updated to show new stack formats
+- [x] Example hands updated to demonstrate H/V split stack format
+- [x] 0 TypeScript errors, 105 tests passing

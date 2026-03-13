@@ -258,7 +258,17 @@ const coachRouter = router({
 
       const parsedData = hand.parsedData as any;
 
-      const prompt = `You are a world-class professional poker coach specialising in exploitative play at mid-to-high stakes ($500-$1000 buy-ins). Your analysis is direct, professional, and focused on maximising EV against this specific villain type.
+      // Build explicit hand-strength context so the LLM doesn't have to infer it
+      const heroCards: string[] = parsedData?.heroCards || [];
+      const allBoardCards: string[] = [];
+      for (const street of (parsedData?.streets || [])) {
+        if (street.board) allBoardCards.push(...street.board);
+      }
+      const handContextNote = heroCards.length > 0 && allBoardCards.length > 0
+        ? `\n\nCRITICAL — HERO'S EXACT HAND STRENGTH (you MUST use this, do not infer differently):\nHero hole cards: ${heroCards.join(' ')}\nFinal board: ${allBoardCards.join(' ')}\nBefore writing any street comment, enumerate hero's exact 5-card best hand from these 7 cards. Do NOT assume draws or made hands that are not present. Common errors to avoid:\n- Do NOT say hero has trips unless hero holds a pocket pair matching a board card, OR the board has a pair and hero holds the matching rank.\n- Do NOT say hero has a gutshot unless there is exactly one missing rank in a 4-card sequence using hero's hole cards + board cards.\n- Do NOT say hero has a flush draw unless hero holds 2 cards of the same suit AND at least 2 board cards share that suit.\n- State the exact hand: e.g. "Hero has top pair (Q) with J kicker on Q85 board" or "Hero has two pair, Aces and Jacks" etc.`
+        : '';
+
+      const prompt = `You are a world-class professional poker coach specialising in exploitative play at mid-to-high stakes ($500-$1000 buy-ins). Your analysis is direct, professional, and focused on maximising EV against this specific villain type.${handContextNote}
 
 Hand Description:
 ${hand.rawText}
@@ -270,11 +280,12 @@ VILLAIN PROFILE:
 ${villainProfile}
 
 Analysis requirements:
-1. Grade and score each street based on how well the hero exploited (or failed to exploit) the villain type.
-2. Identify specific exploitative adjustments — e.g. "against a fish, you should have bet 3x pot on the river instead of checking"
-3. Flag any GTO-correct plays that are actually suboptimal against this villain type
-4. The keyLesson must be a specific, actionable exploitative adjustment for this villain type
-5. In exploitativeAdjustments, list 2-3 concrete changes to make against this villain type specifically
+1. FIRST: verify hero's exact hand strength on each street using the hole cards and board cards provided above. Do not guess or assume.
+2. Grade and score each street based on how well the hero exploited (or failed to exploit) the villain type.
+3. Identify specific exploitative adjustments — e.g. "against a fish, you should have bet 3x pot on the river instead of checking"
+4. Flag any GTO-correct plays that are actually suboptimal against this villain type
+5. The keyLesson must be a specific, actionable exploitative adjustment for this villain type
+6. In exploitativeAdjustments, list 2-3 concrete changes to make against this villain type specifically
 
 Provide your analysis in this exact JSON format:
 {
