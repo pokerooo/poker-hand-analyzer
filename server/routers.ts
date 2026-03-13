@@ -30,6 +30,7 @@ import {
   getStat,
   checkAiRateLimit,
   logAiCall,
+  updateUserTheme,
 } from "./db";
 import { parseHandText } from "./handParser";
 import { invokeLLM } from "./_core/llm";
@@ -925,6 +926,17 @@ const rateLimitRouter = router({
   }),
 });
 
+// ─── User Preferences Router ────────────────────────────────────────────────────────────────────
+
+const prefsRouter = router({
+  updateTheme: protectedProcedure
+    .input(z.object({ theme: z.enum(["light", "dark"]) }))
+    .mutation(async ({ ctx, input }) => {
+      await updateUserTheme(ctx.user.id, input.theme);
+      return { success: true };
+    }),
+});
+
 // ─── Root Router ─────────────────────────────────────────────────────────────────────────────────
 
 export const appRouter = router({
@@ -942,6 +954,7 @@ export const appRouter = router({
   study: studyRouter,
   stats: statsRouter,
   rateLimit: rateLimitRouter,
+  prefs: prefsRouter,
   system: systemRouter,
 });
 

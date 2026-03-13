@@ -20,6 +20,8 @@ export const users = mysqlTable("users", {
   stripeCustomerId: varchar("stripe_customer_id", { length: 255 }),
   stripeSubscriptionId: varchar("stripe_subscription_id", { length: 255 }),
   isPro: boolean("is_pro").default(false).notNull(),
+  // UI preferences
+  theme: mysqlEnum("theme", ["light", "dark"]).default("light").notNull(),
 });
 
 export type User = typeof users.$inferSelect;

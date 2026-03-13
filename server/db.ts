@@ -47,6 +47,12 @@ export async function getUserByOpenId(openId: string) {
   return result[0] ?? undefined;
 }
 
+export async function updateUserTheme(userId: number, theme: "light" | "dark"): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(users).set({ theme }).where(eq(users.id, userId));
+}
+
 // ─── Hands ────────────────────────────────────────────────────────────────────
 
 function generateSlug(len = 8): string {

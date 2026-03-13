@@ -128,9 +128,9 @@
   --poker-blue: oklch(0.62 0.18 240);
   --poker-blue-subtle: rgba(59,130,246,0.08);
   --poker-blue-subtle-border: rgba(59,130,246,0.2);
-  --poker-table-felt: oklch(0.35 0.12 155);         /* poker table felt */
-  --poker-table-rim: oklch(0.28 0.08 155);
-  --poker-table-rim-glow: rgba(16,185,129,0.3);
+  --poker-table-felt: oklch(0.48 0.16 155);         /* poker table felt — medium green in light mode */
+  --poker-table-rim: oklch(0.38 0.12 155);            /* rim — slightly darker green */
+  --poker-table-rim-glow: rgba(16,185,129,0.25);
   --poker-pill-bg: oklch(0.93 0.04 155);
   --poker-pill-text: oklch(0.35 0.12 155);
 }

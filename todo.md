@@ -475,3 +475,11 @@ Optional paid AI coach scores the hand and explains what to do differently.
 - [x] Add floating ThemeToggle button (Moon/Sun) to App.tsx — visible on all pages
 - [x] ThemeProvider set to switchable=true with localStorage persistence
 - [x] 0 TypeScript errors, 105 tests passing
+
+## Session: Theme Improvements (Mar 2026)
+- [x] Lighter poker table felt in day mode — oklch(0.48 0.16 155) medium green (was dark 0.35)
+- [x] Reposition floating theme toggle on mobile — bottom-20 on xs, bottom-6 on sm+ (avoids replay controls)
+- [x] Persist theme preference to DB — users.theme ENUM column added, updateUserTheme helper in db.ts
+- [x] prefs.updateTheme tRPC mutation (protectedProcedure) added and registered in appRouter
+- [x] ThemeContext syncs with server: loads user.theme on login, calls prefs.updateTheme on every toggle
+- [x] 0 TypeScript errors, 105 tests passing

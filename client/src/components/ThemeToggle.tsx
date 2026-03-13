@@ -17,7 +17,7 @@ export function ThemeToggle() {
       onClick={toggleTheme}
       aria-label={isDark ? "Switch to day mode" : "Switch to night mode"}
       title={isDark ? "Day mode" : "Night mode"}
-      className="fixed bottom-6 right-5 z-50 w-11 h-11 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 hover:scale-110 active:scale-95"
+      className="fixed bottom-20 sm:bottom-6 right-5 z-50 w-11 h-11 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 hover:scale-110 active:scale-95"
       style={{
         background: isDark
           ? "var(--poker-green)"
