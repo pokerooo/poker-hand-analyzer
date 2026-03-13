@@ -17,6 +17,9 @@ import { Link, useLocation } from "wouter";
 import { Send, RotateCcw, Zap, RefreshCw, ArrowLeft, BookOpen, Check, Clock, AlertCircle } from "lucide-react";
 import { Streamdown } from "streamdown";
 import { toast } from "sonner";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { LanguageToggle } from "@/components/LanguageToggle";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const MASCOT_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663320611071/g6HPzuQNwUJzsGs4mHVNkx/coach_mascot_cfaa3837.png";
 
@@ -51,6 +54,7 @@ interface Message {
 
 export default function CoachChat() {
   const { user, isAuthenticated } = useAuth();
+  const { t, language } = useLanguage();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -178,6 +182,7 @@ export default function CoachChat() {
       chatMutation.mutate({
         question: text.trim(),
         history: messages.slice(-10),
+        language: language as "en" | "zh" | "es",
       });
     },
     [messages, isTyping, chatMutation, remainingCalls]
@@ -263,7 +268,7 @@ export default function CoachChat() {
             <span style={{ color: "var(--poker-text-muted)" }}>/</span>
           <div className="flex items-center gap-2">
             <Zap className="h-5 w-5" style={{ color: "var(--poker-green)" }} />
-            <span className="font-bold text-white">AI Coach</span>
+            <span className="font-bold text-white">{t("coachChatTitle")}</span>
           </div>
         </div>
 
@@ -304,9 +309,11 @@ export default function CoachChat() {
               style={{ color: "var(--poker-text-muted)", border: "1px solid var(--poker-border)" }}
             >
               <RotateCcw className="h-3 w-3" />
-              New chat
+              {t("coachChatClear")}
             </button>
           )}
+          <LanguageToggle />
+          <ThemeToggle />
         </div>
       </div>
 
@@ -338,10 +345,10 @@ export default function CoachChat() {
             </div>
 
             <h1 className="text-3xl font-bold text-white text-center mb-2">
-              Instant review, evolve your poker mind.
+              {t("coachChatTitle")}
             </h1>
             <p className="text-center max-w-md mb-8" style={{ color: "var(--poker-text-muted)" }}>
-              Ask anything — hand lines, theoretical concepts, tournament adjustments, or exploitative reads. Direct answers, no fluff.
+              {t("coachChatWelcome")}
             </p>
 
             {/* Daily limit notice for free users near limit */}
@@ -576,7 +583,7 @@ export default function CoachChat() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={remainingCalls === 0 ? "Daily limit reached. Resets at midnight UTC." : "Ask anything about your game..."}
+              placeholder={remainingCalls === 0 ? t("coachRateLimitHit") : t("coachChatPlaceholder")}
               disabled={remainingCalls === 0}
               rows={1}
               className="flex-1 bg-transparent resize-none outline-none text-sm py-1.5 disabled:cursor-not-allowed"

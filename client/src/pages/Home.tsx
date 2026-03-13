@@ -8,6 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { LanguageToggle } from "@/components/LanguageToggle";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Loader2, Play, ChevronRight, AlertCircle, Zap } from "lucide-react";
 import { toast } from "sonner";
 
@@ -33,6 +35,7 @@ function hasBlinds(text: string): boolean {
 
 // Detect if effective stack or any stack info is present
 // Accepts: 2000eff, 80bb, H 100bb V 80bb, 100bb/80bb, hero 1000 villain 800
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function hasEffStack(text: string): boolean {
   return /\d+(\.\d+)?\s*k?\s*eff/i.test(text) ||
     /\b\d+(\.\d+)?\s*bb\b/i.test(text) ||
@@ -42,6 +45,7 @@ function hasEffStack(text: string): boolean {
 export default function Home() {
   const [, navigate] = useLocation();
   const { isAuthenticated } = useAuth();
+  const { t } = useLanguage();
   const [handText, setHandText] = useState("");
   const [handTitle, setHandTitle] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
@@ -86,7 +90,7 @@ export default function Home() {
   const handleVisualize = async () => {
     const text = handText.trim();
     if (!text || text.length < 10) {
-      toast.error("Please describe your hand first");
+      toast.error(t("homeCantRead"));
       return;
     }
 
@@ -107,8 +111,8 @@ export default function Home() {
       });
       navigate(`/hand/${shareSlug}`);
     } catch {
-      toast.error("Couldn't read your hand", {
-        description: "Try including blinds (500/1000), effective stack (2000eff), and your position",
+      toast.error(t("homeCantRead"), {
+        description: t("homeCantReadDesc"),
       });
     } finally {
       setIsProcessing(false);
@@ -154,9 +158,10 @@ export default function Home() {
           <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
             <span className="text-primary-foreground text-sm font-bold">♠</span>
           </div>
-          <span className="font-bold text-lg tracking-tight">Poker AI</span>
+          <span className="font-bold text-lg tracking-tight">{t("appName")}</span>
         </div>
         <div className="flex items-center gap-2">
+          <LanguageToggle />
           <ThemeToggle />
           <Button
             variant="outline"
@@ -165,15 +170,16 @@ export default function Home() {
             className="font-semibold gap-1.5 border-amber-400/40 text-amber-600 hover:bg-amber-50 hover:text-amber-700 dark:text-amber-400 dark:hover:bg-amber-950/30"
           >
             <Zap className="h-3.5 w-3.5" />
-            AI Coach
+            <span className="hidden sm:inline">{t("aiCoach")}</span>
           </Button>
           {isAuthenticated ? (
             <Button variant="outline" size="sm" onClick={() => navigate("/my-hands")} className="font-medium">
-              My Hands
+              <span className="hidden sm:inline">{t("myHands")}</span>
+              <span className="sm:hidden">≡</span>
             </Button>
           ) : (
             <Button variant="outline" size="sm" onClick={() => navigate("/login")} className="font-medium">
-              Sign In
+              {t("signIn")}
             </Button>
           )}
         </div>
@@ -185,15 +191,15 @@ export default function Home() {
         {/* Headline */}
         <div className="text-center space-y-4">
           <div className="inline-flex items-center gap-2 bg-primary/10 text-primary rounded-full px-4 py-1.5 text-sm font-semibold mb-2">
-            <span>♠</span> Your Personal AI Poker Coach
+            <span>♠</span> {t("tagline")}
           </div>
           <h1 className="text-3xl sm:text-5xl font-bold tracking-tight leading-tight">
-            Stop guessing.
+            {t("homeHeadline1")}
             <br />
-            <span className="text-primary">Start playing like a pro.</span>
+            <span className="text-primary">{t("homeHeadline2")}</span>
           </h1>
           <p className="text-muted-foreground text-lg leading-relaxed max-w-lg mx-auto">
-            Describe any hand. Get instant visual replays, street-by-street AI coaching, and leak detection — all in seconds.
+            {t("homeSubtitle")}
           </p>
           {/* Social proof counter */}
           <div className="inline-flex items-center gap-2 text-sm text-muted-foreground">
@@ -203,11 +209,11 @@ export default function Home() {
               ))}
             </span>
             <span>
-              Used by{" "}
+              {t("homeUsedBy")}{" "}
               <span className="font-bold text-foreground tabular-nums">
                 {userCount.toLocaleString()}+
               </span>
-              {" "}players worldwide
+              {" "}{t("homePlayersWorldwide")}
             </span>
           </div>
         </div>
@@ -230,24 +236,24 @@ export default function Home() {
         <div className="w-full grid grid-cols-1 sm:grid-cols-3 gap-3">
           {[
             {
-              icon: "🎬",
-              title: "Hand Replayer",
-              desc: "See every street play out on an animated table with pot, SPR, and stack tracking in real time.",
-              cta: "Paste a hand below",
+              icon: "🎦",
+              title: t("homeFeature1Title"),
+              desc: t("homeFeature1Desc"),
+              cta: t("homeFeature1Cta"),
               onClick: () => textareaRef.current?.focus(),
             },
             {
               icon: "🧠",
-              title: "AI Coach",
-              desc: "Get street-by-street analysis, a grade, and exploitative adjustments tailored to your villain type.",
-              cta: "Open AI Coach",
+              title: t("homeFeature2Title"),
+              desc: t("homeFeature2Desc"),
+              cta: t("homeFeature2Cta"),
               onClick: () => navigate("/coach"),
             },
             {
               icon: "🔍",
-              title: "Leak Detection",
-              desc: "Scan your hand history for recurring patterns — positional leaks, sizing tells, and EV losses quantified.",
-              cta: "View My Hands",
+              title: t("homeFeature3Title"),
+              desc: t("homeFeature3Desc"),
+              cta: t("homeFeature3Cta"),
               onClick: () => navigate("/my-hands"),
             },
           ].map((tile) => (
@@ -273,7 +279,7 @@ export default function Home() {
           <Input
             value={handTitle}
             onChange={(e) => setHandTitle(e.target.value)}
-            placeholder="Hand title (optional) — e.g. Sick river spot vs reg"
+            placeholder={t("homeHandTitle")}
             className="text-sm font-medium"
           />
 
@@ -286,7 +292,7 @@ export default function Home() {
                 ? "bg-green-50 text-green-700 border border-green-200"
                 : "bg-muted text-muted-foreground border border-transparent"
             }`}>
-              {hasBlinds(handText) ? "✓" : "!"} Blinds e.g. 500/1000
+              {hasBlinds(handText) ? "✓" : "!"} {t("homeBlindsHint")}
             </span>
             <span className={`flex items-center gap-1 font-medium px-2 py-1 rounded-md transition-colors ${
               missingStack
@@ -295,7 +301,7 @@ export default function Home() {
                 ? "bg-green-50 text-green-700 border border-green-200"
                 : "bg-muted text-muted-foreground border border-transparent"
             }`}>
-              {hasEffStack(handText) ? "✓" : "!"} Stack e.g. 2000eff or 100bb or H 100bb V 80bb
+              {hasEffStack(handText) ? "✓" : "!"} {t("homeStackHint")}
             </span>
           </div>
 
@@ -305,7 +311,7 @@ export default function Home() {
               ref={textareaRef}
               value={handText}
               onChange={handleTextChange}
-              placeholder={`500/1000 2000eff utg open 2500, we co ATo flat, btn flat\nFlop A84r hero bet 3500 btn call\nTurn 2s hero bet 9000 btn raise 22000 hero fold\n\n(Stack formats: 2000eff · 100bb · H 100bb V 80bb)`}
+              placeholder={t("homeHandPlaceholder")}
               className="min-h-[160px] sm:min-h-[180px] text-sm resize-none font-mono leading-relaxed pb-14 bg-card"
               onKeyDown={(e) => {
                 if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
@@ -320,9 +326,9 @@ export default function Home() {
                 className="gap-2 font-semibold shadow-sm"
               >
                 {isProcessing ? (
-                  <><Loader2 className="h-4 w-4 animate-spin" /> Reading hand...</>
+                  <><Loader2 className="h-4 w-4 animate-spin" /> {t("homeReadingHand")}</>
                 ) : (
-                  <><Play className="h-4 w-4 fill-current" /> Visualise</>
+                  <><Play className="h-4 w-4 fill-current" /> {t("homeVisualize")}</>
                 )}
               </Button>
             </div>
@@ -341,13 +347,13 @@ export default function Home() {
           )}
 
           <p className="text-xs text-muted-foreground text-center">
-            Press <kbd className="px-1.5 py-0.5 rounded bg-muted border border-border text-xs font-mono">⌘ Enter</kbd> to visualise
+            {t("homePressEnter")} <kbd className="px-1.5 py-0.5 rounded bg-muted border border-border text-xs font-mono">⌘ Enter</kbd> {t("homePressEnterTo")}
           </p>
         </div>
 
         {/* Example Hands */}
         <div className="w-full space-y-2">
-          <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Try an example</p>
+          <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">{t("homeTryExample")}</p>
           <div className="flex flex-wrap gap-2">
             {EXAMPLE_HANDS.map((ex) => (
               <button
@@ -364,9 +370,9 @@ export default function Home() {
         {/* How it works */}
         <div className="w-full grid grid-cols-1 sm:grid-cols-3 gap-3 pt-6 border-t border-border">
           {[
-            { icon: "✍️", title: "Type it", desc: "Describe your hand like you would on WhatsApp" },
-            { icon: "🎬", title: "Replay it", desc: "See it come to life on an animated poker table" },
-            { icon: "📤", title: "Share it", desc: "One tap to WhatsApp, TikTok, IG & more" },
+            { icon: "✍️", title: t("homeStep1Title"), desc: t("homeStep1Desc") },
+            { icon: "🎦", title: t("homeStep2Title"), desc: t("homeStep2Desc") },
+            { icon: "📤", title: t("homeStep3Title"), desc: t("homeStep3Desc") },
           ].map((step) => (
             <div key={step.title} className="text-center space-y-1.5 p-3 rounded-xl bg-card border border-border">
               <div className="text-2xl">{step.icon}</div>
@@ -389,12 +395,9 @@ export default function Home() {
           </div>
           <div className="flex-1 min-w-0">
             <div className="font-semibold text-sm flex items-center gap-2">
-              AI Coach Analysis
+              {t("homeAiCoachCta")}
               <Badge className="text-xs bg-amber-500 text-white border-0">Free</Badge>
             </div>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Get your hand scored and learn exactly what you should have done differently.
-            </p>
           </div>
           <ChevronRight className="h-4 w-4 text-amber-500 shrink-0" />
         </div>
@@ -402,7 +405,7 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="text-center text-xs text-muted-foreground py-4 border-t border-border">
-        Poker AI · Your Personal AI Poker Coach
+        {t("appName")} · {t("tagline")}
       </footer>
     </div>
   );

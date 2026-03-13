@@ -6,6 +6,9 @@ import ProPaywall from "@/components/ProPaywall";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, ChevronLeft, BarChart2, AlertTriangle, TrendingUp, Zap, Target, Brain, Shield } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { LanguageToggle } from "@/components/LanguageToggle";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 // ─── Severity colours ─────────────────────────────────────────────────────────
 
@@ -170,6 +173,7 @@ function PatternCard({ pattern, index }: { pattern: any; index: number }) {
 export default function PatternRecognition() {
   const [, navigate] = useLocation();
   const { user, isAuthenticated, loading } = useAuth();
+  const { t } = useLanguage();
   const isPro = (user as any)?.isPro ?? false;
 
   const { data, isLoading, error, refetch } = trpc.patterns.analyze.useQuery(
@@ -200,11 +204,11 @@ export default function PatternRecognition() {
           onClick={() => navigate("/my-hands")}
         >
           <ChevronLeft className="h-4 w-4" />
-          My Hands
+          {t("myHands")}
         </button>
         <div className="flex items-center gap-2">
           <BarChart2 className="h-5 w-5" style={{ color: "#a78bfa" }} />
-          <span className="font-semibold text-base">Pattern Recognition</span>
+          <span className="font-semibold text-base">{t("patternTitle")}</span>
         </div>
         <Badge
           className="text-[10px] px-2 py-0.5 ml-1"
@@ -212,6 +216,10 @@ export default function PatternRecognition() {
         >
           PRO
         </Badge>
+        <div className="ml-auto flex items-center gap-2">
+          <LanguageToggle />
+          <ThemeToggle />
+        </div>
       </div>
 
       <div className="max-w-2xl mx-auto px-6 py-10 space-y-6">

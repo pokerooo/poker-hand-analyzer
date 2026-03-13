@@ -493,3 +493,16 @@ Optional paid AI coach scores the hand and explains what to do differently.
 - [x] Home.tsx validation hint updated to show new stack formats
 - [x] Example hands updated to demonstrate H/V split stack format
 - [x] 0 TypeScript errors, 105 tests passing
+
+## Session: Language Toggle — Chinese & Spanish (Mar 2026)
+- [x] Fix deployment build error (dist/index.js not found — build output path mismatch)
+- [x] Create i18n.ts with EN/ZH (Traditional)/ES translations for all UI strings
+- [x] Create LanguageContext.tsx with useLanguage hook and localStorage persistence
+- [x] Create LanguageToggle component (EN/中/ES pill buttons)
+- [x] Add LanguageProvider to main.tsx
+- [x] Apply translations to Home.tsx, MyHands.tsx, HandReplayer.tsx, CoachChat.tsx, MemoryBank.tsx, WinRateVisualizer.tsx, PatternRecognition.tsx
+- [x] Update coach.analyze LLM prompt to respond in Traditional Chinese or Spanish when selected
+- [x] Update chat.ask LLM prompt to respond in Traditional Chinese or Spanish when selected
+- [x] Pass language parameter from CoachPanel and CoachChat to both mutations
+- [x] Language preference persisted to localStorage
+- [x] 0 TypeScript errors, 105 tests passing

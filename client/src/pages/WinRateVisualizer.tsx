@@ -23,6 +23,9 @@ import {
   ReferenceLine,
 } from "recharts";
 import { TrendingUp, TrendingDown, Lock, BarChart2, BookOpen, ChevronRight, Info } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { LanguageToggle } from "@/components/LanguageToggle";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const POSITION_ORDER = ["BTN", "CO", "HJ", "LJ", "UTG+1", "UTG", "SB", "BB", "Unknown"];
 
@@ -71,6 +74,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 
 export default function WinRateVisualizer() {
   const { isAuthenticated, loading: authLoading } = useAuth();
+  const { t } = useLanguage();
   const { data, isLoading } = trpc.winrate.getStats.useQuery(undefined, {
     enabled: isAuthenticated,
   });
@@ -134,26 +138,30 @@ export default function WinRateVisualizer() {
           <span style={{ color: "var(--poker-text-muted)" }}>/</span>
           <div className="flex items-center gap-2">
             <BarChart2 className="h-5 w-5" style={{ color: "var(--poker-green)" }} />
-            <span className="font-bold text-white">Win Rate</span>
+            <span className="font-bold text-white">{t("winRateTitle")}</span>
           </div>
         </div>
-        <Link href="/memory-bank">
-          <button
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold"
-            style={{ background: "var(--poker-green-subtle)", color: "var(--poker-green)", border: "1px solid var(--poker-green-subtle-border)" }}
-          >
-            View Leaks
-            <ChevronRight className="h-3.5 w-3.5" />
-          </button>
-        </Link>
+        <div className="flex items-center gap-2">
+          <LanguageToggle />
+          <ThemeToggle />
+          <Link href="/memory-bank">
+            <button
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold"
+              style={{ background: "var(--poker-green-subtle)", color: "var(--poker-green)", border: "1px solid var(--poker-green-subtle-border)" }}
+            >
+              {t("memoryTitle")}
+              <ChevronRight className="h-3.5 w-3.5" />
+            </button>
+          </Link>
+        </div>
       </div>
 
       <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
         {/* Title */}
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Win Rate Visualizer</h1>
+          <h1 className="text-3xl font-bold text-white mb-2">{t("winRateTitle")}</h1>
           <p style={{ color: "var(--poker-text-muted)" }} className="text-sm">
-            Simulated P&L based on how well you played each hand. Fix your leaks and watch the graph turn green.
+            {t("winRateSubtitle")}
           </p>
         </div>
 

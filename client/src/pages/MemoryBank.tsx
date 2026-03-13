@@ -20,6 +20,9 @@ import {
   Target,
   Zap,
 } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { LanguageToggle } from "@/components/LanguageToggle";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const SEVERITY_CONFIG = {
   critical: { color: "#ef4444", bg: "rgba(239,68,68,0.1)", border: "rgba(239,68,68,0.3)", label: "Critical" },
@@ -47,6 +50,7 @@ const CATEGORY_DRILLS: Record<string, string> = {
 
 export default function MemoryBank() {
   const { isAuthenticated, loading: authLoading } = useAuth();
+  const { t } = useLanguage();
   const { data, isLoading } = trpc.memoryBank.getLeaks.useQuery(undefined, {
     enabled: isAuthenticated,
   });
@@ -94,26 +98,30 @@ export default function MemoryBank() {
           <span style={{ color: "var(--poker-text-muted)" }}>/</span>
           <div className="flex items-center gap-2">
             <Brain className="h-5 w-5" style={{ color: "var(--poker-green)" }} />
-            <span className="font-bold text-white">Memory Bank</span>
+            <span className="font-bold text-white">{t("memoryTitle")}</span>
           </div>
         </div>
-        <Link href="/coach">
-          <button
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold"
-            style={{ background: "var(--poker-green-subtle)", color: "var(--poker-green)", border: "1px solid var(--poker-green-subtle-border)" }}
-          >
-            <Zap className="h-3.5 w-3.5" />
-            Ask Coach
-          </button>
-        </Link>
+        <div className="flex items-center gap-2">
+          <LanguageToggle />
+          <ThemeToggle />
+          <Link href="/coach">
+            <button
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold"
+              style={{ background: "var(--poker-green-subtle)", color: "var(--poker-green)", border: "1px solid var(--poker-green-subtle-border)" }}
+            >
+              <Zap className="h-3.5 w-3.5" />
+              {t("myHandsCoach")}
+            </button>
+          </Link>
+        </div>
       </div>
 
       <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
         {/* Title */}
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Memory Bank</h1>
+          <h1 className="text-3xl font-bold text-white mb-2">{t("memoryTitle")}</h1>
           <p style={{ color: "var(--poker-text-muted)" }} className="text-sm">
-            Recurring patterns and leaks detected across your entire hand history.
+            {t("memorySubtitle")}
           </p>
         </div>
 

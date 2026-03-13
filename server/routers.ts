@@ -231,7 +231,7 @@ const coachRouter = router({
 
   // Analyze a hand with AI coach (protected — requires auth)
   analyze: protectedProcedure
-    .input(z.object({ handId: z.number(), villainType: z.string().max(100).optional() }))
+    .input(z.object({ handId: z.number(), villainType: z.string().max(100).optional(), language: z.enum(["en", "zh", "es"]).optional() }))
     .mutation(async ({ input, ctx }) => {
       const hand = await getHandById(input.handId);
       if (!hand) throw new TRPCError({ code: "NOT_FOUND", message: "Hand not found" });
@@ -268,7 +268,13 @@ const coachRouter = router({
         ? `\n\nCRITICAL — HERO'S EXACT HAND STRENGTH (you MUST use this, do not infer differently):\nHero hole cards: ${heroCards.join(' ')}\nFinal board: ${allBoardCards.join(' ')}\nBefore writing any street comment, enumerate hero's exact 5-card best hand from these 7 cards. Do NOT assume draws or made hands that are not present. Common errors to avoid:\n- Do NOT say hero has trips unless hero holds a pocket pair matching a board card, OR the board has a pair and hero holds the matching rank.\n- Do NOT say hero has a gutshot unless there is exactly one missing rank in a 4-card sequence using hero's hole cards + board cards.\n- Do NOT say hero has a flush draw unless hero holds 2 cards of the same suit AND at least 2 board cards share that suit.\n- State the exact hand: e.g. "Hero has top pair (Q) with J kicker on Q85 board" or "Hero has two pair, Aces and Jacks" etc.`
         : '';
 
-      const prompt = `You are a world-class professional poker coach specialising in exploitative play at mid-to-high stakes ($500-$1000 buy-ins). Your analysis is direct, professional, and focused on maximising EV against this specific villain type.${handContextNote}
+      const langInstruction = input.language === "zh"
+        ? "\n\nIMPORTANT: Respond entirely in Traditional Chinese (繁體中文). All text fields in the JSON must be in Chinese."
+        : input.language === "es"
+        ? "\n\nIMPORTANT: Respond entirely in Spanish. All text fields in the JSON must be in Spanish."
+        : "";
+
+      const prompt = `You are a world-class professional poker coach specialising in exploitative play at mid-to-high stakes ($500-$1000 buy-ins). Your analysis is direct, professional, and focused on maximising EV against this specific villain type.${handContextNote}${langInstruction}
 
 Hand Description:
 ${hand.rawText}
@@ -828,6 +834,7 @@ const chatRouter = router({
         role: z.enum(["user", "assistant"]),
         content: z.string(),
       })).max(20).default([]),
+      language: z.enum(["en", "zh", "es"]).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       // Rate limiting: authenticated users only, max 20 calls/day for free users
@@ -841,6 +848,12 @@ const chatRouter = router({
         }
       }
 
+      const langInstruction = input.language === "zh"
+        ? "\n\nIMPORTANT: Respond entirely in Traditional Chinese (繁體中文)."
+        : input.language === "es"
+        ? "\n\nIMPORTANT: Respond entirely in Spanish."
+        : "";
+
       const systemPrompt = `You are a world-class professional poker coach and player with deep expertise in both Cash games and MTTs. Your tone is professional, direct, and concise.
 
 You are coaching mid-stakes recreational regulars ($500-$1000 buy-ins). Your advice should be:
@@ -849,7 +862,7 @@ You are coaching mid-stakes recreational regulars ($500-$1000 buy-ins). Your adv
 - Calibrated to the recreational/semi-pro level — not overly theoretical
 - Direct: no hedging, no "it depends" without a concrete answer
 
-When answering conceptual questions, always ground your answer in a concrete example or scenario. Keep responses under 400 words unless a longer explanation is genuinely necessary.`;
+When answering conceptual questions, always ground your answer in a concrete example or scenario. Keep responses under 400 words unless a longer explanation is genuinely necessary.${langInstruction}`;
 
       const messages: any[] = [
         { role: "system", content: systemPrompt },

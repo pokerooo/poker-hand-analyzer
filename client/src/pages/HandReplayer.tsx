@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { LanguageToggle } from "@/components/LanguageToggle";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { PokerTable } from "@/components/PokerTable";
 import { toast } from "sonner";
 import { useSwipe } from "@/hooks/useSwipe";
@@ -444,6 +446,7 @@ function CoachPanel({ handId, isUnlocked, cachedAnalysis, storedVillainType }: {
   const { isAuthenticated } = useAuth();
   const { data: stripeStatus } = trpc.stripe.status.useQuery(undefined, { enabled: isAuthenticated });
   const isPro = stripeStatus?.isPro ?? false;
+  const { language } = useLanguage();
   const [analysis, setAnalysis] = useState<any>(cachedAnalysis);
   const [selectedVillain, setSelectedVillain] = useState<string>(storedVillainType || "");
   const [customVillain, setCustomVillain] = useState("");
@@ -465,6 +468,7 @@ function CoachPanel({ handId, isUnlocked, cachedAnalysis, storedVillainType }: {
     analyzeMutation.mutate({
       handId,
       villainType: effectiveVillainType || undefined,
+      language: language as "en" | "zh" | "es",
     });
   };
 
@@ -898,6 +902,7 @@ export default function HandReplayer() {
   const [, params] = useRoute("/hand/:slug");
   const [, navigate] = useLocation();
   const slug = params?.slug || "";
+  const { t } = useLanguage();
 
   const { data: hand, isLoading } = trpc.hands.getBySlug.useQuery({ slug }, { enabled: !!slug });
 
@@ -1241,6 +1246,7 @@ export default function HandReplayer() {
           </div>
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
+          <LanguageToggle />
           <ThemeToggle />
           <HandEditPanel hand={{ ...hand, rawText: localRawText || hand.rawText }} onSaved={handleHandSaved} />
           <button
@@ -1254,7 +1260,7 @@ export default function HandReplayer() {
             title="AI Coach analysis"
           >
             <Sparkles className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Coach</span>
+            <span className="hidden sm:inline">{t("replayerCoach")}</span>
           </button>
           <button
             className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
@@ -1266,7 +1272,7 @@ export default function HandReplayer() {
             onClick={() => setActiveTab("share")}
           >
             <Share2 className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Share</span>
+            <span className="hidden sm:inline">{t("replayerShare")}</span>
           </button>
         </div>
       </header>
@@ -1472,9 +1478,9 @@ export default function HandReplayer() {
       <div className="max-w-lg mx-auto w-full" style={{ borderTop: "1px solid var(--poker-border)" }}>
         <div className="flex">
           {[
-            { id: "replay" as const, label: "Replay", icon: "🎬" },
-            { id: "share" as const, label: "Share", icon: "📤" },
-            { id: "coach" as const, label: "AI Coach", icon: "🧠" },
+            { id: "replay" as const, label: t("replayerReplay"), icon: "🎦" },
+            { id: "share" as const, label: t("replayerShare"), icon: "📤" },
+            { id: "coach" as const, label: t("replayerAiCoach"), icon: "🧠" },
           ].map((tab) => (
             <button
               key={tab.id}

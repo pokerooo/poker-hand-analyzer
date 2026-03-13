@@ -7,6 +7,8 @@ import { Loader2, ArrowLeft, Plus, Share2, Trash2, ChevronRight, Flame, Trending
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { LanguageToggle } from "@/components/LanguageToggle";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 // ─── Streak Badge ─────────────────────────────────────────────────────────────
 
@@ -171,6 +173,7 @@ function LeakReport({ hands }: { hands: any[] }) {
 export default function MyHands() {
   const [, navigate] = useLocation();
   const { isAuthenticated, loading } = useAuth();
+  const { t } = useLanguage();
 
   const { data: hands, isLoading, refetch } = trpc.hands.myHands.useQuery(undefined, {
     enabled: isAuthenticated,
@@ -236,7 +239,7 @@ export default function MyHands() {
             >
               <ArrowLeft className="h-4 w-4" />
             </button>
-            <span className="font-bold" style={{ color: "#e2e8f0" }}>My Hands</span>
+            <span className="font-bold" style={{ color: "#e2e8f0" }}>{t("myHandsTitle")}</span>
             {hands && hands.length > 0 && (
               <span
                 className="text-xs px-2 py-0.5 rounded-full font-semibold"
@@ -247,6 +250,7 @@ export default function MyHands() {
             )}
           </div>
           <div className="flex items-center gap-2">
+            <LanguageToggle />
             <ThemeToggle />
             <button
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
@@ -259,7 +263,7 @@ export default function MyHands() {
               onClick={() => navigate("/")}
             >
               <Plus className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">New Hand</span>
+              <span className="hidden sm:inline">{t("myHandsNewHand")}</span>
             </button>
           </div>
         </div>
@@ -274,35 +278,35 @@ export default function MyHands() {
             style={{ background: "rgba(16,185,129,0.08)", color: "#6ee7b7", border: "1px solid rgba(16,185,129,0.2)" }}
             onClick={() => navigate("/import")}
           >
-            <Upload className="h-3.5 w-3.5" /> Import
+            <Upload className="h-3.5 w-3.5" /> {t("myHandsImport")}
           </button>
           <button
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all shrink-0"
             style={{ background: "rgba(139,92,246,0.08)", color: "#a78bfa", border: "1px solid rgba(139,92,246,0.2)" }}
             onClick={() => navigate("/patterns")}
           >
-            <BarChart2 className="h-3.5 w-3.5" /> Patterns
+            <BarChart2 className="h-3.5 w-3.5" /> {t("myHandsPatterns")}
           </button>
           <button
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all shrink-0"
             style={{ background: "rgba(74,222,128,0.08)", color: "#4ade80", border: "1px solid rgba(74,222,128,0.2)" }}
             onClick={() => navigate("/memory-bank")}
           >
-            <Brain className="h-3.5 w-3.5" /> Memory
+            <Brain className="h-3.5 w-3.5" /> {t("myHandsMemory")}
           </button>
           <button
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all shrink-0"
             style={{ background: "rgba(234,179,8,0.08)", color: "#fbbf24", border: "1px solid rgba(234,179,8,0.2)" }}
             onClick={() => navigate("/coach")}
           >
-            <Zap className="h-3.5 w-3.5" /> Coach
+            <Zap className="h-3.5 w-3.5" /> {t("myHandsCoach")}
           </button>
           <button
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all shrink-0"
             style={{ background: "rgba(59,130,246,0.08)", color: "#60a5fa", border: "1px solid rgba(59,130,246,0.2)" }}
             onClick={() => navigate("/win-rate")}
           >
-            <TrendingUp className="h-3.5 w-3.5" /> Win Rate
+            <TrendingUp className="h-3.5 w-3.5" /> {t("myHandsWinRate")}
           </button>
         </div>
       </header>
@@ -315,9 +319,9 @@ export default function MyHands() {
         ) : !hands || hands.length === 0 ? (
           <div className="text-center py-16 space-y-4">
             <div className="text-5xl">🃏</div>
-            <h3 className="text-xl font-semibold" style={{ color: "#e2e8f0" }}>No hands yet</h3>
-            <p style={{ color: "#64748b" }}>Go back and describe your first hand to get started.</p>
-            <Button onClick={() => navigate("/")}>Describe a Hand</Button>
+            <h3 className="text-xl font-semibold" style={{ color: "#e2e8f0" }}>{t("myHandsNoHands")}</h3>
+            <p style={{ color: "#64748b" }}>{t("myHandsNoHandsDesc")}</p>
+            <Button onClick={() => navigate("/")}>{t("myHandsGoHome")}</Button>
           </div>
         ) : (
           <>
