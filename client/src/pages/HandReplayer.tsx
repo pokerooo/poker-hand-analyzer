@@ -1244,7 +1244,7 @@ export default function HandReplayer() {
           <ThemeToggle />
           <HandEditPanel hand={{ ...hand, rawText: localRawText || hand.rawText }} onSaved={handleHandSaved} />
           <button
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
             style={{
               background: coachPanelOpen ? "rgba(234,179,8,0.18)" : "rgba(234,179,8,0.08)",
               color: "#fbbf24",
@@ -1253,10 +1253,11 @@ export default function HandReplayer() {
             onClick={() => { setCoachPanelOpen(v => !v); setMobileSheetMinimized(false); }}
             title="AI Coach analysis"
           >
-            <Sparkles className="h-3.5 w-3.5" /> Coach
+            <Sparkles className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Coach</span>
           </button>
           <button
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
             style={{
               background: "linear-gradient(135deg, #065f46, #047857)",
               color: "#6ee7b7",
@@ -1265,7 +1266,8 @@ export default function HandReplayer() {
             }}
             onClick={() => setActiveTab("share")}
           >
-            <Share2 className="h-3.5 w-3.5" /> Share
+            <Share2 className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Share</span>
           </button>
         </div>
       </header>

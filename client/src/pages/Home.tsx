@@ -177,14 +177,14 @@ export default function Home() {
       </header>
 
       {/* Hero */}
-      <main className="flex-1 flex flex-col items-center px-4 py-10 sm:py-16 max-w-2xl mx-auto w-full gap-8">
+      <main className="flex-1 flex flex-col items-center px-4 py-6 sm:py-16 max-w-2xl mx-auto w-full gap-6 sm:gap-8">
 
         {/* Headline */}
         <div className="text-center space-y-4">
           <div className="inline-flex items-center gap-2 bg-primary/10 text-primary rounded-full px-4 py-1.5 text-sm font-semibold mb-2">
             <span>♠</span> Your Personal AI Poker Coach
           </div>
-          <h1 className="text-4xl sm:text-5xl font-bold tracking-tight leading-tight">
+          <h1 className="text-3xl sm:text-5xl font-bold tracking-tight leading-tight">
             Stop guessing.
             <br />
             <span className="text-primary">Start playing like a pro.</span>
@@ -359,7 +359,7 @@ export default function Home() {
         </div>
 
         {/* How it works */}
-        <div className="w-full grid grid-cols-3 gap-3 pt-6 border-t border-border">
+        <div className="w-full grid grid-cols-1 sm:grid-cols-3 gap-3 pt-6 border-t border-border">
           {[
             { icon: "✍️", title: "Type it", desc: "Describe your hand like you would on WhatsApp" },
             { icon: "🎬", title: "Replay it", desc: "See it come to life on an animated poker table" },

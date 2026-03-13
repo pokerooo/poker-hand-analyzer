@@ -216,106 +216,93 @@ export default function MyHands() {
       style={{ background: "linear-gradient(160deg, #0a0f0d 0%, #0d1a12 50%, #0a0f0d 100%)" }}
     >
       {/* Header */}
+      {/* ── Header row ─────────────────────────────────────────────────────── */}
       <header
-        className="flex items-center justify-between px-4 py-3 sticky top-0 z-10"
+        className="sticky top-0 z-10"
         style={{
-          background: "rgba(10,15,13,0.85)",
+          background: "rgba(10,15,13,0.92)",
           backdropFilter: "blur(12px)",
           borderBottom: "1px solid rgba(16,185,129,0.12)",
           boxShadow: "0 1px 0 rgba(16,185,129,0.06)",
         }}
       >
-        <div className="flex items-center gap-3">
-          <button
-            className="w-8 h-8 flex items-center justify-center rounded-lg transition-colors"
-            style={{ color: "#6ee7b7", background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.2)" }}
-            onClick={() => navigate("/")}
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </button>
-          <span className="font-bold" style={{ color: "#e2e8f0" }}>My Hands</span>
-          {hands && hands.length > 0 && (
-            <span
-              className="text-xs px-2 py-0.5 rounded-full font-semibold"
-              style={{ background: "rgba(16,185,129,0.12)", color: "#4ade80", border: "1px solid rgba(16,185,129,0.2)" }}
+        {/* Top bar: back + title + theme + new hand */}
+        <div className="flex items-center justify-between px-4 py-3">
+          <div className="flex items-center gap-3">
+            <button
+              className="w-8 h-8 flex items-center justify-center rounded-lg transition-colors shrink-0"
+              style={{ color: "#6ee7b7", background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.2)" }}
+              onClick={() => navigate("/")}
             >
-              {hands.length}
-            </span>
-          )}
+              <ArrowLeft className="h-4 w-4" />
+            </button>
+            <span className="font-bold" style={{ color: "#e2e8f0" }}>My Hands</span>
+            {hands && hands.length > 0 && (
+              <span
+                className="text-xs px-2 py-0.5 rounded-full font-semibold"
+                style={{ background: "rgba(16,185,129,0.12)", color: "#4ade80", border: "1px solid rgba(16,185,129,0.2)" }}
+              >
+                {hands.length}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <button
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+              style={{
+                background: "linear-gradient(135deg, #065f46, #047857)",
+                color: "#6ee7b7",
+                border: "1px solid rgba(16,185,129,0.3)",
+                boxShadow: "0 0 12px rgba(16,185,129,0.2)",
+              }}
+              onClick={() => navigate("/")}
+            >
+              <Plus className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">New Hand</span>
+            </button>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <ThemeToggle />
+
+        {/* Nav pill row — horizontally scrollable on mobile, no overflow clipping */}
+        <div
+          className="flex items-center gap-2 px-4 pb-2 overflow-x-auto"
+          style={{ scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }}
+        >
           <button
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
-            style={{
-              background: "rgba(16,185,129,0.08)",
-              color: "#6ee7b7",
-              border: "1px solid rgba(16,185,129,0.2)",
-            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all shrink-0"
+            style={{ background: "rgba(16,185,129,0.08)", color: "#6ee7b7", border: "1px solid rgba(16,185,129,0.2)" }}
             onClick={() => navigate("/import")}
-            title="Import hand history"
           >
             <Upload className="h-3.5 w-3.5" /> Import
           </button>
           <button
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
-            style={{
-              background: "rgba(139,92,246,0.08)",
-              color: "#a78bfa",
-              border: "1px solid rgba(139,92,246,0.2)",
-            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all shrink-0"
+            style={{ background: "rgba(139,92,246,0.08)", color: "#a78bfa", border: "1px solid rgba(139,92,246,0.2)" }}
             onClick={() => navigate("/patterns")}
-            title="Pattern recognition"
           >
             <BarChart2 className="h-3.5 w-3.5" /> Patterns
           </button>
           <button
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
-            style={{
-              background: "rgba(74,222,128,0.08)",
-              color: "#4ade80",
-              border: "1px solid rgba(74,222,128,0.2)",
-            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all shrink-0"
+            style={{ background: "rgba(74,222,128,0.08)", color: "#4ade80", border: "1px solid rgba(74,222,128,0.2)" }}
             onClick={() => navigate("/memory-bank")}
-            title="Memory Bank — leak patterns"
           >
             <Brain className="h-3.5 w-3.5" /> Memory
           </button>
           <button
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
-            style={{
-              background: "rgba(234,179,8,0.08)",
-              color: "#fbbf24",
-              border: "1px solid rgba(234,179,8,0.2)",
-            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all shrink-0"
+            style={{ background: "rgba(234,179,8,0.08)", color: "#fbbf24", border: "1px solid rgba(234,179,8,0.2)" }}
             onClick={() => navigate("/coach")}
-            title="AI Coach chat"
           >
             <Zap className="h-3.5 w-3.5" /> Coach
           </button>
           <button
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
-            style={{
-              background: "rgba(59,130,246,0.08)",
-              color: "#60a5fa",
-              border: "1px solid rgba(59,130,246,0.2)",
-            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all shrink-0"
+            style={{ background: "rgba(59,130,246,0.08)", color: "#60a5fa", border: "1px solid rgba(59,130,246,0.2)" }}
             onClick={() => navigate("/win-rate")}
-            title="Win Rate Visualizer"
           >
             <TrendingUp className="h-3.5 w-3.5" /> Win Rate
-          </button>
-          <button
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
-            style={{
-              background: "linear-gradient(135deg, #065f46, #047857)",
-              color: "#6ee7b7",
-              border: "1px solid rgba(16,185,129,0.3)",
-              boxShadow: "0 0 12px rgba(16,185,129,0.2)",
-            }}
-            onClick={() => navigate("/")}
-          >
-            <Plus className="h-3.5 w-3.5" /> New Hand
           </button>
         </div>
       </header>

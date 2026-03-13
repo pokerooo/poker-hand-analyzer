@@ -453,3 +453,11 @@ Optional paid AI coach scores the hand and explains what to do differently.
 - [x] Store coachPanelOpen in sessionStorage keyed by hand slug
 - [x] Restore panel state on mount from sessionStorage
 - [x] Sync panel state to sessionStorage on every open/close toggle
+
+## Session: Mobile Responsiveness Fixes (Mar 2026)
+- [x] My Hands: Fix overflowing header tab bar on mobile — split into top bar (back/title/New Hand) + horizontally-scrollable nav pill row
+- [x] My Hands: New Hand button shows icon-only on xs, full label on sm+
+- [x] Hand Replayer: Fix cramped header — Coach and Share buttons show icon-only on mobile (label hidden below sm)
+- [x] Home: Tighten hero section padding on mobile (py-6 on xs, py-16 on sm+), gap reduced
+- [x] Home: "How it works" grid stacks to 1 column on mobile (was fixed 3-col)
+- [x] Home: Hero h1 reduced to text-3xl on mobile (was text-4xl)
