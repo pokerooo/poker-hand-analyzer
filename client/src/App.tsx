@@ -13,6 +13,8 @@ import MemoryBank from "@/pages/MemoryBank";
 import CoachChat from "@/pages/CoachChat";
 import WinRateVisualizer from "@/pages/WinRateVisualizer";
 import NotFound from "@/pages/NotFound";
+import Pricing from "@/pages/Pricing";
+import UpgradeSuccess from "@/pages/UpgradeSuccess";
 
 function Router() {
   return (
@@ -23,6 +25,8 @@ function Router() {
       <Route path="/import" component={ImportHistory} />
       <Route path="/patterns" component={PatternRecognition} />
       <Route path="/pro-success" component={ProSuccess} />
+      <Route path="/pricing" component={Pricing} />
+      <Route path="/upgrade-success" component={UpgradeSuccess} />
       <Route path="/memory-bank" component={MemoryBank} />
       <Route path="/coach" component={CoachChat} />
       <Route path="/win-rate" component={WinRateVisualizer} />

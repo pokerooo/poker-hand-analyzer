@@ -52,7 +52,7 @@ export default function ProPaywall({ feature, onUnlocked }: ProPaywallProps) {
   const handleUpgrade = () => {
     setLoading(true);
     createCheckout.mutate(
-      { origin: window.location.origin },
+      { origin: window.location.origin, plan: "shark", interval: "month" },
       { onSettled: () => setLoading(false) }
     );
   };

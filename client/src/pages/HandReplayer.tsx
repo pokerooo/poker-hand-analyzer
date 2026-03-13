@@ -19,6 +19,9 @@ import {
 } from "lucide-react";
 import { VideoExport } from "@/components/VideoExport";
 import ProPaywall from "@/components/ProPaywall";
+import SignUpGateModal from "@/components/SignUpGateModal";
+import UpgradeModal from "@/components/UpgradeModal";
+import { useGuestHandCount } from "@/hooks/useGuestHandCount";
 
 // --- Types ────────────────────────────────────────────────────────────────────
 
@@ -437,11 +440,12 @@ const VILLAIN_PRESETS = [
 
 // --- AI Coach Panel ───────────────────────────────────────────────────────────
 
-function CoachPanel({ handId, isUnlocked, cachedAnalysis, storedVillainType }: {
+function CoachPanel({ handId, isUnlocked, cachedAnalysis, storedVillainType, onLimitReached }: {
   handId: number;
   isUnlocked: boolean;
   cachedAnalysis: any;
   storedVillainType?: string | null;
+  onLimitReached?: () => void;
 }) {
   const { isAuthenticated } = useAuth();
   const { data: stripeStatus } = trpc.stripe.status.useQuery(undefined, { enabled: isAuthenticated });
@@ -459,7 +463,13 @@ function CoachPanel({ handId, isUnlocked, cachedAnalysis, storedVillainType }: {
       setActiveVillainType(data.villainType || "");
       setShowReanalyze(false);
     },
-    onError: (err) => toast.error("Analysis failed", { description: err.message }),
+    onError: (err) => {
+      if (err.message.includes('limit reached') || err.data?.code === 'FORBIDDEN') {
+        onLimitReached?.();
+      } else {
+        toast.error("Analysis failed", { description: err.message });
+      }
+    },
   });
 
   const effectiveVillainType = customVillain.trim() || selectedVillain;
@@ -903,6 +913,14 @@ export default function HandReplayer() {
   const [, navigate] = useLocation();
   const slug = params?.slug || "";
   const { t } = useLanguage();
+  const { isAuthenticated, user } = useAuth();
+  const currentPlan = (user as any)?.plan ?? "fish";
+
+  // Guest hand gate — show sign-up modal after 3 anonymous replays
+  const { count: guestCount, increment: incrementGuest, shouldGate } = useGuestHandCount();
+  const [showSignUpGate, setShowSignUpGate] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [upgradeReason, setUpgradeReason] = useState<"hands" | "coach">("hands");
 
   const { data: hand, isLoading } = trpc.hands.getBySlug.useQuery({ slug }, { enabled: !!slug });
 
@@ -913,6 +931,14 @@ export default function HandReplayer() {
     if (hand && !hasIncrementedRef.current) {
       hasIncrementedRef.current = true;
       incrementUsage.mutate();
+      // Track guest hand views and show sign-up gate after limit
+      if (!isAuthenticated) {
+        incrementGuest();
+        // Show gate on the NEXT view after limit (count is the previous value)
+        if (shouldGate) {
+          setShowSignUpGate(true);
+        }
+      }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [!!hand]);
@@ -1102,6 +1128,15 @@ export default function HandReplayer() {
 
   return (
     <>
+    {/* Sign-up gate for anonymous users */}
+    <SignUpGateModal open={showSignUpGate} onClose={() => setShowSignUpGate(false)} />
+    {/* Upgrade modal when limits are hit */}
+    <UpgradeModal
+      open={showUpgradeModal}
+      onClose={() => setShowUpgradeModal(false)}
+      reason={upgradeReason}
+      currentPlan={currentPlan}
+    />
     <Helmet>
       <title>{ogTitle} | Poker AI</title>
       <meta property="og:title" content={ogTitle} />
@@ -1157,6 +1192,7 @@ export default function HandReplayer() {
               isUnlocked={hand.coachUnlocked}
               cachedAnalysis={hand.coachAnalysis}
               storedVillainType={(hand as any).villainType}
+              onLimitReached={() => { setUpgradeReason('coach'); setShowUpgradeModal(true); }}
             />
           </div>
         </div>
@@ -1212,6 +1248,7 @@ export default function HandReplayer() {
                 isUnlocked={hand.coachUnlocked}
                 cachedAnalysis={hand.coachAnalysis}
                 storedVillainType={(hand as any).villainType}
+                onLimitReached={() => { setUpgradeReason('coach'); setShowUpgradeModal(true); }}
               />
             </div>
           )}
@@ -1539,6 +1576,7 @@ export default function HandReplayer() {
               isUnlocked={hand.coachUnlocked}
               cachedAnalysis={hand.coachAnalysis}
               storedVillainType={(hand as any).villainType}
+              onLimitReached={() => { setUpgradeReason('coach'); setShowUpgradeModal(true); }}
             />
           )}
         </div>

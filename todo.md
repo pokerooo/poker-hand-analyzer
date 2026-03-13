@@ -517,3 +517,51 @@ Optional paid AI coach scores the hand and explains what to do differently.
 - [x] prefs.updateLanguage tRPC mutation added (protectedProcedure)
 - [x] LanguageContext: loads user.language from server on login, calls prefs.updateLanguage on every toggle
 - [x] 0 TypeScript errors, 105 tests passing
+
+## Session: Freemium Tier System + Stripe Paywall (Mar 2026)
+- [ ] DB: Add plan ENUM('fish','reg','shark') column to users table
+- [ ] DB: Add monthlyHandsUsed, monthlyCoachUsed, usageResetDate columns to users table
+- [ ] DB: Track anonymous guest hand count in localStorage (3 free hands before sign-up gate)
+- [ ] Server: Enforce hand parse limits (fish=3/mo, reg=15/mo, shark=50/mo)
+- [ ] Server: Enforce coach analyze + chat limits (fish=3/mo, reg=15/mo, shark=unlimited)
+- [ ] Server: Monthly usage reset logic (reset on 1st of each month)
+- [ ] Stripe: Create products and prices for Reg ($19/mo, $99/yr) and Shark ($29/mo, $199/yr)
+- [ ] Stripe: createCheckoutSession mutation with plan + billing period selection
+- [ ] Stripe: Webhook handler to update users.plan on subscription events
+- [ ] Pricing page (/pricing): 3-tier cards (Fish/Reg/Shark) with feature lists and CTAs
+- [ ] Sign-up gate modal: prompt after 3 anonymous hand replays (name+email or social login)
+- [ ] Paywall modal: Upgrade prompt when hand or coach limit is hit
+- [ ] Gate Memory Bank and Leak/Pattern Detection to Reg+ users
+- [ ] Gate Shark-only features (exploitative analysis, database analysis, style profile)
+- [ ] Add /pricing route to App.tsx
+
+## Session: Freemium Tier System + Stripe Paywall — COMPLETED (Mar 2026)
+- [x] DB: Add plan ENUM('fish','reg','shark') column to users table
+- [x] DB: Add monthlyHandsUsed, monthlyCoachUsed, usageResetDate columns to users table
+- [x] DB: Add stripeCustomerId, stripeSubscriptionId to users table
+- [x] Server: checkHandLimit / checkCoachLimit helpers with monthly reset logic
+- [x] Server: incrementMonthlyHands / incrementMonthlyCoach helpers
+- [x] Server: setUserPlan / setUserPlanByCustomerId helpers for webhook
+- [x] Server: Enforce hand create limits per tier in routers.ts
+- [x] Server: Enforce coach analyze + chat.ask limits per tier in routers.ts
+- [x] Stripe: stripeRouter.ts with createCheckout (plan + interval) and status query
+- [x] Stripe: Webhook handler for checkout.session.completed and customer.subscription.updated
+- [x] Pricing page (/pricing): 3-tier cards (Fish/Reg/Shark) with feature lists and CTAs
+- [x] UpgradeSuccess page (/upgrade-success) for post-checkout redirect
+- [x] Sign-up gate modal: shown to anonymous users after 3 hand replays
+- [x] Upgrade modal: shown when hand or coach monthly limit is hit
+- [x] useGuestHandCount hook: tracks anonymous hand views in localStorage
+- [x] Home.tsx: Pricing link in header, upgrade modal on limit error
+- [x] HandReplayer.tsx: sign-up gate + upgrade modal wired to CoachPanel onLimitReached
+- [x] 10 new tier limit tests, 115 total passing, 0 TypeScript errors
+
+## Session: Player Profile Tab — Shark Only (Mar 2026)
+- [ ] DB: No new schema needed — derive metrics from existing hands table
+- [ ] Server: playerProfile.getMetrics tRPC procedure (protectedProcedure, Shark-gated)
+- [ ] Server: Compute radar dimensions from parsed hand history (VPIP, PFR, AF, 3bet%, CBet%, fold-to-cbet%)
+- [ ] Client: PlayerProfile page (/profile) with radar chart + stats table
+- [ ] Client: Radar chart using Chart.js (recharts radar) — dark gaming aesthetic
+- [ ] Client: Stats table (street-by-street: hands analysed, avg grade, EV BB)
+- [ ] Client: Shark paywall gate — blur overlay + upgrade CTA for non-Shark users
+- [ ] Client: Add Profile tab/link to navigation (Home header + My Hands header)
+- [ ] Wire /profile route in App.tsx

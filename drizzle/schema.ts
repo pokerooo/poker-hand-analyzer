@@ -23,6 +23,11 @@ export const users = mysqlTable("users", {
   // UI preferences
   theme: mysqlEnum("theme", ["light", "dark"]).default("light").notNull(),
   language: mysqlEnum("language", ["en", "zh", "es"]).default("en").notNull(),
+  // Tier / usage tracking
+  plan: mysqlEnum("plan", ["fish", "reg", "shark"]).default("fish").notNull(),
+  monthlyHandsUsed: int("monthlyHandsUsed").default(0).notNull(),
+  monthlyCoachUsed: int("monthlyCoachUsed").default(0).notNull(),
+  usageResetDate: varchar("usageResetDate", { length: 10 }), // YYYY-MM-DD of last reset
 });
 
 export type User = typeof users.$inferSelect;

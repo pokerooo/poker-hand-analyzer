@@ -32,6 +32,11 @@ import {
   logAiCall,
   updateUserTheme,
   updateUserLanguage,
+  checkHandLimit,
+  checkCoachLimit,
+  incrementMonthlyHands,
+  incrementMonthlyCoach,
+  getUserUsageStatus,
 } from "./db";
 import { parseHandText } from "./handParser";
 import { invokeLLM } from "./_core/llm";
@@ -81,6 +86,18 @@ const handsRouter = router({
     )
     .mutation(async ({ input, ctx }) => {
       const userId = ctx.user?.id ?? null;
+
+      // Enforce monthly hand limit for authenticated users
+      if (userId) {
+        const limit = await checkHandLimit(userId);
+        if (!limit.allowed) {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: `Monthly hand limit reached (${limit.used}/${limit.limit}). Upgrade your plan to analyse more hands.`,
+          });
+        }
+      }
+
       const { shareSlug } = await createHand({
         userId,
         rawText: input.rawText,
@@ -89,6 +106,12 @@ const handsRouter = router({
         notes: input.notes,
         isPublic: true,
       });
+
+      // Increment monthly counter for authenticated users
+      if (userId) {
+        await incrementMonthlyHands(userId);
+      }
+
       return { shareSlug };
     }),
 
@@ -248,12 +271,12 @@ const coachRouter = router({
         return { analysis: hand.coachAnalysis, cached: true, villainType: storedVillainType };
       }
 
-      // Rate limiting: max 20 AI calls/day for free users
-      const rateLimit = await checkAiRateLimit(ctx.user.id, ctx.user.isPro);
-      if (!rateLimit.allowed) {
+      // Monthly coach limit based on plan tier
+      const coachLimit = await checkCoachLimit(ctx.user.id);
+      if (!coachLimit.allowed) {
         throw new TRPCError({
-          code: 'TOO_MANY_REQUESTS',
-          message: `Daily AI limit reached (${rateLimit.limit} calls/day). Resets at midnight UTC. Upgrade to Pro for unlimited access.`,
+          code: 'FORBIDDEN',
+          message: `Monthly AI coach limit reached (${coachLimit.used}/${coachLimit.limit}). Upgrade your plan for more coaching sessions.`,
         });
       }
 
@@ -337,8 +360,9 @@ Be direct and professional. No hand-holding. Focus on EV maximisation.`;
       }
       await updateHandCoachAnalysis(input.handId, analysis);
 
-      // Log AI call for rate limiting
+      // Log AI call for rate limiting and increment monthly counter
       await logAiCall(ctx.user.id, 'analyze');
+      await incrementMonthlyCoach(ctx.user.id);
 
       // Update study streak
       const streakResult = await updateStudyStreak(ctx.user.id);
@@ -838,13 +862,13 @@ const chatRouter = router({
       language: z.enum(["en", "zh", "es"]).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      // Rate limiting: authenticated users only, max 20 calls/day for free users
+      // Monthly coach limit based on plan tier (authenticated users only)
       if (ctx.user) {
-        const rateLimit = await checkAiRateLimit(ctx.user.id, ctx.user.isPro);
-        if (!rateLimit.allowed) {
+        const coachLimit = await checkCoachLimit(ctx.user.id);
+        if (!coachLimit.allowed) {
           throw new TRPCError({
-            code: 'TOO_MANY_REQUESTS',
-            message: `Daily AI limit reached (${rateLimit.limit} calls/day). Resets at midnight UTC. Upgrade to Pro for unlimited access.`,
+            code: 'FORBIDDEN',
+            message: `Monthly AI coach limit reached (${coachLimit.used}/${coachLimit.limit}). Upgrade your plan for more coaching sessions.`,
           });
         }
       }
@@ -875,16 +899,17 @@ When answering conceptual questions, always ground your answer in a concrete exa
       const content = response.choices[0].message.content;
       const answer = typeof content === "string" ? content : JSON.stringify(content);
 
-      // Log the call after success
+      // Log the call after success and increment monthly counter
       if (ctx.user) {
         await logAiCall(ctx.user.id, 'chat');
+        await incrementMonthlyCoach(ctx.user.id);
       }
 
       // Return remaining calls count for UI display
       let remaining: number | null = null;
-      if (ctx.user && !ctx.user.isPro) {
-        const updated = await checkAiRateLimit(ctx.user.id, ctx.user.isPro);
-        remaining = updated.remaining;
+      if (ctx.user) {
+        const updated = await checkCoachLimit(ctx.user.id);
+        remaining = updated.remaining === Infinity ? null : updated.remaining;
       }
 
       return { answer, remaining };
@@ -945,9 +970,13 @@ const statsRouter = router({
 // ─── Rate Limit Router ─────────────────────────────────────────────────────────────────────────────────
 
 const rateLimitRouter = router({
-  // Get the user's current AI call usage for today
+  // Get the user's current AI call usage for today (legacy daily limit)
   getStatus: protectedProcedure.query(async ({ ctx }) => {
     return checkAiRateLimit(ctx.user.id, ctx.user.isPro);
+  }),
+  // Get the user's monthly usage status (plan-aware)
+  getUsage: protectedProcedure.query(async ({ ctx }) => {
+    return getUserUsageStatus(ctx.user.id);
   }),
 });
 

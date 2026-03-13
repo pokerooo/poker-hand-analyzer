@@ -393,3 +393,126 @@ export async function logAiCall(
     console.warn('[RateLimit] logAiCall failed:', e);
   }
 }
+
+// ─── Plan / Monthly Usage ───────────────────────────────────────────────────
+
+import { PLAN_LIMITS, PlanKey } from './products';
+
+/** Return today's YYYY-MM string (UTC) for monthly reset comparison */
+function currentMonth(): string {
+  return new Date().toISOString().slice(0, 7); // e.g. "2026-03"
+}
+
+/**
+ * Ensure the user's monthly counters are reset if we're in a new calendar month.
+ * Returns the user row (with potentially-reset counters).
+ */
+export async function ensureMonthlyReset(userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+  const user = result[0];
+  if (!user) return null;
+
+  const thisMonth = currentMonth();
+  const resetDate = (user as any).usageResetDate as string | null;
+
+  if (resetDate !== thisMonth) {
+    await db.update(users).set({
+      monthlyHandsUsed: 0,
+      monthlyCoachUsed: 0,
+      usageResetDate: thisMonth,
+    } as any).where(eq(users.id, userId));
+    return { ...user, monthlyHandsUsed: 0, monthlyCoachUsed: 0, usageResetDate: thisMonth };
+  }
+  return user;
+}
+
+/**
+ * Check whether the user may create another hand this month.
+ * Returns { allowed, used, limit, remaining }
+ */
+export async function checkHandLimit(userId: number): Promise<{ allowed: boolean; used: number; limit: number; remaining: number }> {
+  const user = await ensureMonthlyReset(userId);
+  if (!user) return { allowed: true, used: 0, limit: 3, remaining: 3 };
+
+  const plan = ((user as any).plan ?? 'fish') as PlanKey;
+  const limit = PLAN_LIMITS[plan].handsPerMonth;
+  const used = (user as any).monthlyHandsUsed ?? 0;
+  const remaining = limit === Infinity ? Infinity : Math.max(0, limit - used);
+  return { allowed: used < limit, used, limit, remaining };
+}
+
+/**
+ * Check whether the user may make another coach call this month.
+ */
+export async function checkCoachLimit(userId: number): Promise<{ allowed: boolean; used: number; limit: number; remaining: number }> {
+  const user = await ensureMonthlyReset(userId);
+  if (!user) return { allowed: true, used: 0, limit: 3, remaining: 3 };
+
+  const plan = ((user as any).plan ?? 'fish') as PlanKey;
+  const limit = PLAN_LIMITS[plan].coachPerMonth;
+  const used = (user as any).monthlyCoachUsed ?? 0;
+  const remaining = limit === Infinity ? Infinity : Math.max(0, limit - used);
+  return { allowed: used < limit, used, limit, remaining };
+}
+
+/** Increment the monthly hand counter for a user. */
+export async function incrementMonthlyHands(userId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(users).set({
+    monthlyHandsUsed: sql`${users.monthlyHandsUsed} + 1`,
+  } as any).where(eq(users.id, userId));
+}
+
+/** Increment the monthly coach counter for a user. */
+export async function incrementMonthlyCoach(userId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(users).set({
+    monthlyCoachUsed: sql`${users.monthlyCoachUsed} + 1`,
+  } as any).where(eq(users.id, userId));
+}
+
+/** Update a user's plan (called from Stripe webhook). */
+export async function setUserPlan(userId: number, plan: PlanKey, stripeCustomerId?: string, stripeSubscriptionId?: string): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const updateSet: Record<string, unknown> = { plan, isPro: plan !== 'fish' };
+  if (stripeCustomerId) updateSet.stripeCustomerId = stripeCustomerId;
+  if (stripeSubscriptionId) updateSet.stripeSubscriptionId = stripeSubscriptionId;
+  await db.update(users).set(updateSet as any).where(eq(users.id, userId));
+}
+
+/** Set plan by Stripe customer ID (used in webhook). */
+export async function setUserPlanByCustomerId(stripeCustomerId: string, plan: PlanKey, stripeSubscriptionId?: string): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const updateSet: Record<string, unknown> = { plan, isPro: plan !== 'fish' };
+  if (stripeSubscriptionId) updateSet.stripeSubscriptionId = stripeSubscriptionId;
+  await db.update(users).set(updateSet as any).where(eq(users.stripeCustomerId as any, stripeCustomerId));
+}
+
+/** Get a user's current plan. */
+export async function getUserPlan(userId: number): Promise<PlanKey> {
+  const db = await getDb();
+  if (!db) return 'fish';
+  const result = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+  return ((result[0] as any)?.plan ?? 'fish') as PlanKey;
+}
+
+/** Get full usage status for a user (after monthly reset check). */
+export async function getUserUsageStatus(userId: number) {
+  const user = await ensureMonthlyReset(userId);
+  if (!user) return null;
+  const plan = ((user as any).plan ?? 'fish') as PlanKey;
+  const limits = PLAN_LIMITS[plan];
+  return {
+    plan,
+    monthlyHandsUsed: (user as any).monthlyHandsUsed ?? 0,
+    monthlyCoachUsed: (user as any).monthlyCoachUsed ?? 0,
+    handLimit: limits.handsPerMonth,
+    coachLimit: limits.coachPerMonth,
+  };
+}

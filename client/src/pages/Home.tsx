@@ -10,8 +10,9 @@ import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Loader2, Play, ChevronRight, AlertCircle, Zap } from "lucide-react";
+import { Loader2, Play, ChevronRight, AlertCircle, Zap, Crown } from "lucide-react";
 import { toast } from "sonner";
+import UpgradeModal from "@/components/UpgradeModal";
 
 const EXAMPLE_HANDS = [
   {
@@ -50,6 +51,9 @@ export default function Home() {
   const [handTitle, setHandTitle] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const { user } = useAuth();
+  const currentPlan = (user as any)?.plan ?? 'fish';
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const parseMutation = trpc.hands.parseText.useMutation();
@@ -110,10 +114,14 @@ export default function Home() {
         title: handTitle.trim() || undefined,
       });
       navigate(`/hand/${shareSlug}`);
-    } catch {
-      toast.error(t("homeCantRead"), {
-        description: t("homeCantReadDesc"),
-      });
+    } catch (err: any) {
+      if (err?.message?.includes('limit reached') || err?.data?.code === 'FORBIDDEN') {
+        setShowUpgradeModal(true);
+      } else {
+        toast.error(t("homeCantRead"), {
+          description: t("homeCantReadDesc"),
+        });
+      }
     } finally {
       setIsProcessing(false);
     }
@@ -136,6 +144,7 @@ export default function Home() {
   const missingStack = handText.trim().length > 5 && !hasEffStack(handText);
 
   return (
+    <>
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <Helmet>
         <title>Poker AI — Your Personal AI Poker Coach</title>
@@ -163,6 +172,15 @@ export default function Home() {
         <div className="flex items-center gap-2">
           <LanguageToggle />
           <ThemeToggle inline />
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate("/pricing")}
+            className="font-medium text-muted-foreground hover:text-foreground gap-1.5"
+          >
+            <Crown className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Pricing</span>
+          </Button>
           <Button
             variant="outline"
             size="sm"
@@ -408,5 +426,13 @@ export default function Home() {
         {t("appName")} · {t("tagline")}
       </footer>
     </div>
+    {/* Upgrade modal for when hand limit is hit */}
+    <UpgradeModal
+      open={showUpgradeModal}
+      onClose={() => setShowUpgradeModal(false)}
+      reason="hands"
+      currentPlan={currentPlan}
+    />
+    </>
   );
 }
