@@ -56,12 +56,12 @@ const trpcClient = trpc.createClient({
 
 createRoot(document.getElementById("root")!).render(
   <HelmetProvider>
-    <LanguageProvider>
-      <trpc.Provider client={trpcClient} queryClient={queryClient}>
-        <QueryClientProvider client={queryClient}>
+    <trpc.Provider client={trpcClient} queryClient={queryClient}>
+      <QueryClientProvider client={queryClient}>
+        <LanguageProvider>
           <App />
-        </QueryClientProvider>
-      </trpc.Provider>
-    </LanguageProvider>
+        </LanguageProvider>
+      </QueryClientProvider>
+    </trpc.Provider>
   </HelmetProvider>
 );
