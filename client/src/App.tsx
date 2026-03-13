@@ -15,6 +15,7 @@ import WinRateVisualizer from "@/pages/WinRateVisualizer";
 import NotFound from "@/pages/NotFound";
 import Pricing from "@/pages/Pricing";
 import UpgradeSuccess from "@/pages/UpgradeSuccess";
+import PlayerProfile from "@/pages/PlayerProfile";
 
 function Router() {
   return (
@@ -27,6 +28,7 @@ function Router() {
       <Route path="/pro-success" component={ProSuccess} />
       <Route path="/pricing" component={Pricing} />
       <Route path="/upgrade-success" component={UpgradeSuccess} />
+      <Route path="/profile" component={PlayerProfile} />
       <Route path="/memory-bank" component={MemoryBank} />
       <Route path="/coach" component={CoachChat} />
       <Route path="/win-rate" component={WinRateVisualizer} />

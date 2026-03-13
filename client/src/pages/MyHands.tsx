@@ -308,6 +308,13 @@ export default function MyHands() {
           >
             <TrendingUp className="h-3.5 w-3.5" /> {t("myHandsWinRate")}
           </button>
+          <button
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all shrink-0"
+            style={{ background: "rgba(245,158,11,0.08)", color: "#fbbf24", border: "1px solid rgba(245,158,11,0.2)" }}
+            onClick={() => navigate("/profile")}
+          >
+            <TrendingUp className="h-3.5 w-3.5" /> Player Profile
+          </button>
         </div>
       </header>
 

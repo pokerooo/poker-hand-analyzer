@@ -556,12 +556,12 @@ Optional paid AI coach scores the hand and explains what to do differently.
 - [x] 10 new tier limit tests, 115 total passing, 0 TypeScript errors
 
 ## Session: Player Profile Tab — Shark Only (Mar 2026)
-- [ ] DB: No new schema needed — derive metrics from existing hands table
-- [ ] Server: playerProfile.getMetrics tRPC procedure (protectedProcedure, Shark-gated)
-- [ ] Server: Compute radar dimensions from parsed hand history (VPIP, PFR, AF, 3bet%, CBet%, fold-to-cbet%)
-- [ ] Client: PlayerProfile page (/profile) with radar chart + stats table
-- [ ] Client: Radar chart using Chart.js (recharts radar) — dark gaming aesthetic
-- [ ] Client: Stats table (street-by-street: hands analysed, avg grade, EV BB)
-- [ ] Client: Shark paywall gate — blur overlay + upgrade CTA for non-Shark users
-- [ ] Client: Add Profile tab/link to navigation (Home header + My Hands header)
-- [ ] Wire /profile route in App.tsx
+- [x] DB: No new schema needed — derive metrics from existing hands table
+- [x] Server: playerProfile.getMetrics tRPC procedure (protectedProcedure, Shark-gated)
+- [x] Server: Compute radar dimensions from parsed hand history (VPIP, PFR, AF, 3bet%, CBet%, fold-to-cbet%)
+- [x] Client: PlayerProfile page (/profile) with radar chart + stats table
+- [x] Client: Radar chart using recharts RadarChart — dark gaming aesthetic
+- [x] Client: Stats table (street-by-street: hands analysed, avg grade, EV BB)
+- [x] Client: Shark paywall gate — blur overlay + upgrade CTA for non-Shark users
+- [x] Client: Add Profile tab/link to navigation (My Hands header)
+- [x] Wire /profile route in App.tsx
