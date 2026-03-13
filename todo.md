@@ -506,3 +506,14 @@ Optional paid AI coach scores the hand and explains what to do differently.
 - [x] Pass language parameter from CoachPanel and CoachChat to both mutations
 - [x] Language preference persisted to localStorage
 - [x] 0 TypeScript errors, 105 tests passing
+
+## Session: Theme Toggle Fix + Language Persistence (Mar 2026)
+- [x] Removed global floating ThemeToggle from App.tsx — no longer overlaps My Hands button
+- [x] ThemeToggle now supports inline prop — renders as compact header button when inline=true
+- [x] All page headers updated to use <ThemeToggle inline /> for consistent in-nav placement
+- [x] ImportHistory header updated to include both LanguageToggle and ThemeToggle inline
+- [x] users.language ENUM('en','zh','es') column added to DB and schema.ts
+- [x] updateUserLanguage helper added to db.ts
+- [x] prefs.updateLanguage tRPC mutation added (protectedProcedure)
+- [x] LanguageContext: loads user.language from server on login, calls prefs.updateLanguage on every toggle
+- [x] 0 TypeScript errors, 105 tests passing

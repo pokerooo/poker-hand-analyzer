@@ -53,6 +53,12 @@ export async function updateUserTheme(userId: number, theme: "light" | "dark"): 
   await db.update(users).set({ theme }).where(eq(users.id, userId));
 }
 
+export async function updateUserLanguage(userId: number, language: "en" | "zh" | "es"): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(users).set({ language }).where(eq(users.id, userId));
+}
+
 // ─── Hands ────────────────────────────────────────────────────────────────────
 
 function generateSlug(len = 8): string {

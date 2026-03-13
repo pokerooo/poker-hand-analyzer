@@ -13,7 +13,6 @@ import MemoryBank from "@/pages/MemoryBank";
 import CoachChat from "@/pages/CoachChat";
 import WinRateVisualizer from "@/pages/WinRateVisualizer";
 import NotFound from "@/pages/NotFound";
-import { ThemeToggle } from "@/components/ThemeToggle";
 
 function Router() {
   return (
@@ -39,7 +38,6 @@ function App() {
         <TooltipProvider>
           <Toaster />
           <Router />
-          <ThemeToggle />
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>

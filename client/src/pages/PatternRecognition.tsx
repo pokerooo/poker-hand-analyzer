@@ -218,7 +218,7 @@ export default function PatternRecognition() {
         </Badge>
         <div className="ml-auto flex items-center gap-2">
           <LanguageToggle />
-          <ThemeToggle />
+          <ThemeToggle inline />
         </div>
       </div>
 

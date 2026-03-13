@@ -31,6 +31,7 @@ import {
   checkAiRateLimit,
   logAiCall,
   updateUserTheme,
+  updateUserLanguage,
 } from "./db";
 import { parseHandText } from "./handParser";
 import { invokeLLM } from "./_core/llm";
@@ -957,6 +958,12 @@ const prefsRouter = router({
     .input(z.object({ theme: z.enum(["light", "dark"]) }))
     .mutation(async ({ ctx, input }) => {
       await updateUserTheme(ctx.user.id, input.theme);
+      return { success: true };
+    }),
+  updateLanguage: protectedProcedure
+    .input(z.object({ language: z.enum(["en", "zh", "es"]) }))
+    .mutation(async ({ ctx, input }) => {
+      await updateUserLanguage(ctx.user.id, input.language);
       return { success: true };
     }),
 });

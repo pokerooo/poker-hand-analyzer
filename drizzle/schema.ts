@@ -22,6 +22,7 @@ export const users = mysqlTable("users", {
   isPro: boolean("is_pro").default(false).notNull(),
   // UI preferences
   theme: mysqlEnum("theme", ["light", "dark"]).default("light").notNull(),
+  language: mysqlEnum("language", ["en", "zh", "es"]).default("en").notNull(),
 });
 
 export type User = typeof users.$inferSelect;

@@ -162,7 +162,7 @@ export default function Home() {
         </div>
         <div className="flex items-center gap-2">
           <LanguageToggle />
-          <ThemeToggle />
+          <ThemeToggle inline />
           <Button
             variant="outline"
             size="sm"

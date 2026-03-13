@@ -313,7 +313,7 @@ export default function CoachChat() {
             </button>
           )}
           <LanguageToggle />
-          <ThemeToggle />
+          <ThemeToggle inline />
         </div>
       </div>
 

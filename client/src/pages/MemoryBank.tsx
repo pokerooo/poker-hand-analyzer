@@ -103,7 +103,7 @@ export default function MemoryBank() {
         </div>
         <div className="flex items-center gap-2">
           <LanguageToggle />
-          <ThemeToggle />
+          <ThemeToggle inline />
           <Link href="/coach">
             <button
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold"

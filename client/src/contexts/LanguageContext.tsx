@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { Language, translations, TranslationKey } from "@/lib/i18n";
+import { trpc } from "@/lib/trpc";
 
 interface LanguageContextType {
   language: Language;
@@ -18,11 +19,34 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     return "en";
   });
 
+  // Load language from user profile when authenticated
+  const { data: meData } = trpc.auth.me.useQuery(undefined, {
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
+
+  useEffect(() => {
+    const serverLang = (meData as any)?.language as Language | undefined;
+    if (serverLang && (serverLang === "en" || serverLang === "zh" || serverLang === "es")) {
+      setLanguageState(serverLang);
+      try {
+        localStorage.setItem("poker-ai-language", serverLang);
+      } catch {}
+    }
+  }, [(meData as any)?.language]);
+
+  // Persist language to server when authenticated
+  const updateLanguageMutation = trpc.prefs.updateLanguage.useMutation();
+
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
     try {
       localStorage.setItem("poker-ai-language", lang);
     } catch {}
+    // Persist to server if user is logged in
+    if (meData) {
+      updateLanguageMutation.mutate({ language: lang });
+    }
   };
 
   const t = (key: TranslationKey): string => {

@@ -16,6 +16,8 @@ import {
   ChevronLeft,
   Layers,
 } from "lucide-react";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { LanguageToggle } from "@/components/LanguageToggle";
 
 interface ImportResult {
   shareSlug: string;
@@ -102,7 +104,7 @@ export default function ImportHistory() {
     <div className="min-h-screen" style={{ background: "var(--poker-page-bg)", color: "var(--poker-text)" }}>
       {/* Header */}
       <div
-        className="border-b px-6 py-4 flex items-center gap-4"
+        className="border-b px-4 sm:px-6 py-3 flex items-center gap-3"
         style={{ borderColor: "var(--poker-border)", background: "var(--poker-header-bg)" }}
       >
         <Link href="/my-hands">
@@ -116,16 +118,20 @@ export default function ImportHistory() {
             My Hands
           </button>
         </Link>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-1">
           <Layers className="h-5 w-5" style={{ color: "#10b981" }} />
           <span className="font-semibold text-base">Import Hand History</span>
+          <Badge
+            className="text-[10px] px-2 py-0.5"
+            style={{ background: "rgba(16,185,129,0.15)", color: "#10b981", border: "1px solid rgba(16,185,129,0.3)" }}
+          >
+            PRO
+          </Badge>
         </div>
-        <Badge
-          className="text-[10px] px-2 py-0.5 ml-1"
-          style={{ background: "rgba(16,185,129,0.15)", color: "#10b981", border: "1px solid rgba(16,185,129,0.3)" }}
-        >
-          PRO
-        </Badge>
+        <div className="flex items-center gap-2">
+          <LanguageToggle />
+          <ThemeToggle inline />
+        </div>
       </div>
 
       <div className="max-w-2xl mx-auto px-6 py-10 space-y-8">

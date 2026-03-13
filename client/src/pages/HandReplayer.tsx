@@ -1247,7 +1247,7 @@ export default function HandReplayer() {
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
           <LanguageToggle />
-          <ThemeToggle />
+          <ThemeToggle inline />
           <HandEditPanel hand={{ ...hand, rawText: localRawText || hand.rawText }} onSaved={handleHandSaved} />
           <button
             className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
