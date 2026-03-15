@@ -577,3 +577,15 @@ Optional paid AI coach scores the hand and explains what to do differently.
 - [x] Client: Delta badges showing change vs previous snapshot per axis (up/down/flat)
 - [x] Client: Snapshot history table (date, style, hands, AI report indicator)
 - [x] 135 tests passing, 0 TypeScript errors
+
+## Session: Auto-Snapshot + Opponent Profiling + Report History — COMPLETED (Mar 2026)
+- [x] DB: opponent_profiles table (userId, villainName, vpip, pfr, threeBet, cbet, foldToCbet, af, notes, aiAdjustments, createdAt)
+- [x] DB: Applied migration via direct SQL
+- [x] Server: Weekly auto-snapshot cron job (startAutoSnapshotScheduler — fires every Sunday midnight UTC)
+- [x] Server: opponentProfile.create / list / update / delete / analyze tRPC procedures (Shark-gated)
+- [x] Server: opponentProfile.analyze — LLM generates 4-section exploitative strategy per villain
+- [x] Client: OpponentProfiler page (/opponents) — villain stats form with sliders, villain radar, exploitative adjustments
+- [x] Client: Report History section on PlayerProfile — expandable list of past AI reports per snapshot
+- [x] Client: Opponent Profiler CTA card on PlayerProfile page
+- [x] Wire /opponents route in App.tsx
+- [x] Tests: 14 new tests (villain normalisation, classification, AF, scheduler) — 150 total passing, 0 TS errors

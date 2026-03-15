@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS `opponentProfiles` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `userId` int NOT NULL,\n  `villainName` varchar(100) NOT NULL,\n  `vpip` int NOT NULL DEFAULT 0,\n  `pfr` int NOT NULL DEFAULT 0,\n  `threeBet` int NOT NULL DEFAULT 0,\n  `cbet` int NOT NULL DEFAULT 0,\n  `foldToCbet` int NOT NULL DEFAULT 0,\n  `af` int NOT NULL DEFAULT 0,\n  `handsObserved` int NOT NULL DEFAULT 0,\n  `notes` text,\n  `aiAdjustments` text,\n  `createdAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  `updatedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n  PRIMARY KEY (`id`),\n  KEY `idx_opponentProfiles_userId` (`userId`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3S5EK7kkwn3cfqa.root --database g6HPzuQNwUJzsGs4mHVNkx --execute CREATE TABLE IF NOT EXISTS `opponentProfiles` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `userId` int NOT NULL,\n  `villainName` varchar(100) NOT NULL,\n  `vpip` int NOT NULL DEFAULT 0,\n  `pfr` int NOT NULL DEFAULT 0,\n  `threeBet` int NOT NULL DEFAULT 0,\n  `cbet` int NOT NULL DEFAULT 0,\n  `foldToCbet` int NOT NULL DEFAULT 0,\n  `af` int NOT NULL DEFAULT 0,\n  `handsObserved` int NOT NULL DEFAULT 0,\n  `notes` text,\n  `aiAdjustments` text,\n  `createdAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  `updatedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n  PRIMARY KEY (`id`),\n  KEY `idx_opponentProfiles_userId` (`userId`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1918
+}

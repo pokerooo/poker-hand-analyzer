@@ -42,6 +42,7 @@ import { parseHandText } from "./handParser";
 import { invokeLLM } from "./_core/llm";
 import { stripeRouter } from "./stripeRouter";
 import { playerProfileRouter } from "./playerProfileRouter";
+import { opponentProfileRouter } from "./opponentProfileRouter";
 import { splitHandHistory, parseHandHistory, historyHandToText } from "./historyParser";
 
 // ─── Auth Router ──────────────────────────────────────────────────────────────
@@ -1018,6 +1019,7 @@ export const appRouter = router({
   prefs: prefsRouter,
   system: systemRouter,
   playerProfile: playerProfileRouter,
+  opponentProfile: opponentProfileRouter,
 });
 
 export type AppRouter = typeof appRouter;

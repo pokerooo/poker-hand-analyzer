@@ -20,7 +20,22 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LanguageToggle } from "@/components/LanguageToggle";
-import { Loader2, ArrowLeft, Lock, Crown, TrendingUp, Zap, Sparkles, Camera, ChevronUp, ChevronDown, Minus } from "lucide-react";
+import {
+  ArrowLeft,
+  Lock,
+  Crown,
+  TrendingUp,
+  Zap,
+  Sparkles,
+  Camera,
+  ChevronUp,
+  ChevronDown,
+  Minus,
+  Target,
+  History,
+  ChevronRight,
+  Loader2,
+} from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { toast } from "sonner";
 import {
@@ -140,6 +155,110 @@ function StatCard({ label, value, sub }: { label: string; value: string; sub?: s
       <div className="text-[10px] font-semibold tracking-widest text-zinc-500 uppercase">{label}</div>
       <div className="text-xl font-bold text-white font-mono">{value}</div>
       {sub && <div className="text-xs text-zinc-500">{sub}</div>}
+    </div>
+  );
+}
+
+// ─── Report History section ──────────────────────────────────────────────────
+
+function ReportHistorySection({ isShark }: { isShark: boolean }) {
+  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const { data: snapshots, isLoading } = trpc.playerProfile.getSnapshots.useQuery(undefined, {
+    enabled: isShark,
+    retry: false,
+  });
+
+  if (!isShark) return null;
+
+  const snapshotsWithReports = (snapshots ?? []).filter((s) => s.aiReport);
+
+  if (isLoading) {
+    return (
+      <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-8 flex justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-amber-400" />
+      </div>
+    );
+  }
+
+  if (snapshotsWithReports.length === 0) {
+    return (
+      <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6 text-center space-y-2">
+        <div className="w-10 h-10 rounded-xl bg-zinc-800 flex items-center justify-center mx-auto">
+          <History className="h-5 w-5 text-zinc-600" />
+        </div>
+        <p className="text-sm text-zinc-500">No saved reports yet. Generate and save a snapshot to build your report history.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 overflow-hidden">
+      <div className="flex items-center gap-2 px-5 py-4 border-b border-zinc-800">
+        <History className="h-4 w-4 text-violet-400" />
+        <span className="font-bold text-sm text-white tracking-wide">Report History</span>
+        <span className="text-xs text-zinc-500 ml-1">{snapshotsWithReports.length} saved report{snapshotsWithReports.length !== 1 ? "s" : ""}</span>
+      </div>
+
+      <div className="divide-y divide-zinc-800/60">
+        {[...snapshotsWithReports].reverse().map((s) => (
+          <div key={s.id}>
+            {/* Row header */}
+            <button
+              onClick={() => setExpandedId(expandedId === s.id ? null : s.id)}
+              className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-zinc-800/20 transition-colors text-left"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-violet-500/10 border border-violet-500/20 flex items-center justify-center shrink-0">
+                  <Sparkles className="h-3.5 w-3.5 text-violet-400" />
+                </div>
+                <div>
+                  <div className="text-sm font-semibold text-white">{s.snapshotDate}</div>
+                  <div className="text-[10px] text-zinc-500">
+                    {s.styleTag ?? "Unknown style"} · {s.handsCount.toLocaleString()} hands
+                  </div>
+                </div>
+              </div>
+              <ChevronRight
+                className={`h-4 w-4 text-zinc-600 transition-transform duration-200 ${
+                  expandedId === s.id ? "rotate-90" : ""
+                }`}
+              />
+            </button>
+
+            {/* Expanded report */}
+            {expandedId === s.id && s.aiReport && (
+              <div className="px-5 pb-5 pt-1 bg-zinc-900/30">
+                <div
+                  className="prose prose-invert prose-sm max-w-none leading-relaxed border-l-2 border-violet-500/30 pl-4"
+                  style={{ color: "#d4d4d8" }}
+                >
+                  {s.aiReport.split("\n").map((line, i) => {
+                    if (line.startsWith("**") && line.endsWith("**")) {
+                      return (
+                        <p key={i} className="font-bold text-violet-400 mt-4 mb-1 text-sm tracking-wide">
+                          {line.replace(/\*\*/g, "")}
+                        </p>
+                      );
+                    }
+                    if (line.startsWith("**")) {
+                      const parts = line.split(/\*\*(.*?)\*\*/g);
+                      return (
+                        <p key={i} className="text-sm leading-relaxed mb-2">
+                          {parts.map((part, j) =>
+                            j % 2 === 1 ? <strong key={j} className="text-white">{part}</strong> : part
+                          )}
+                        </p>
+                      );
+                    }
+                    if (line.trim() === "") return <div key={i} className="h-2" />;
+                    return <p key={i} className="text-sm leading-relaxed mb-2">{line}</p>;
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -627,6 +746,28 @@ export default function PlayerProfile() {
 
         {/* Progress Trend Tracker — Shark only */}
         <TrendTrackerSection isShark={isShark} />
+
+        {/* Report History — Shark only */}
+        <ReportHistorySection isShark={isShark} />
+
+        {/* Opponent Profiler CTA — Shark only */}
+        {isShark && (
+          <button
+            onClick={() => navigate("/opponents")}
+            className="w-full rounded-2xl border border-red-500/20 bg-zinc-900/40 hover:bg-red-500/5 hover:border-red-500/30 transition-all p-5 flex items-center gap-4 text-left"
+          >
+            <div className="w-12 h-12 rounded-xl bg-red-500/10 border border-red-500/30 flex items-center justify-center shrink-0">
+              <Target className="h-6 w-6 text-red-400" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-bold text-white mb-0.5">Opponent Profiler</h3>
+              <p className="text-sm text-zinc-400">
+                Log villain stats, visualise their tendencies on a radar, and get AI-generated exploitative adjustments.
+              </p>
+            </div>
+            <ChevronRight className="h-5 w-5 text-zinc-600 shrink-0" />
+          </button>
+        )}
 
         {/* Not enough data state */}
         {isShark && data && !data.hasEnoughData && (

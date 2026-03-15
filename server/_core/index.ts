@@ -9,6 +9,7 @@ import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { registerOgRoute } from "../ogRoute.ts";
 import { handleStripeWebhook } from "../stripeRouter";
+import { startAutoSnapshotScheduler } from "../autoSnapshot";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -99,3 +100,6 @@ async function startServer() {
 }
 
 startServer().catch(console.error);
+
+// Start the weekly auto-snapshot scheduler for Shark users
+startAutoSnapshotScheduler();

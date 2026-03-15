@@ -159,3 +159,28 @@ export const profileSnapshots = mysqlTable("profileSnapshots", {
 
 export type ProfileSnapshot = typeof profileSnapshots.$inferSelect;
 export type InsertProfileSnapshot = typeof profileSnapshots.$inferInsert;
+
+/**
+ * Opponent profiles — Shark users manually log villain stats for exploitative analysis.
+ */
+export const opponentProfiles = mysqlTable("opponentProfiles", {
+  id: int("id").primaryKey().autoincrement(),
+  userId: int("userId").notNull(),
+  villainName: varchar("villainName", { length: 100 }).notNull(),
+  // Core stats (percentages stored as integers, e.g. 25 = 25%)
+  vpip: int("vpip").default(0).notNull(),
+  pfr: int("pfr").default(0).notNull(),
+  threeBet: int("threeBet").default(0).notNull(),
+  cbet: int("cbet").default(0).notNull(),
+  foldToCbet: int("foldToCbet").default(0).notNull(),
+  af: int("af").default(0).notNull(), // aggression factor * 10 (e.g. 25 = 2.5)
+  handsObserved: int("handsObserved").default(0).notNull(),
+  notes: text("notes"),
+  // AI-generated exploitative adjustments (cached)
+  aiAdjustments: text("aiAdjustments"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+});
+
+export type OpponentProfile = typeof opponentProfiles.$inferSelect;
+export type InsertOpponentProfile = typeof opponentProfiles.$inferInsert;

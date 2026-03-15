@@ -16,6 +16,7 @@ import NotFound from "@/pages/NotFound";
 import Pricing from "@/pages/Pricing";
 import UpgradeSuccess from "@/pages/UpgradeSuccess";
 import PlayerProfile from "@/pages/PlayerProfile";
+import OpponentProfiler from "@/pages/OpponentProfiler";
 
 function Router() {
   return (
@@ -29,6 +30,7 @@ function Router() {
       <Route path="/pricing" component={Pricing} />
       <Route path="/upgrade-success" component={UpgradeSuccess} />
       <Route path="/profile" component={PlayerProfile} />
+      <Route path="/opponents" component={OpponentProfiler} />
       <Route path="/memory-bank" component={MemoryBank} />
       <Route path="/coach" component={CoachChat} />
       <Route path="/win-rate" component={WinRateVisualizer} />
